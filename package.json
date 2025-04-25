@@ -1,5 +1,5 @@
 {
-  "name": "@sn-react/shadcn-kit",
+  "name": "sn-shadcn-kit",
   "version": "1.0.0",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
@@ -10,6 +10,17 @@
     "dist"
   ],
   "sideEffects": false,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/vincepg13/sn-react-shadcn"
+  },
+  "bugs": {
+    "url": "https://github.com/vincepg13/sn-react-shadcn/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "homepage": "https://github.com/vincepg13/sn-react-shadcn#readme",
   "scripts": {
     "build": "tsup src/index.ts --dts --format esm,cjs --out-dir dist",
     "dev": "vite",

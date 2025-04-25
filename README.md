@@ -1,4 +1,4 @@
-# @sn-react/shadcn-kit
+# sn-shadcn-kit
 
 A tree shakeable collection of react components built using using [ShadCN UI](https://ui.shadcn.com/) and [Tailwind CSS](https://tailwindcss.com/).
 
@@ -11,7 +11,7 @@ Designed to give ServiceNow developers easy access to react components on the pl
 Install the component and its peer dependencies:
 
 ```bash
-npm install @sn-react/shadcn-kit react react-dom @tanstack/react-table tailwindcss
+npm install sn-shadcn-kit react react-dom @tanstack/react-table tailwindcss
 ```
 
 ---
@@ -22,7 +22,7 @@ To ensure Tailwind includes styles used in the component, add this to your globa
 
 ```css
 @import 'tailwindcss';
-@source "./node_modules/@sn-react/shadcn-kit/dist";
+@source "./node_modules/sn-shadcn-kit/dist";
 ```
 ---
 
@@ -30,7 +30,7 @@ To ensure Tailwind includes styles used in the component, add this to your globa
 When using either of the data tables, it will display each fields display value in the corresponding cell. If you want to take control of the UI, you can do this by passing in your own column definitions to the table. To find out more about column definitions in Tanstack visit the [Column Definition Guide](https://tanstack.com/table/v8/docs/guide/column-defs)
 
 ```tsx
-import { SnDataTable, SnRow } from '@sn-react/shadcn-kit'
+import { SnDataTable, SnRow } from 'sn-shadcn-kit'
 
 const columns = [
   {
@@ -82,7 +82,7 @@ This has more or less the same properties as SnDataTable with the exception that
 This package exports helpful types for working with ServiceNow data:
 
 ```ts
-import type { SnRow, SnRowItem } from '@sn-react/shadcn-kit'
+import type { SnRow, SnRowItem } from 'sn-shadcn-kit'
 ```
 
 SnRowItem corresponds to a fields value which is simply an object with both its value and display_value. SnRow is a record (array) of SnRowItems.
