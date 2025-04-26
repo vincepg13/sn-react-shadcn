@@ -4,6 +4,8 @@ A tree shakeable collection of react components built using using [ShadCN UI](ht
 
 Designed to give ServiceNow developers easy access to react components on the platform. To find out more about creating a react environment inside of a ServiceNow instance visit [servicenow-react-app](https://github.com/elinsoftware/servicenow-react-app).
 
+For a demonstration on an application that uses these components which you can install on your own ServiceNow instance visit [sn-react-shadcn-demo](https://github.com/vincepg13/sn-react-shadcn-demo).
+
 ---
 
 ## 📦 Installation
