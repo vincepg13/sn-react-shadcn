@@ -1,98 +1,81 @@
-import { useEffect, useState, useCallback } from 'react'
-import { ColumnDef, SortingState, Updater } from '@tanstack/react-table'
-import { Row } from '@tanstack/react-table'
-import { SnRow, SnRowItem } from '../../types/table-schema'
-import { getTableRows, getTableSchema } from '../../utils/table-api'
-import { getDefaultSortingFromQuery, getSortedQuery, resolveUpdater } from '../../utils/table-helper'
-import { getColumnViaFields } from './columns'
-import { DataTable } from './data-table'
-import SnDataTableSkeleton from './data-table-skeleton'
+import { SnDataTableSkeleton, SnDataTableSkeletonError } from "./data-table-skeleton";
+import { useState, useCallback } from "react";
+import { ColumnDef, Updater } from "@tanstack/react-table";
+import { Row } from "@tanstack/react-table";
+import { SnRow, SnRowItem } from "../../types/table-schema";
+import { resolveUpdater } from "../../utils/table-helper";
+import { DataTable } from "./data-table";
+import { useErrorState } from "./hooks/useErrorState";
+import { useSortingQuery } from "./hooks/useSortingQuery";
+import { useFetchSchema } from "./hooks/useFetchSchema";
+import { useFetchRows } from "./hooks/useFetchRows";
 
 interface SnDataTableProps {
-  table: string
-  fields: string[]
-  query?: string
-  defaultPageSize?: number
-  onRowClick?: (row: Row<SnRow>) => void
-  columnDefinitions?: ColumnDef<SnRow, SnRowItem>[]
+  table: string;
+  fields: string[];
+  query?: string;
+  inputError?: string;
+  defaultPageSize?: number;
+  onRowClick?: (row: Row<SnRow>) => void;
+  columnDefinitions?: ColumnDef<SnRow, SnRowItem>[];
 }
 
 export default function SnDataTable({
   table,
   fields,
-  query = '',
+  query = "",
+  inputError,
   onRowClick,
   defaultPageSize = 20,
   columnDefinitions,
 }: SnDataTableProps) {
-  const [rows, setRows] = useState<SnRow[]>([])
-  const [columns, setColumns] = useState<ColumnDef<SnRow, SnRowItem>[]>([])
-  const [pageIndex, setPageIndex] = useState(0)
-  const [pageSize, setPageSize] = useState(defaultPageSize)
-  const [pageCount, setPageCount] = useState(0)
-  const [sorting, setSorting] = useState<SortingState>(getDefaultSortingFromQuery(query))
+  const [error, setError] = useErrorState(inputError || "");
+  const [rows, setRows] = useState<SnRow[]>([]);
+  const [columns, setColumns] = useState<ColumnDef<SnRow, SnRowItem>[]>([]);
+  const [pageIndex, setPageIndex] = useState(0);
+  const [pageSize, setPageSize] = useState(defaultPageSize);
+  const [pageCount, setPageCount] = useState(0);
+  const [sorting, setSorting] = useSortingQuery(query);
 
-  useEffect(() => {
-    const defaultSorting = getDefaultSortingFromQuery(query);
-    setSorting(defaultSorting);
-  }, [query]);
+  /* Fetch column schema for column labels */
+  useFetchSchema({
+    table,
+    fields,
+    columnDefinitions,
+    setColumns,
+    setError,
+  });
 
-  useEffect(() => {
-    if (!fields || fields.length === 0) return
+  /* Fetch row data from servicenow records */
+  useFetchRows({
+    table,
+    query,
+    fields,
+    sorting,
+    pageIndex,
+    pageSize,
+    defaultPageSize,
+    setRows,
+    setPageCount,
+    setError,
+  });
 
-    const httpController = new AbortController()
-
-    getTableSchema(table, httpController)
-      .then((r) => {
-        setColumns(getColumnViaFields(fields, r.data.result, columnDefinitions))
-      })
-      .catch((error) => {
-        console.error('Failed to fetch table schema:', error)
-        setColumns(getColumnViaFields(fields, [], columnDefinitions))
-      })
-
-      return () => {
-        httpController.abort()
-      }
-  }, [table, fields, columnDefinitions])
-
-  useEffect(() => {
-    if (!fields || fields.length === 0) return
-
-    const offset = pageIndex * pageSize
-    const effectiveQuery = sorting.length > 0 ? getSortedQuery(sorting, query) : query
-    const fieldsWithGuid = [...fields, 'sys_id'].join(',')
-    const httpController = new AbortController()
-
-    getTableRows(table, effectiveQuery, fieldsWithGuid, offset, pageSize, httpController)
-      .then((r) => {
-        const total = +(r.headers['x-total-count'] || defaultPageSize)
-        setRows(r.data.result)
-        setPageCount(Math.ceil(total / pageSize))
-      })
-      .catch((error) => {
-        console.error('Failed to fetch table data:', error)
-        setRows([])
-        setPageCount(0)
-      })
-
-    return () => {
-      httpController.abort()
-    }
-  }, [query, table, fields, sorting, pageIndex, pageSize, defaultPageSize])
-
+  /* Handle page changes */
   const handlePageChange = useCallback(
     (updater: Updater<{ pageIndex: number; pageSize: number }>) => {
-      const newState = resolveUpdater(updater, { pageIndex, pageSize })
-      setPageIndex(newState.pageIndex)
-      setPageSize(newState.pageSize)
+      const newState = resolveUpdater(updater, { pageIndex, pageSize });
+      setPageIndex(newState.pageIndex);
+      setPageSize(newState.pageSize);
     },
     [pageIndex, pageSize]
-  )
+  );
 
   return (
     <>
-      {!!fields.length && !!columns.length && !!rows.length && (
+    { error && <SnDataTableSkeletonError error={error} />}
+
+    { !error && (
+      rows.length > 0 ? (
         <DataTable
           pageIndex={pageIndex}
           pageSize={pageSize}
@@ -104,11 +87,10 @@ export default function SnDataTable({
           onPageChange={handlePageChange}
           onRowClick={onRowClick}
         />
-      )}
-      
-      {(!columns.length || !fields.length || !rows.length) && (
-        <SnDataTableSkeleton rowCount={defaultPageSize}/>
-      )}
+      ) : (
+        <SnDataTableSkeleton rowCount={defaultPageSize} />
+      )
+    )}
     </>
-  )
+  );
 }

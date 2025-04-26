@@ -2,6 +2,7 @@ import axios from 'axios'
 import { SnRow, SnColSchemea, SnListPref, SnListView, SnListViewElement } from '../types/table-schema'
 
 type SnApiResponse<T = []> = {
+  status: number,
   data: {
     result: T
   }
@@ -16,12 +17,13 @@ export function getViewPreference(
   view?: string
 ): Promise<SnApiResponse<SnListPref[]>> {
   if (view !== undefined) {
-    return Promise.resolve({ headers: {}, data: { result: [{ value: view }] } })
+    return Promise.resolve({ status: 200, headers: {}, data: { result: [{ value: view }] } })
   } else {
     return axios.get(
       `/api/now/table/sys_user_preference?sysparm_query=user=javascript:gs.getUserID()^name=${table}_list.view`,
       {
         signal: controller.signal,
+        validateStatus: (status) => status >= 200 && status < 300,
       }
     )
   }
@@ -38,6 +40,7 @@ export function getListView(
   `,
     {
       signal: controller.signal,
+      validateStatus: (status) => status >= 200 && status < 300,
     }
   )
 }
@@ -59,6 +62,7 @@ export function getListViewElements(
     `/api/now/table/sys_ui_list_element?sysparm_fields=element,position&sysparm_query=${fieldsQuery}^ORDERBYposition`,
     {
       signal: controller.signal,
+      validateStatus: (status) => status >= 200 && status < 300,
     }
   )
 }
@@ -66,6 +70,7 @@ export function getListViewElements(
 export function getTableSchema(table: string, controller: AbortController): Promise<SnApiResponse<SnColSchemea[]>> {
   return axios.get(`/api/now/doc/table/schema/${table}`, {
     signal: controller.signal,
+    validateStatus: (status) => status >= 200 && status < 300,
   })
 }
 
@@ -81,6 +86,7 @@ export function getTableRows(
     `/api/now/table/${table}?sysparm_query=${query}&sysparm_display_value=all&sysparm_fields=${fields}&sysparm_offset=${offset}&sysparm_limit=${pageSize}`,
     {
       signal: controller.signal,
+      validateStatus: (status) => status >= 200 && status < 300,
     }
   )
 }
