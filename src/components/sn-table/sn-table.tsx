@@ -21,12 +21,13 @@ export default function SnTable({
   columnDefinitions,
 }: SnTableProps) {
   /* Hook to fetch fields based on table and view */
-  const { fields, error } = useFetchFields({ table, view });
+  const { fields, fieldsTable, error } = useFetchFields({ table, view });
 
   return (
     <SnDataTable
       table={table}
       fields={fields}
+      fieldsTable={fieldsTable}
       query={query}
       inputError={error}
       onRowClick={onRowClick}

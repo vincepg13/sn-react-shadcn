@@ -2,11 +2,14 @@ import { useEffect } from "react";
 import { getTableRows } from "../../../utils/table-api";
 import { getSortedQuery } from "../../../utils/table-helper";
 import axios from "axios"; // optional, only if you want to check for cancel
+import { SnRow } from "@/types/table-schema";
+import { SortingState } from "@tanstack/react-table";
 
 export function useFetchRows({
   table,
   query,
   fields,
+  fieldsTable,
   sorting,
   pageIndex,
   pageSize,
@@ -18,28 +21,26 @@ export function useFetchRows({
   table: string;
   query: string;
   fields: string[];
-  sorting: any[]; // type better later
+  fieldsTable: string;
+  sorting: SortingState;
   pageIndex: number;
   pageSize: number;
   defaultPageSize: number;
-  setRows: (rows: any[]) => void;
+  setRows: (rows: SnRow[]) => void;
   setPageCount: (count: number) => void;
   setError: (msg: string) => void;
 }) {
   useEffect(() => {
-    if (!fields || fields.length === 0) {
-      console.log("ABORT NO FIELDS FOR ROWS");
-      return;
-    }
+    if (!fields || !fields.length || fieldsTable !== table) return setRows([]);
+    // setRows([]); - uncomment this to show skeleton between page loads
 
     const controller = new AbortController();
 
     const loadRows = async () => {
-      try {
+      try { 
         const offset = pageIndex * pageSize;
         const effectiveQuery = sorting.length > 0 ? getSortedQuery(sorting, query) : query;
         const fieldsWithGuid = [...fields, "sys_id"].join(",");
-
         const res = await getTableRows(table, effectiveQuery, fieldsWithGuid, offset, pageSize, controller);
         const total = +(res.headers["x-total-count"] || defaultPageSize);
 
@@ -62,5 +63,5 @@ export function useFetchRows({
     return () => {
       controller.abort();
     };
-  }, [query, table, fields, sorting, pageIndex, pageSize, defaultPageSize, setRows, setPageCount, setError]);
+  }, [query, table, fields, fieldsTable, sorting, pageIndex, pageSize, defaultPageSize, setRows, setPageCount, setError]);
 }

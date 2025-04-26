@@ -13,6 +13,7 @@ import { useFetchRows } from "./hooks/useFetchRows";
 interface SnDataTableProps {
   table: string;
   fields: string[];
+  fieldsTable?: string;
   query?: string;
   inputError?: string;
   defaultPageSize?: number;
@@ -23,6 +24,7 @@ interface SnDataTableProps {
 export default function SnDataTable({
   table,
   fields,
+  fieldsTable,
   query = "",
   inputError,
   onRowClick,
@@ -41,6 +43,7 @@ export default function SnDataTable({
   useFetchSchema({
     table,
     fields,
+    fieldsTable: fieldsTable || table,
     columnDefinitions,
     setColumns,
     setError,
@@ -51,6 +54,7 @@ export default function SnDataTable({
     table,
     query,
     fields,
+    fieldsTable: fieldsTable || table,
     sorting,
     pageIndex,
     pageSize,

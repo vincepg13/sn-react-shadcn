@@ -1,10 +1,21 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
-import { getListView, getListViewElements, getViewPreference } from "../../../utils/table-api";
+import {
+  getListView,
+  getListViewElements,
+  getViewPreference,
+} from "../../../utils/table-api";
 import { SnListViewElement } from "../../../types/table-schema";
 
-export function useFetchFields({ table, view }: { table: string; view?: string }) {
+export function useFetchFields({
+  table,
+  view,
+}: {
+  table: string;
+  view?: string;
+}) {
   const [fields, setFields] = useState<string[]>([]);
+  const [fieldsTable, setFieldsTable] = useState<string>("");
   const [error, setError] = useState<string>("");
 
   useEffect(() => {
@@ -18,7 +29,8 @@ export function useFetchFields({ table, view }: { table: string; view?: string }
     const loadFields = async () => {
       try {
         const prefRes = await getViewPreference(table, controller, view);
-        const tableView = view !== undefined ? view : prefRes.data.result[0]?.value || "";
+        const tableView =
+          view !== undefined ? view : prefRes.data.result[0]?.value || "";
 
         const listViewRes = await getListView(table, tableView, controller);
 
@@ -28,10 +40,17 @@ export function useFetchFields({ table, view }: { table: string; view?: string }
           return;
         }
 
-        const elementsRes = await getListViewElements(table, listViewRes.data.result, controller);
-        const snFields = elementsRes.data.result.map((f: SnListViewElement) => f.element);
+        const elementsRes = await getListViewElements(
+          table,
+          listViewRes.data.result,
+          controller
+        );
+        const snFields = elementsRes.data.result.map(
+          (f: SnListViewElement) => f.element
+        );
 
         setFields(snFields);
+        setFieldsTable(table); // ✅ Mark that these fields belong to this table
         setError(""); // clear error if successful
       } catch (error: unknown) {
         if (axios.isAxiosError(error) && error.code !== "ERR_CANCELED") {
@@ -48,5 +67,5 @@ export function useFetchFields({ table, view }: { table: string; view?: string }
     };
   }, [table, view]);
 
-  return { fields, error };
+  return { fields, fieldsTable, error };
 }

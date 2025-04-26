@@ -1,22 +1,26 @@
 import { useEffect } from "react";
 import { getTableSchema } from "../../../utils/table-api"; // adjust your path
 import { getColumnViaFields } from "../columns"; // adjust your path
+import { SnRow, SnRowItem } from "@/types/table-schema";
+import { ColumnDef } from "@tanstack/react-table";
 
 export function useFetchSchema({
   table,
   fields,
+  fieldsTable,
   columnDefinitions,
   setColumns,
   setError,
 }: {
   table: string;
   fields: string[];
-  columnDefinitions?: any; // tighten typing later
-  setColumns: (cols: any[]) => void;
+  fieldsTable: string;
+  columnDefinitions?: ColumnDef<SnRow, SnRowItem>[];
+  setColumns: (cols: ColumnDef<SnRow, SnRowItem>[]) => void;
   setError: (msg: string) => void;
 }) {
   useEffect(() => {
-    if (!fields || fields.length === 0) return
+    if (!fields || !fields.length || fieldsTable !== table) return
 
     const controller = new AbortController();
 
@@ -26,7 +30,7 @@ export function useFetchSchema({
         setColumns(getColumnViaFields(fields, res.data.result, columnDefinitions));
       } catch (error) {
         setColumns(getColumnViaFields(fields, [], columnDefinitions));
-        setError("Failed to fetch table schema");
+        setError("Failed to fetch table schema: " + error);
       }
     };
 
@@ -35,5 +39,5 @@ export function useFetchSchema({
     return () => {
       controller.abort();
     };
-  }, [table, fields, columnDefinitions]);
+  }, [table, fields, fieldsTable, columnDefinitions, setColumns, setError]);
 }
