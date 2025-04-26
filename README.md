@@ -8,10 +8,10 @@ Designed to give ServiceNow developers easy access to react components on the pl
 
 ## 📦 Installation
 
-Install the component and its peer dependencies:
+If you are installing from scratch then install the component and its peer dependencies:
 
 ```bash
-npm install sn-shadcn-kit react react-dom @tanstack/react-table tailwindcss
+npm install sn-shadcn-kit react react-dom @tanstack/react-table tailwindcss axios
 ```
 
 ---

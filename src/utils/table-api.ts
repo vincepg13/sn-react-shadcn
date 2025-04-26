@@ -1,5 +1,7 @@
-import axios from 'axios'
+import { getAxiosInstance } from './axios-client';
 import { SnRow, SnColSchemea, SnListPref, SnListView, SnListViewElement } from '../types/table-schema'
+
+const axios = getAxiosInstance();
 
 type SnApiResponse<T = []> = {
   status: number,

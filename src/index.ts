@@ -8,5 +8,8 @@ export { DataTableColumnHeader } from './components/sn-table/data-table-column-h
 //export { SmartForm } from './components/form'
 //export { UserCard } from './components/user'
 
+// Data Fetching
+export { setAxiosInstance } from './utils/axios-client'
+
 // Types
 export type { SnRow, SnRowItem } from './types/table-schema'
