@@ -1,8 +1,8 @@
-import axios, { AxiosStatic } from 'axios';
+import axios from 'axios';
 
 let axiosInstance = axios;
 
-export function setAxiosInstance(instance: AxiosStatic) {
+export function setAxiosInstance(instance: any) {
   axiosInstance = instance;
 }
 

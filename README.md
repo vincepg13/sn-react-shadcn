@@ -28,6 +28,41 @@ To ensure Tailwind includes styles used in the component, add this to your globa
 ```
 ---
 
+## 🔑 Axios Setup (IMPORTANT)
+
+Any components which fetch data from a ServiceNow instance (such as tables) use a **shared Axios instance**.  You must configure Axios **in your app** to provide authentication. 
+
+*If you installed this package prior to Version 1.0.5 please update and make sure you include this step in the application that consumes it.* Otherwise you may notice an issue where ServiceNow asks for authentication details when using your app on the instance.
+
+Depending on your environment:
+
+- **Development mode:** you can set basic auth credentials (`username` and `password`) directly.
+- **Production mode:** you should set the `X-userToken` header after retrieving a session token.
+
+You must then call `setAxiosInstance` (provided by the package) to inject your configured Axios instance.
+
+✅ **Example Setup:**
+
+```tsx
+import axios from 'axios';
+import { setAxiosInstance } from 'sn-shadcn-kit';
+
+if (import.meta.env.MODE === 'development') {
+  axios.defaults.auth = {
+    username: import.meta.env.VITE_REACT_APP_USER,
+    password: import.meta.env.VITE_REACT_APP_PASSWORD,
+  };
+} else {
+  const response = await axios.get(import.meta.env.VITE_TOKEN_PATH);
+  axios.defaults.headers['X-userToken'] = response.data.result.sessionToken;
+}
+
+// Important: inject the configured instance into sn-shadcn-kit
+setAxiosInstance(axios);
+```
+---
+
+
 ## 🏓 Tables, Tables and More Tables
 When using either of the data tables, it will display each fields display value in the corresponding cell. If you want to take control of the UI, you can do this by passing in your own column definitions to the table. To find out more about column definitions in Tanstack visit the [Column Definition Guide](https://tanstack.com/table/v8/docs/guide/column-defs)
 
