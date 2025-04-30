@@ -1,9 +1,11 @@
 import { useEffect } from "react";
 import { getTableRows } from "../../../utils/table-api";
 import { getSortedQuery } from "../../../utils/table-helper";
-import axios from "axios"; // optional, only if you want to check for cancel
-import { SnRow } from "@/types/table-schema";
+import { SnRow } from "../../../types/table-schema";
 import { SortingState } from "@tanstack/react-table";
+import { getAxiosInstance } from "./../../../utils/axios-client";
+
+const axios = getAxiosInstance();
 
 export function useFetchRows({
   table,

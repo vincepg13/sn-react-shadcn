@@ -23,7 +23,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table'
+} from '../../components/ui/table'
 import { DataTablePagination } from './data-table-pagination'
 
 interface DataTableProps<TData, TValue> {
