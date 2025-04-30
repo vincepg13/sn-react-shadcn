@@ -1,3 +1,4 @@
+import { SnRow } from './table-schema';
 import { z } from 'zod'
 
 const _recordPickerItem = z.object({
@@ -5,6 +6,7 @@ const _recordPickerItem = z.object({
     value: z.string(),
     primary: z.string().optional(),
     secondary: z.string().optional(),
+    meta: z.custom<SnRow>().optional()
 })
 
 export const pickerList = z.record(_recordPickerItem)

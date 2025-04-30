@@ -9,7 +9,8 @@ export { SnRecordPicker } from './components/sn-form/sn-record-picker'
 //export { SmartForm } from './components/form'
 
 //Other Components
-//export { UserCard } from './components/user'
+export { default as SnAvatar } from './components/sn-user/sn-avatar'
+export { SnUserCard } from './components/sn-user/sn-user-card'
 //export { GroupCard } from './components/user'
 
 // Data Fetching

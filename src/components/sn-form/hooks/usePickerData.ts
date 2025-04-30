@@ -1,8 +1,8 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useEffect, useState } from 'react'
 import { getTableRows } from '../../../utils/table-api'
-import { SnRow } from '@/types/table-schema'
-import { SnRecordPickerItem as Record } from '@/types/form-schema'
+import { SnRow } from '../../../types/table-schema'
+import { SnRecordPickerItem as Record } from '../../../types/form-schema'
 import axios from 'axios'
 
 interface PickerOptions {
@@ -12,9 +12,10 @@ interface PickerOptions {
   searchTerm: string
   pageSize: number
   open: boolean
+  metaFields: string[]
 }
 
-export function usePickerData({ table, fields, query, searchTerm, pageSize, open }: PickerOptions) {
+export function usePickerData({ table, fields, query, searchTerm, pageSize, open, metaFields }: PickerOptions) {
   const [records, setRecords] = useState<Record[]>([])
   const [loading, setLoading] = useState(false)
   const [hasMore, setHasMore] = useState(true)
@@ -30,7 +31,7 @@ export function usePickerData({ table, fields, query, searchTerm, pageSize, open
     setLoading(true)
 
     let queryString = query
-    const apiFields = [...fields, 'sys_id']
+    let apiFields = [...fields, 'sys_id', ...metaFields]
 
     if (search) queryString += `^${fields[0]}LIKE${search}`
     if (!query.includes('ORDERBY')) queryString += `^ORDERBY${fields[0]}`
@@ -49,12 +50,13 @@ export function usePickerData({ table, fields, query, searchTerm, pageSize, open
       const rows: SnRow[] = res.data.result || []
       const mapped = rows.map((row): Record => {
         const record: Record = {
+          meta: row,
           value: row.sys_id.value,
           display_value: row[fields[0]]?.display_value || row[fields[0]]?.value,
         }
 
-        if (fields[1] !== 'sys_id') record.primary = row[fields[1]]?.display_value
-        if (fields[2] !== 'sys_id') record.secondary = row[fields[2]]?.display_value
+        if (fields[1]) record.primary = row[fields[1]]?.display_value
+        if (fields[2]) record.secondary = row[fields[2]]?.display_value
         return record
       })
 

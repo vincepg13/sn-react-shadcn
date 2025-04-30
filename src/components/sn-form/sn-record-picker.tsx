@@ -1,24 +1,42 @@
-import { cn } from '@/lib/utils'
+import { cn } from '../../lib/utils'
 import { Check, ChevronsUpDown, X, Loader2 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '../../components/ui/command'
+import { Button } from '../../components/ui/button'
+import { Popover, PopoverContent, PopoverTrigger } from '../../components/ui/popover'
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '../../components/ui/command'
 
 import { useRef, useState, UIEvent, MouseEvent } from 'react'
 import { useDebounce } from './hooks/useDebounce'
 import { usePickerData } from './hooks/usePickerData'
-import { SnRecordPickerItem as Record } from '@/types/form-schema'
+import { SnRecordPickerItem as Record } from '../../types/form-schema'
 
 interface RecordPickerProps {
   table: string
   fields: string[]
+  onChange: (record: Record | null) => void
+  metaFields?: string[]
   query?: string
   value?: Record | null
-  onChange: (record: Record | null) => void
   pageSize?: number
+  placeholder?: string
 }
 
-export function SnRecordPicker({ table, fields, query = '', value, onChange, pageSize = 20 }: RecordPickerProps) {
+export function SnRecordPicker({
+  table,
+  fields,
+  query = '',
+  value,
+  onChange,
+  metaFields = [],
+  pageSize = 20,
+  placeholder = '-- Select a Record --',
+}: RecordPickerProps) {
   const [open, setOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const debouncedSearchTerm = useDebounce(searchTerm, 300)
@@ -31,6 +49,7 @@ export function SnRecordPicker({ table, fields, query = '', value, onChange, pag
     searchTerm: debouncedSearchTerm,
     pageSize,
     open,
+    metaFields
   })
 
   function handleScroll(e: UIEvent<HTMLDivElement>) {
@@ -50,8 +69,14 @@ export function SnRecordPicker({ table, fields, query = '', value, onChange, pag
     <Popover open={open} onOpenChange={setOpen}>
       <div className="relative w-full">
         <PopoverTrigger asChild>
-          <Button variant="outline" role="combobox" aria-expanded={open} className="w-full justify-between pr-8">
-            <div className="flex-1 truncate text-left">{value ? value.display_value : 'Select a record...'}</div>
+          <Button
+            variant="outline"
+            role="combobox"
+            aria-expanded={open}
+            className="w-full min-w-[200px] justify-between pr-8"
+          >
+            {!value && <div className="flex-1 truncate text-center text-muted-foreground">{placeholder}</div>}
+            {value && <div className="flex-1 truncate text-left">{value ? value.display_value : placeholder}</div>}
             <ChevronsUpDown className="h-4 w-4 opacity-50 ml-2" />
           </Button>
         </PopoverTrigger>
@@ -64,7 +89,7 @@ export function SnRecordPicker({ table, fields, query = '', value, onChange, pag
         )}
       </div>
 
-      <PopoverContent className="w-[300px] p-0">
+      <PopoverContent className="w-full max-w-[500px] p-0">
         <Command shouldFilter={false}>
           <div className="relative">
             <CommandInput
@@ -91,7 +116,11 @@ export function SnRecordPicker({ table, fields, query = '', value, onChange, pag
                     setSearchTerm('')
                   }}
                 >
-                  {record.display_value}
+                  <div className="flex flex-col gap-1">
+                    {record.display_value}
+                    {record.primary && <span className="text-muted-foreground text-sm">{record.primary}</span>}
+                    {record.secondary && <span className="text-muted-foreground text-sm">{record.secondary}</span>}
+                  </div>
                   <Check className={cn('ml-auto', value?.value === record.value ? 'opacity-100' : 'opacity-0')} />
                 </CommandItem>
               ))}

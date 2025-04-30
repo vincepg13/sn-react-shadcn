@@ -1,7 +1,7 @@
 import { useEffect } from "react";
-import { getTableSchema } from "../../../utils/table-api"; // adjust your path
-import { getColumnViaFields } from "../columns"; // adjust your path
-import { SnRow, SnRowItem } from "@/types/table-schema";
+import { getTableSchema } from "../../../utils/table-api";
+import { getColumnViaFields } from "../columns";
+import { SnRow, SnRowItem } from "../../../types/table-schema";
 import { ColumnDef } from "@tanstack/react-table";
 
 export function useFetchSchema({

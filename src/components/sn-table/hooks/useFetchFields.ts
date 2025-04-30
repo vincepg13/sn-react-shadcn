@@ -50,8 +50,8 @@ export function useFetchFields({
         );
 
         setFields(snFields);
-        setFieldsTable(table); // ✅ Mark that these fields belong to this table
-        setError(""); // clear error if successful
+        setFieldsTable(table);
+        setError("");
       } catch (error: unknown) {
         if (axios.isAxiosError(error) && error.code !== "ERR_CANCELED") {
           setError("Failed to fetch table view");

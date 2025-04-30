@@ -83,10 +83,11 @@ const columns = [
   columnDefinitions={columns}
 />
 ```
+Below is an Example of what SnTable looks like with no UI modifications:
+![Shadcn Components Demo](https://raw.githubusercontent.com/vincepg13/sn-react-shadcn-demo/refs/heads/main/assets/SN%20Table%20Demo.png)
 
----
 
-## 🔧 Props
+### 🔧 Props
 
 ### `<SnDataTable />`
 
@@ -99,9 +100,6 @@ const columns = [
 | `onRowClick`       | `(row: SnRow) => void` (optional)    | Callback when a row is clicked           |
 | `columnDefinitions`| `ColumnDef<SnRow, SnRowItem>[]`      | Custom column definitions                |
 
----
-
-## 🧩 Also available
 
 ### `<SnTable />`
 
@@ -111,6 +109,62 @@ This has more or less the same properties as SnDataTable with the exception that
 - Display the last used view of the logged in user with any customisations to it
 - If they have no list view pref for that table, it will display the default view
 - You can pass in the view name of a specific view via the *view* property
+
+---
+
+## 👥 Interacting With User Data
+*SnAvatar* - Can be used to display a users avatar. This will be their photo as a thumbnail if supplied, else it will fall back to their initials
+```ts
+<SnAvatar name={name} image={image} className="size-12" />
+```
+
+*SnUserCard* - This will display the details of a given user
+| Prop           | Type               | Description                                    |
+|----------------|------------------- |------------------------------------------------|
+| `name`         | `string`           | User's name                                    |
+| `email`        | `string`           | User's email address                           |
+| `phone`        | `string` (optional)| User's contact number                          |
+| `image`        | `string` (optional)| User's avatar image                            |
+| `primaryInfo`  | `string` (optional)| Information shown under the user's name        |
+| `im`           | `string` (optional)| Instant messaging link to the user's contact   |
+
+below is an example of how to use SnRecordPicker (which allows you to fetch data from a ServiceNow table in a drop down) to select a user and display their details
+```ts
+import { useState } from "react";
+import { SnRecordPicker, SnRecordPickerItem, SnUserCard } from "sn-shadcn-kit";
+
+export default function ServicenowUI() {
+  const [selected, setSelected] = useState<SnRecordPickerItem | null>(null);
+
+  return (
+    <div className="">
+      <div className="max-w-[400px] flex flex-col gap-4">
+        <SnRecordPicker
+          table="sys_user"
+          fields={["name", "email"]}
+          metaFields={["title", "photo", "mobile_phone"]}
+          query="active=true^nameSTARTSWITHVince"
+          value={selected}
+          onChange={setSelected}
+          placeholder="Select a user to view their card..."
+        ></SnRecordPicker>
+        {selected?.meta && (
+          <SnUserCard
+            name={selected.meta!.name.display_value}
+            im={`https://teams.microsoft.com/l/chat/0/0?users=${selected.meta.email.value}`}
+            email={selected.meta.email.value}
+            phone={selected.meta.mobile_phone.value}
+            image={`/${selected.meta.photo.display_value}`}
+            primaryInfo={selected.meta.title.display_value}
+          ></SnUserCard>
+        )}
+      </div>
+    </div>
+  );
+}
+```
+
+![SnUserCardDemo](https://github.com/vincepg13/sn-react-shadcn-demo/blob/main/assets/SnUserCardDemo.png?raw=true)
 
 ---
 
