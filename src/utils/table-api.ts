@@ -1,15 +1,7 @@
 import { getAxiosInstance } from "./axios-client";
 import { SnRow, SnColSchemea, SnListPref, SnListView, SnListViewElement } from "../types/table-schema";
+import { SnApiResponse } from "../types/table-schema";
 
-type SnApiResponse<T = []> = {
-  status: number;
-  data: {
-    result: T;
-  };
-  headers: {
-    "x-total-count"?: string;
-  };
-};
 
 export function getViewPreference(
   table: string,
