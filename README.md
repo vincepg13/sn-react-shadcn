@@ -113,12 +113,14 @@ This has more or less the same properties as SnDataTable with the exception that
 ---
 
 ## 👥 Interacting With User Data
-*SnAvatar* - Can be used to display a users avatar. This will be their photo as a thumbnail if supplied, else it will fall back to their initials
+### `<SnAvatar />`
+Can be used to display a users avatar. This will show their photo as a thumbnail if supplied, else it will fall back to their initials
 ```ts
 <SnAvatar name={name} image={image} className="size-12" />
 ```
 
-*SnUserCard* - This will display the details of a given user
+### `<SnUserCard />`
+This will display the details of a given user
 | Prop           | Type               | Description                                    |
 |----------------|------------------- |------------------------------------------------|
 | `name`         | `string`           | User's name                                    |
@@ -127,6 +129,16 @@ This has more or less the same properties as SnDataTable with the exception that
 | `image`        | `string` (optional)| User's avatar image                            |
 | `primaryInfo`  | `string` (optional)| Information shown under the user's name        |
 | `im`           | `string` (optional)| Instant messaging link to the user's contact   |
+
+### `<SnGroupWrapper />` && `<SnGroupCard />`
+SnGroupWrapper is designed to be easily used by simply passing in a groups sys_id, page size and a callback to build the instant messaging link per user. This wrapper will then load all the metadata for a group and feed it into SnGroupCard. If you just want to quickly load a group, this wrapper is the easiest way. Alternatively if you are loading multiple groups or want any custom logic around the group metadata then use SnGroupCard directly and pass in all the necessary props instead.
+
+SnGroupWrapper props:
+| Prop           | Type                 | Description                                    |
+|----------------|--------------------- |------------------------------------------------|
+| `guid`         | `string`             | sys_id of a group record                       |
+| `pagesize`     | `number`             | Number of members to show per page             |
+| `getImLink`    | `callback` (optional)| Function to build each users IM link           |
 
 below is an example of how to use SnRecordPicker (which allows you to fetch data from a ServiceNow table in a drop down) to select a user and display their details
 ```ts
@@ -164,7 +176,7 @@ export default function ServicenowUI() {
 }
 ```
 
-![SnUserCardDemo](https://github.com/vincepg13/sn-react-shadcn-demo/blob/main/assets/SnUserCardDemo.png?raw=true)
+![SnUserCardDemo](https://github.com/vincepg13/sn-react-shadcn-demo/blob/main/assets/SnGroupUser%20Cards.png?raw=true)
 
 ---
 
@@ -174,6 +186,8 @@ This package exports helpful types for working with ServiceNow data:
 
 ```ts
 import type { SnRow, SnRowItem } from 'sn-shadcn-kit'
+import type { SnUser, SnGroup } from 'sn-shadcn-kit'
+import type { SnRecordPickerItem, SnRecordPickerList } from 'sn-shadcn-kit'
 ```
 
 SnRowItem corresponds to a fields value which is simply an object with both its value and display_value. SnRow is a record (array) of SnRowItems.

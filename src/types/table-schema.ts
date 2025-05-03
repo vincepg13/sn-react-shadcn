@@ -37,3 +37,13 @@ export type SnColSchemea = z.infer<typeof _snColSchema>
 export type SnListPref = z.infer<typeof _listPref>
 export type SnListView = z.infer<typeof _listView>
 export type SnListViewElement = z.infer<typeof _listViewElement>
+
+export type SnApiResponse<T = []> = {
+  status: number;
+  data: {
+    result: T;
+  };
+  headers: {
+    "x-total-count"?: string;
+  };
+};
