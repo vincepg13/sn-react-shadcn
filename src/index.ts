@@ -7,7 +7,7 @@ export { SnSimplePagination } from './components/sn-table/sn-simple-pagination'
 
 //Form Components
 export { SnRecordPicker } from './components/sn-form/sn-record-picker'
-//export { SmartForm } from './components/form'
+export { SnForm } from './components/sn-form/sn-form'
 
 //User Related Components
 export { default as SnAvatar } from './components/sn-user/sn-avatar'
