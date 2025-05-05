@@ -1,9 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { createContext, useContext } from "react";
-import { SnClientScript } from "../../../types/form-schema"; // assuming your script shape is typed
 
 interface ClientScriptContextValue {
-  clientScripts: SnClientScript[];
   runClientScriptsForFieldChange: (
     fieldName: string,
     oldValue: any,

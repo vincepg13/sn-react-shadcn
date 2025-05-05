@@ -1,22 +1,25 @@
-import { RHFField } from "../../../types/form-schema";
-import { Input } from "../../../components/ui/input";
-import { useFieldUI } from "../contexts/FieldUIContext";
+import { RHFField } from "../../../types/form-schema"
+import { Input } from "../../../components/ui/input"
+import { useFieldUI } from "../contexts/FieldUIContext"
 
 interface SnFieldInputProps {
-  rhfField: RHFField;
-  onChange: (val: string) => void;
+  rhfField: RHFField
+  onChange: (val: string) => void
+  onFocus: () => void
 }
 
-export function SnFieldInput({ rhfField, onChange }: SnFieldInputProps) {
-  const { readonly } = useFieldUI();
+export function SnFieldInput({ rhfField, onChange, onFocus }: SnFieldInputProps) {
+  const { readonly } = useFieldUI()
 
   return (
     <Input
       {...rhfField}
       value={String(rhfField.value ?? "")}
-      onChange={(e) => onChange(e.target.value)}
+      onChange={(e) => rhfField.onChange(e)} // RHF live updates
+      onFocus={onFocus}                      // Capture old value
+      onBlur={(e) => onChange(e.target.value)} // Trigger policy logic
       disabled={!!readonly}
       className="w-full"
     />
-  );
+  )
 }

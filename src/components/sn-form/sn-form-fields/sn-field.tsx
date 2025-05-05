@@ -1,22 +1,17 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-// import { SnFieldBoolean } from "./sn-field-boolean";
-// import { SnFieldChoice } from "./sn-field-choice";
-
-import React from 'react'
-// import isEqual from "lodash.isequal";
+import { ReactNode, useRef } from 'react'
 import { useFormContext } from 'react-hook-form'
 import { SnFieldSchema, RHFField, FieldUIState } from '../../../types/form-schema'
 import { SnFieldInput } from './sn-field-input'
 import { SnFieldTextarea } from './sn-field-textarea'
-import { SnFieldChoice } from './sn-field-select'
+import { SnFieldChoice } from './sn-field-choice'
 import { useClientScripts } from '../contexts/SnClientScriptContext'
+import { useUiPoliciesContext } from '../contexts/SnUiPolicyContext'
 import { createGFormBridge } from '../../../utils/form-client'
 import { FieldUIContext } from '../contexts/FieldUIContext'
-
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '../../ui/form'
 import { useEffectiveFieldState } from '../hooks/useFieldUiState'
 import { SnFieldCheckbox } from './sn-field-checkbox'
-import { SnFieldDate } from './sn-field-data'
+import { SnFieldDate } from './sn-field-date'
 
 interface SnFieldProps {
   field: SnFieldSchema
@@ -26,10 +21,13 @@ interface SnFieldProps {
   guid?: string
 }
 
+type SnFieldPrimitive = string | boolean | number
+
 function SnFieldComponent({ field, fieldUIState, updateFieldUI, guid, table }: SnFieldProps) {
-  const { control, getValues, setValue } = useFormContext()
+  const { control, getValues, setValue/*, watch */} = useFormContext()
   const { runClientScriptsForFieldChange } = useClientScripts()
-  const [hasInitialized, setHasInitialized] = React.useState(false)
+  const { runUiPoliciesForField } = useUiPoliciesContext()
+  const oldValueRef = useRef<SnFieldPrimitive>(field.value)
 
   const fieldUI = useEffectiveFieldState({
     field,
@@ -44,28 +42,34 @@ function SnFieldComponent({ field, fieldUIState, updateFieldUI, guid, table }: S
         name={field.name}
         control={control}
         render={({ field: rhfField }) => {
-          const handleChange = (newValue: string) => {
-            const oldValue = getValues()[field.name]
-            rhfField.onChange(newValue)
-
-            if (!hasInitialized) {
-              setHasInitialized(true)
-              return
-            }
-
-            if (newValue !== oldValue) {
-              const g_form = createGFormBridge(getValues, setValue, updateFieldUI, table, guid)
-              runClientScriptsForFieldChange(field.name, oldValue, newValue, false, g_form)
-            }
+          const handleFocus = () => {
+            //oldValueRef.current = getValues()[field.name]
           }
 
-          const input = renderFieldComponent(field, rhfField, handleChange)
+          const handleChange = (newValue: SnFieldPrimitive) => {
+            console.log("SN FIELD CHANGE", field.name, typeof newValue)
+            // if (oldValueRef.current === undefined) {
+            //   oldValueRef.current = getValues()[field.name]
+            // }
+            // const oldValue = oldValueRef.current
+            rhfField.onChange(newValue)
+
+            const g_form = createGFormBridge(getValues, setValue, updateFieldUI, table, guid)
+            runClientScriptsForFieldChange(field.name, oldValueRef.current, newValue, false, g_form)
+            runUiPoliciesForField(field.name)
+            oldValueRef.current = newValue
+          }
+
+          const input = renderFieldComponent(field, rhfField, handleChange, handleFocus)
           if (!input) return <></>
+
           return (
             <FormItem className="mb-4">
-              {field.type != 'boolean' && (
+              {field.type !== 'boolean' && (
                 <FormLabel>
-                  {field.label} {fieldUI.mandatory && <span>M!!</span>}
+                  <span>
+                    {field.label} {fieldUI.mandatory && <span className="text-red-500">*</span>}
+                  </span>
                 </FormLabel>
               )}
               <FormControl>{input}</FormControl>
@@ -81,14 +85,15 @@ function SnFieldComponent({ field, fieldUIState, updateFieldUI, guid, table }: S
 function renderFieldComponent(
   field: SnFieldSchema,
   rhfField: RHFField,
-  handleChange: (value: any) => void
-): React.ReactNode {
+  handleChange: (value: string | boolean) => void,
+  handleFocus: () => void
+): ReactNode {
   switch (field.type) {
     case 'string':
       if (field.max_length && field.max_length >= 200) {
-        return <SnFieldTextarea field={field} rhfField={rhfField} onChange={handleChange} />
+        return <SnFieldTextarea field={field} rhfField={rhfField} onChange={handleChange} onFocus={handleFocus} />
       }
-      return <SnFieldInput rhfField={rhfField} onChange={handleChange} />
+      return <SnFieldInput rhfField={rhfField} onChange={handleChange} onFocus={handleFocus} />
     case 'choice':
       return <SnFieldChoice field={field} rhfField={rhfField} onChange={handleChange} />
     case 'boolean':
@@ -97,13 +102,8 @@ function renderFieldComponent(
     case 'glide_date_time':
       return <SnFieldDate field={field} rhfField={rhfField} onChange={handleChange} />
     default:
-      // console.log(`Unsupported field type: ${field.type}`);
       return null
   }
 }
-
-// export const SnField = React.memo(SnFieldComponent, (prev, next) =>
-//   isEqual(prev.field, next.field)
-// );
 
 export const SnField = SnFieldComponent

@@ -2,8 +2,9 @@ import { SnFieldBaseProps } from '../../../types/form-schema';
 import { Checkbox } from '../../../components/ui/checkbox';
 import { useFieldUI } from '../contexts/FieldUIContext';
 
-export function SnFieldCheckbox({ field, rhfField, onChange }: SnFieldBaseProps<boolean>) {
+export function SnFieldCheckbox({ field, rhfField, onChange }: SnFieldBaseProps<string|boolean>) {
   const { readonly } = useFieldUI();
+  if (!field) return null;
 
   return (
     <div className="flex items-center space-x-2">

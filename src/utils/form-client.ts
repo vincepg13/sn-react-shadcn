@@ -6,6 +6,7 @@ import { toast } from 'sonner'
 
 export function mapFieldToZod(field: SnFieldSchema): ZodTypeAny {
   let base: ZodTypeAny
+  const allowEmpty = !field.mandatory
 
   switch (field.type) {
     case 'string':
@@ -13,28 +14,47 @@ export function mapFieldToZod(field: SnFieldSchema): ZodTypeAny {
       if (field.max_length && base instanceof z.ZodString) {
         base = base.max(field.max_length)
       }
+      if (!allowEmpty) {
+        base = (base as z.ZodString).min(1, '')
+      }
       break
+
     case 'choice':
       base = z.enum(field.choices!.map(c => c.value) as [string, ...string[]])
+      if (!allowEmpty) {
+        base = base.refine(val => val !== '', {
+          message: 'A selection is required',
+        })
+      }
       break
+
     case 'boolean':
-      base = z.boolean()
+      base = z
+        .union([z.boolean(), z.literal('true'), z.literal('false')])
+        .transform(val => val === true || val === 'true')
       break
+
     case 'glide_date':
-    case 'glide_date_time':
-      base = z.string().refine(val => /^\d{4}-\d{2}-\d{2}$/.test(val), {
-        message: 'Invalid date format',
-      })
+      base = z
+        .string()
+        .refine(val => (allowEmpty && val === '') || /^\d{4}-\d{2}-\d{2}$/.test(val), {
+          message: 'Invalid date format',
+        })
       break
+
+    case 'glide_date_time':
+      base = z
+        .string()
+        .refine(val => (allowEmpty && val === '') || /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(val), {
+          message: 'Invalid date format',
+        })
+      break
+
     default:
       base = z.any()
   }
 
-  if (field.type === 'string' && field.mandatory) {
-    base = z.string().min(1, ``)
-  }
-
-  return field.mandatory ? base : base.optional()
+  return allowEmpty ? base.optional() : base
 }
 
 export function getDefaultValue(field: SnFieldSchema) {

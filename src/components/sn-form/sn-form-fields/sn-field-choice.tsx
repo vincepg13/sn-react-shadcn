@@ -9,6 +9,7 @@ import {
 } from '../../ui/select';
 import { X } from 'lucide-react';
 import { SnFieldSchema, RHFField } from '../../../types/form-schema';
+import { useRef } from 'react';
 
 interface SnFieldChoiceProps {
   field: SnFieldSchema;
@@ -17,11 +18,21 @@ interface SnFieldChoiceProps {
 }
 
 export function SnFieldChoice({ field, rhfField, onChange }: SnFieldChoiceProps) {
+  const didMount = useRef(false)
+
+  const handleValueChange = (val: string) => {
+    if (!didMount.current) {
+      didMount.current = true
+      return // 🧼 suppress first call
+    }
+
+    onChange(val)
+  }
   return (
     <div className="relative w-full">
       <Select
         value={(rhfField.value ?? '') + ''}
-        onValueChange={onChange}
+        onValueChange={handleValueChange}
         disabled={field.readonly}
       >
         <SelectTrigger className="w-full">
