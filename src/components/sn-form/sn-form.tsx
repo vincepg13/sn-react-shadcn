@@ -83,9 +83,10 @@ export function SnForm({ table, guid }: SnFormProps) {
   useEffect(() => {
     if (!schema || !formFields || hasReset) return
   
-    const values = Object.fromEntries(
-      Object.entries(formFields).map(([name, field]) => [name, field.value ?? ''])
-    )
+    // const values = Object.fromEntries(
+    //   Object.entries(formFields).map(([name, field]) => [name, field.value ?? ''])
+    // )
+    const values = form.getValues()
   
     console.log("FORM RESET VALUES", values)
   
@@ -121,7 +122,7 @@ export function SnForm({ table, guid }: SnFormProps) {
   }, [table, guid])
 
   const onSubmit = (data: Record<string, any>) => {
-    console.log('Form submitted:', data)
+    console.log('Form submitted!:', data, actionRef.current)
     actionRef.current?.triggerPrimaryAction()
   }
 
@@ -147,7 +148,7 @@ export function SnForm({ table, guid }: SnFormProps) {
               <button type="submit" className="mt-4">
                 Submit
               </button>
-              <SnFormActions table={table} recordID={guid} uiActions={uiActions} formFields={formFields} />
+              <SnFormActions ref={actionRef} table={table} recordID={guid} uiActions={uiActions} formFields={formFields} />
             </form>
           </div>
         </FormProvider>
