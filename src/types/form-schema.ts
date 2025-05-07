@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import { SnRow } from './table-schema'
 import { ControllerRenderProps } from 'react-hook-form'
-import { getAllPredicates } from '@kit/utils/predicate-helper'
+import { getAllPredicates } from '@kit/types/predicate-definitions'
 
 const _formConfig = z.object({
   date_format: z.string(),
@@ -43,7 +43,7 @@ const _formField = z.object({
   mandatory: z.boolean(),
   visible: z.boolean(),
   readonly: z.boolean(),
-  type: z.enum(['string', 'choice', 'glide_date', 'glide_date_time', 'reference', 'boolean']),
+  type: z.string(),//z.enum(['string', 'choice', 'glide_date', 'glide_date_time', 'reference', 'boolean']),
   max_length: z.number().optional(),
   choice: z.number().optional(),
   choices: z

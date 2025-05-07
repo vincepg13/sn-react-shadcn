@@ -15,9 +15,9 @@ export function SnFieldInput({ rhfField, onChange, onFocus }: SnFieldInputProps)
     <Input
       {...rhfField}
       value={String(rhfField.value ?? "")}
-      onChange={(e) => rhfField.onChange(e)} // RHF live updates
-      onFocus={onFocus}                      // Capture old value
-      onBlur={(e) => onChange(e.target.value)} // Trigger policy logic
+      onChange={(e) => rhfField.onChange(e)}
+      onFocus={onFocus}
+      onBlur={(e) => onChange(e.target.value)}
       disabled={!!readonly}
       className="w-full"
     />

@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect } from 'react'
 import { SnClientScript, FieldUIState, SnFieldsSchema } from '@kit/types/form-schema'
 import { createGFormBridge } from '@kit/utils/form-client'
 import { getDefaultValue } from '@kit/utils/form-client'
@@ -9,16 +9,18 @@ export function useClientScripts({
   form,
   table,
   guid,
+  clientScripts,
   formFields,
   updateFieldUI,
 }: {
   form: any
   table: string
   guid: string
-  formFields: SnFieldsSchema | null
+  clientScripts: SnClientScript[]
+  formFields: SnFieldsSchema | null  
   updateFieldUI: (field: string, updates: Partial<FieldUIState>) => void
 }) {
-  const [clientScripts, setClientScripts] = useState<SnClientScript[]>([])
+  // const [clientScripts, setClientScripts] = useState<SnClientScript[]>([])
 
   const runClientScriptsForFieldChange = useCallback(
     (fieldName: string, oldValue: any, newValue: any, isLoading = false) => {
@@ -26,8 +28,6 @@ export function useClientScripts({
       const matchingScripts = clientScripts.filter(s => s.type === 'onChange' && s.fieldName === fieldName)
 
       for (const script of matchingScripts) {
-        console.log('Running client scripts for field change:', fieldName, script.name)
-
         try {
           const func = new Function(
             'control',
@@ -62,7 +62,6 @@ export function useClientScripts({
 
   return {
     clientScripts,
-    setClientScripts,
     runClientScriptsForFieldChange,
   }
 }

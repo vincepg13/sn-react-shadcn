@@ -1,69 +1,68 @@
 // hooks/useUiPolicies.ts
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { SnFormConfig, SnPolicy, SnPolicyCondition } from './../../../types/form-schema'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo } from 'react'
 import { FieldUIState, SnFieldsSchema } from '@kit/types/form-schema'
 import { evaluateAndApplyPolicy } from '../../../utils/form-policy'
 
 interface UseUiPoliciesOptions {
-  form: any
-  formFields: SnFieldsSchema | null
-  updateFieldUI: (field: string, updates: Partial<FieldUIState>) => void
-  formConfig: SnFormConfig | null
+form: any
+formFields: SnFieldsSchema | null
+uiPolicies: SnPolicy[]
+updateFieldUI: (field: string, updates: Partial<FieldUIState>) => void
+formConfig: SnFormConfig | null
 }
 
-export function useUiPolicies({ form, formFields, updateFieldUI, formConfig }: UseUiPoliciesOptions) {
-  const [uiPolicies, setUiPolicies] = useState<SnPolicy[]>([])
+export function useUiPolicies({ form, formFields, uiPolicies, updateFieldUI, formConfig }: UseUiPoliciesOptions) {
+// const [uiPolicies, setUiPolicies] = useState<SnPolicy[]>([])
 
-  const policyIndex = useMemo(() => {
-    const map = new Map<string, SnPolicy[]>()
+const policyIndex = useMemo(() => {
+  const map = new Map<string, SnPolicy[]>()
 
-    for (const policy of uiPolicies) {
-      const fields = new Set(policy.conditions.map((c: SnPolicyCondition) => c.field))
+  for (const policy of uiPolicies) {
+    const fields = new Set(policy.conditions.map((c: SnPolicyCondition) => c.field))
 
-      for (const field of fields) {
-        if (!map.has(field)) map.set(field, [])
-        map.get(field)!.push(policy)
-      }
+    for (const field of fields) {
+      if (!map.has(field)) map.set(field, [])
+      map.get(field)!.push(policy)
     }
-    return map
-  }, [uiPolicies])
+  }
+  return map
+}, [uiPolicies])
 
-  const runUiPolicies = useCallback(() => {
+const runUiPolicies = useCallback(() => {
+  if (!formConfig || !formFields) return
+
+  for (const policy of uiPolicies) {
+    if (policy.onload)
+      evaluateAndApplyPolicy(form, formFields, policy, updateFieldUI, formConfig)
+  }
+}, [uiPolicies, form, formFields, updateFieldUI, formConfig])
+
+const runUiPoliciesForField = useCallback(
+  (fieldName: string) => {
     if (!formConfig || !formFields) return
 
-    for (const policy of uiPolicies) {
-      if (policy.onload)
-        evaluateAndApplyPolicy(form, formFields, policy, updateFieldUI, formConfig)
+    const relatedPolicies = policyIndex.get(fieldName) || []
+    for (const policy of relatedPolicies) {
+      evaluateAndApplyPolicy(form, formFields, policy, updateFieldUI, formConfig)
     }
-  }, [uiPolicies, form, formFields, updateFieldUI, formConfig])
+  },
+  [policyIndex, form, formFields, updateFieldUI, formConfig]
+)
 
-  const runUiPoliciesForField = useCallback(
-    (fieldName: string) => {
-      if (!formConfig || !formFields) return
+useEffect(() => {
+  if (!formFields || uiPolicies.length === 0) return
 
-      console.log('Running UI policies for field:', fieldName)
-      const relatedPolicies = policyIndex.get(fieldName) || []
-      for (const policy of relatedPolicies) {
-        evaluateAndApplyPolicy(form, formFields, policy, updateFieldUI, formConfig)
-      }
-    },
-    [policyIndex, form, formFields, updateFieldUI, formConfig]
-  )
+  const values = form.getValues()
+  const hasAnyValue = Object.values(values).some(v => v !== undefined && v !== null)
 
-  useEffect(() => {
-    if (!formFields || uiPolicies.length === 0) return
+  if (hasAnyValue) runUiPolicies()
+}, [form, formFields, runUiPolicies, uiPolicies])
 
-    const values = form.getValues()
-    const hasAnyValue = Object.values(values).some(v => v !== undefined && v !== null)
-
-    if (hasAnyValue) runUiPolicies()
-  }, [form, formFields, runUiPolicies, uiPolicies])
-
-  return {
-    uiPolicies,
-    setUiPolicies,
-    runUiPolicies,
-    runUiPoliciesForField,
-  }
+return {
+  uiPolicies,
+  runUiPolicies,
+  runUiPoliciesForField,
+}
 }

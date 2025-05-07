@@ -12,6 +12,7 @@ import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '../../
 import { useEffectiveFieldState } from '../hooks/useFieldUiState'
 import { SnFieldCheckbox } from './sn-field-checkbox'
 import { SnFieldDate } from './sn-field-date'
+import { SnFieldNumeric } from './SnFieldNumeric'
 
 interface SnFieldProps {
   field: SnFieldSchema
@@ -24,7 +25,7 @@ interface SnFieldProps {
 type SnFieldPrimitive = string | boolean | number
 
 function SnFieldComponent({ field, fieldUIState, updateFieldUI, guid, table }: SnFieldProps) {
-  const { control, getValues, setValue/*, watch */} = useFormContext()
+  const { control, getValues, setValue /*, watch */ } = useFormContext()
   const { runClientScriptsForFieldChange } = useClientScripts()
   const { runUiPoliciesForField } = useUiPoliciesContext()
   const oldValueRef = useRef<SnFieldPrimitive>(field.value)
@@ -47,7 +48,7 @@ function SnFieldComponent({ field, fieldUIState, updateFieldUI, guid, table }: S
           }
 
           const handleChange = (newValue: SnFieldPrimitive) => {
-            console.log("SN FIELD CHANGE", field.name, typeof newValue)
+            // console.log('SN FIELD CHANGE', field.name, newValue)
             // if (oldValueRef.current === undefined) {
             //   oldValueRef.current = getValues()[field.name]
             // }
@@ -85,7 +86,7 @@ function SnFieldComponent({ field, fieldUIState, updateFieldUI, guid, table }: S
 function renderFieldComponent(
   field: SnFieldSchema,
   rhfField: RHFField,
-  handleChange: (value: string | boolean) => void,
+  handleChange: (value: string | number | boolean) => void,
   handleFocus: () => void
 ): ReactNode {
   switch (field.type) {
@@ -101,6 +102,19 @@ function renderFieldComponent(
     case 'glide_date':
     case 'glide_date_time':
       return <SnFieldDate field={field} rhfField={rhfField} onChange={handleChange} />
+    case 'integer':
+    case 'float':
+    case 'decimal':
+      return (
+        <SnFieldNumeric
+          value={rhfField.value as number}
+          onValueChange={(value) => handleChange(value ?? '')}
+          onFocus={handleFocus}
+          thousandSeparator=","
+          decimalScale={field.type === 'float' || field.type === 'decimal' ? 2 : 0}
+          fixedDecimalScale={field.type === 'decimal'}
+        />
+      )
     default:
       return null
   }

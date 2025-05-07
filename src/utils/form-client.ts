@@ -1,61 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { z, ZodTypeAny } from 'zod'
 import { FieldUIState, SnFieldSchema, SnFieldsSchema } from '../types/form-schema'
 import { postFormAction } from './form-api'
 import { toast } from 'sonner'
-
-export function mapFieldToZod(field: SnFieldSchema): ZodTypeAny {
-  let base: ZodTypeAny
-  const allowEmpty = !field.mandatory
-
-  switch (field.type) {
-    case 'string':
-      base = z.string()
-      if (field.max_length && base instanceof z.ZodString) {
-        base = base.max(field.max_length)
-      }
-      if (!allowEmpty) {
-        base = (base as z.ZodString).min(1, '')
-      }
-      break
-
-    case 'choice':
-      base = z.enum(field.choices!.map(c => c.value) as [string, ...string[]])
-      if (!allowEmpty) {
-        base = base.refine(val => val !== '', {
-          message: 'A selection is required',
-        })
-      }
-      break
-
-    case 'boolean':
-      base = z
-        .union([z.boolean(), z.literal('true'), z.literal('false')])
-        .transform(val => val === true || val === 'true')
-      break
-
-    case 'glide_date':
-      base = z
-        .string()
-        .refine(val => (allowEmpty && val === '') || /^\d{4}-\d{2}-\d{2}$/.test(val), {
-          message: 'Invalid date format',
-        })
-      break
-
-    case 'glide_date_time':
-      base = z
-        .string()
-        .refine(val => (allowEmpty && val === '') || /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(val), {
-          message: 'Invalid date format',
-        })
-      break
-
-    default:
-      base = z.any()
-  }
-
-  return allowEmpty ? base.optional() : base
-}
 
 export function getDefaultValue(field: SnFieldSchema) {
   if (field.value !== undefined && field.value !== null) return field.value
@@ -99,15 +45,17 @@ export function createGFormBridge(
 }
 
 export function buildSubmissionPayload(formFields: SnFieldsSchema, values: Record<string, any>): Record<string, any> {
-  return Object.fromEntries(
+  const payload = Object.fromEntries(
     Object.entries(formFields).map(([name, field]) => [
       name,
       {
         ...field,
-        value: values[name],
+        value: String(values[name] || ''),
       },
     ])
   )
+
+  return payload
 }
 
 export async function triggerNativeUIAction({
