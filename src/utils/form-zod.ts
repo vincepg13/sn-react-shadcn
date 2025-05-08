@@ -16,6 +16,16 @@ export function mapFieldToZod(field: SnFieldSchema): ZodTypeAny {
       }
       break
 
+    case 'glide_list':
+    case 'reference':
+      base = z.string()
+      if (!allowEmpty) {
+        base = (base as z.ZodString).refine(val => val !== '', {
+          message: 'A selection is required',
+        })
+      }
+      break
+
     case 'choice':
       base = z.enum(field.choices!.map(c => c.value) as [string, ...string[]])
       if (!allowEmpty) {

@@ -13,16 +13,17 @@ import { useEffectiveFieldState } from '../hooks/useFieldUiState'
 import { SnFieldCheckbox } from './sn-field-checkbox'
 import { SnFieldDate } from './sn-field-date'
 import { SnFieldNumeric } from './SnFieldNumeric'
+import { SnFieldReference } from './sn-field-reference'
 
 interface SnFieldProps {
   field: SnFieldSchema
   fieldUIState: Record<string, FieldUIState>
   updateFieldUI: (field: string, updates: Partial<FieldUIState>) => void
-  table?: string
-  guid?: string
+  table: string
+  guid: string
 }
 
-type SnFieldPrimitive = string | boolean | number
+type SnFieldPrimitive = string | string[] | boolean | number
 
 function SnFieldComponent({ field, fieldUIState, updateFieldUI, guid, table }: SnFieldProps) {
   const { control, getValues, setValue /*, watch */ } = useFormContext()
@@ -61,7 +62,7 @@ function SnFieldComponent({ field, fieldUIState, updateFieldUI, guid, table }: S
             oldValueRef.current = newValue
           }
 
-          const input = renderFieldComponent(field, rhfField, handleChange, handleFocus)
+          const input = renderFieldComponent(table, guid, field, rhfField, handleChange, handleFocus, getValues())
           if (!input) return <></>
 
           return (
@@ -84,10 +85,13 @@ function SnFieldComponent({ field, fieldUIState, updateFieldUI, guid, table }: S
 }
 
 function renderFieldComponent(
+  table: string,
+  guid: string,
   field: SnFieldSchema,
   rhfField: RHFField,
-  handleChange: (value: string | number | boolean) => void,
-  handleFocus: () => void
+  handleChange: (value: string | string[] | number | boolean) => void,
+  handleFocus: () => void,
+  formValues: Record<string, string>
 ): ReactNode {
   switch (field.type) {
     case 'string':
@@ -99,6 +103,9 @@ function renderFieldComponent(
       return <SnFieldChoice field={field} rhfField={rhfField} onChange={handleChange} />
     case 'boolean':
       return <SnFieldCheckbox field={field} rhfField={rhfField} onChange={handleChange} />
+    case 'reference':
+    case 'glide_list':
+      return <SnFieldReference field={field} table={table} recordSysId={guid} formValues={formValues} onChange={handleChange}/>
     case 'glide_date':
     case 'glide_date_time':
       return <SnFieldDate field={field} rhfField={rhfField} onChange={handleChange} />

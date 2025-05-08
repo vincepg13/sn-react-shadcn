@@ -35,6 +35,20 @@ const _clientScript = z.object({
   sys_id: z.string(),
 })
 
+const _ed = z.object({
+  reference: z.string(),
+  qualifier: z.string(),
+  dependent_field: z.string().optional(),
+  defaultOperator: z.string().optional(), 
+  searchField: z.string().optional(),
+  attributes: z.object({
+    ref_ac_columns: z.string().optional(),
+    ref_ac_order_by: z.string().optional(),
+    ref_ac_table: z.string().optional(),
+    ref_ac_display_value: z.string().optional(),
+  }),
+})
+
 const _formField = z.object({
   name: z.string(),
   label: z.string(),
@@ -46,6 +60,7 @@ const _formField = z.object({
   type: z.string(),//z.enum(['string', 'choice', 'glide_date', 'glide_date_time', 'reference', 'boolean']),
   max_length: z.number().optional(),
   choice: z.number().optional(),
+  ed: _ed.optional(),
   choices: z
     .array(
       z.object({
@@ -93,6 +108,7 @@ export type SnPolicy = z.infer<typeof _policy>
 export type SnFieldsSchema = Record<string, SnFieldSchema>
 export type SnRecordPickerItem = z.infer<typeof _recordPickerItem>
 export type SnRecordPickerList = SnRecordPickerItem[]
+export type SnRefFieldEd = z.infer<typeof _ed>
 
 export type SnFormConfig = z.infer<typeof _formConfig>
 export type FormData = Record<string, string | boolean | number | null>
