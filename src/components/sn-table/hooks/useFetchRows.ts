@@ -50,7 +50,6 @@ export function useFetchRows({
         setPageCount(Math.ceil(total / pageSize));
       } catch (error) {
         if (axios.isCancel(error)) {
-          console.warn("ROWS FETCH ABORTED");
           return;
         }
         console.error("Failed to fetch table rows:", error);
