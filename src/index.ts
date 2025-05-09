@@ -1,3 +1,6 @@
+// General UI Components
+export { SnTabs } from './components/sn-ui/sn-tabs'
+
 // Table Components
 export { default as SnDataTable } from './components/sn-table/sn-data-table'
 export { default as SnTable } from './components/sn-table/sn-table'
@@ -7,7 +10,8 @@ export { SnSimplePagination } from './components/sn-table/sn-simple-pagination'
 
 //Form Components
 export { SnRecordPicker } from './components/sn-form/sn-record-picker'
-//export { SmartForm } from './components/form'
+export { SnForm } from './components/sn-form/sn-form'
+export { SnFormWrapper } from './components/sn-form/sn-form-wrapper'
 
 //User Related Components
 export { default as SnAvatar } from './components/sn-user/sn-avatar'
@@ -16,7 +20,7 @@ export { SnGroupCard } from './components/sn-user/sn-group-card'
 export { SnGroupWrapper } from './components/sn-user/sn-group-wrapper'
 
 // Data Fetching
-export { setAxiosInstance } from './utils/axios-client'
+export { getAxiosInstance, setAxiosInstance } from './utils/axios-client'
 
 // Types
 export type { SnUser, SnGroup } from './types/user-schema'

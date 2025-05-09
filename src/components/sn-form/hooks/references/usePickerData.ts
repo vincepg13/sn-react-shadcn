@@ -1,9 +1,10 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useEffect, useState } from 'react'
-import { getTableRows } from '../../../utils/table-api'
-import { SnRow } from '../../../types/table-schema'
-import { SnRecordPickerItem as Record } from '../../../types/form-schema'
+import { getTableRows } from '../../../../utils/table-api'
+import { SnRow } from '../../../../types/table-schema'
+import { SnRecordPickerItem as Record } from '../../../../types/form-schema'
 import axios from 'axios'
+// import { getRefData } from '@kit/utils/form-api'
 
 interface PickerOptions {
   table: string

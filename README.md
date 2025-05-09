@@ -111,7 +111,79 @@ This has more or less the same properties as SnDataTable with the exception that
 - You can pass in the view name of a specific view via the *view* property
 
 ---
+## ServiceNow Forms
+If your'e familiar with the ServicePortal you know ServiceNow provide a method in the GlideScriptable API ($sp.getForm) that can return you the entire metadata for any given form. The below components is a very pre alpha version of how you can consume that metadata and recreate a ServiceNow form with the same layout as well as UI policies, Client Scripts and UI actions.
 
+Since we have no access to any gForm object, it does mean remapping everything into logic that react can understand which will be very time consuming. However, it does work. To use the form you must provide it with all necessary metadata, I do this by a scripted API call in the global scope to the api method mentioned above. Below is the code I run in that endpoint:
+
+```js
+(function process( /*RESTAPIRequest*/ request, /*RESTAPIResponse*/ response) {
+    const table = request.pathParams.table;
+    const guid = request.pathParams.id;
+
+    if (!table || !guid) {
+        return sendError("400", "Table and id must be provided");
+    }
+
+	const formData = new global.GlideSPScriptable().getForm(table, guid);
+	const fields = formData._fields;
+
+	for (f in fields) {
+		var field = fields[f];
+
+		if (field.type === "glide_date") {
+			if (field.value) {
+				var gd = new GlideDate();
+				gd.setDisplayValue(field.value);
+				field.value = gd.getValue();
+			}
+		}
+
+		if (field.type === "glide_date_time") {
+			if (field.value) {
+				var gdt = new GlideDateTime();
+				gdt.setDisplayValue(field.value);
+				field.value = gdt.getValue();
+			}
+		}
+	}
+
+	formData.react_config = {
+		date_format: gs.getSession().getUser().getDateFormat()
+	};
+
+	response.setStatus(200);
+	response.setBody(formData);
+
+    function sendError(code, msg) {
+       var error = new sn_ws_err.ServiceError();
+       error.setStatus(code);
+       error.setMessage(msg);
+       return error;
+   }
+
+})(request, response);
+```
+
+With the metadata available you can now make use of the components.
+
+### `<SnFormWrapper />` && `<SnForm />`
+Load a form using SnFormWrapper by giving it the api path to a scripted rest message above, the table name to load, and a guid (sysid)
+
+SnFormWrapper props:
+| Prop           | Type                 | Description                                    |
+|----------------|--------------------- |------------------------------------------------|
+| `guid`         | `string`             | sys_id of a record                             |
+| `table`        | `string`             | Table name the record belongs to               |
+| `api`          | `string`             | Resource path to metadata api                  |
+
+This component will then consume the metadata from the api response and pass it to *<SnForm />* to build the form
+
+![SnFormDemo](/demo/SNDemoForm.png)
+![SnFormRefs](/demo/SNDemoFormRefs.png)
+![SnFormDates](/demo/SNDemoFormDates.png)
+
+---
 ## 👥 Interacting With User Data
 ### `<SnAvatar />`
 Can be used to display a users avatar. This will show their photo as a thumbnail if supplied, else it will fall back to their initials
