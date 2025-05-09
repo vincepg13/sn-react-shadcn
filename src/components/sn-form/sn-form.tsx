@@ -1,17 +1,18 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useForm, FormProvider, FieldErrors } from 'react-hook-form'
 import { z, ZodTypeAny } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { SnField } from './sn-form-fields/sn-field'
 import { Toaster } from '../../components/ui/sonner'
-import { SnFormActions } from './sn-form-layout/sn-form-actions'
-import { SnClientScriptContext } from './contexts/SnClientScriptContext'
-import { SnUiPolicyContext } from './contexts/SnUiPolicyContext'
 import { mapFieldToZod } from '@kit/utils/form-zod'
-import { useClientScripts } from './hooks/useClientScripts'
 import { useUiPolicies } from './hooks/useUiPolicies'
-import { SnFormLayout, SnSection } from './sn-form-layout/sn-form-layout'
+import { createGFormBridge } from '@kit/utils/form-client'
+import { useClientScripts } from './hooks/useClientScripts'
+import { SnFormLayout } from './sn-form-layout/sn-form-layout'
+import { SnFormActions } from './sn-form-layout/sn-form-actions'
+import { SnUiPolicyContext } from './contexts/SnUiPolicyContext'
+import { useForm, FormProvider, FieldErrors } from 'react-hook-form'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { SnClientScriptContext } from './contexts/SnClientScriptContext'
 
 import {
   FieldUIState,
@@ -19,9 +20,9 @@ import {
   SnFieldsSchema,
   SnFormConfig,
   SnPolicy,
+  SnSection,
   SnUiAction,
 } from '@kit/types/form-schema'
-import { createGFormBridge } from '@kit/utils/form-client'
 
 interface SnFormProps {
   table: string
@@ -83,21 +84,14 @@ export function SnForm({
   })
 
   const gForm = useMemo(() => {
-    return createGFormBridge(
-      form.getValues,
-      form.setValue,
-      updateFieldUI,
-      fieldChangeHandlersRef,
-      table,
-      guid,
-    );
-  }, [form, guid, table, updateFieldUI]);
+    return createGFormBridge(form.getValues, form.setValue, updateFieldUI, fieldChangeHandlersRef, table, guid)
+  }, [form, guid, table, updateFieldUI])
 
   const { runClientScriptsForFieldChange } = useClientScripts({
     form,
     clientScripts: clientScripts || [],
     formFields,
-    gForm
+    gForm,
   })
 
   const { runUiPolicies, runUiPoliciesForField } = useUiPolicies({
@@ -111,8 +105,6 @@ export function SnForm({
   useEffect(() => {
     if (!schema || !formFields || hasReset) return
     const values = form.getValues()
-
-    console.log("FORM RESET", values)
 
     form.reset(values, {
       keepErrors: true,
@@ -136,14 +128,14 @@ export function SnForm({
       value={{
         runClientScriptsForFieldChange,
         fieldChangeHandlers: fieldChangeHandlersRef.current,
-        gForm
+        gForm,
       }}
     >
       <SnUiPolicyContext.Provider value={{ formConfig, runUiPolicies, runUiPoliciesForField }}>
         <FormProvider {...form}>
           <Toaster position="top-center" expand={true} richColors />
           <div className="w-full px-4">
-            <form className="w-full max-w-4xl mx-auto space-y-6">
+            <form className="w-full">
               <SnFormLayout
                 sections={sections}
                 overrideTab={overrideTab}

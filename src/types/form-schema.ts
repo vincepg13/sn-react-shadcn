@@ -39,7 +39,7 @@ const _ed = z.object({
   reference: z.string(),
   qualifier: z.string(),
   dependent_field: z.string().optional(),
-  defaultOperator: z.string().optional(), 
+  defaultOperator: z.string().optional(),
   searchField: z.string().optional(),
   attributes: z.object({
     ref_ac_columns: z.string().optional(),
@@ -59,7 +59,7 @@ const _formField = z.object({
   readonly: z.boolean(),
   sys_readonly: z.boolean().optional(),
   sys_mandatory: z.boolean().optional(),
-  type: z.string(),//z.enum(['string', 'choice', 'glide_date', 'glide_date_time', 'reference', 'boolean']),
+  type: z.string(), //z.enum(['string', 'choice', 'glide_date', 'glide_date_time', 'reference', 'boolean']),
   max_length: z.number().optional(),
   choice: z.number().optional(),
   ed: _ed.optional(),
@@ -121,8 +121,20 @@ export type FieldUIState = {
   readonly: boolean
 }
 
+export type SnFieldPrimitive = string | string[] | boolean | number
+
 export interface SnFieldBaseProps<T> {
   rhfField: RHFField
   onChange: (val: T) => void
   field?: SnFieldSchema
+}
+
+export type SnSectionField = { name: string; type: string }
+export type SnSectionColumn = { fields: SnSectionField[] }
+export type SnSection = {
+  id: string
+  captionDisplay?: string
+  _parent?: string
+  _bootstrap_cells: number
+  columns: SnSectionColumn[]
 }

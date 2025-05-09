@@ -1,25 +1,15 @@
-import { SnTabs } from '../../sn-ui/sn-tabs';
-import { SnFormSection } from './sn-form-section';
-import { ReactNode, useEffect, useMemo } from 'react';
-
-type Field = { name: string; type: string };
-type Column = { fields: Field[] };
-
-export type SnSection = {
-  id: string;
-  captionDisplay?: string;
-  _parent?: string;
-  _bootstrap_cells: number;
-  columns: Column[];
-};
+import { SnTabs } from '../../sn-ui/sn-tabs'
+import { SnFormSection } from './sn-form-section'
+import { ReactNode, useEffect, useMemo } from 'react'
+import { SnSection } from '../../../types/form-schema'
 
 type SnFormLayoutProps = {
-  sections: SnSection[];
-  renderField: (name: string) => ReactNode;
-  onFieldTabMap?: (map: Record<string, string>) => void;
-  overrideTab?: string;
-  clearOverrideTab?: () => void;
-};
+  sections: SnSection[]
+  renderField: (name: string) => ReactNode
+  onFieldTabMap?: (map: Record<string, string>) => void
+  overrideTab?: string
+  clearOverrideTab?: () => void
+}
 
 export function SnFormLayout({
   sections,
@@ -29,51 +19,51 @@ export function SnFormLayout({
   clearOverrideTab,
 }: SnFormLayoutProps) {
   const { nestedMap, topLevelSections } = useMemo(() => {
-    const map = new Map<string, SnSection[]>();
-    const topLevel: SnSection[] = [];
+    const map = new Map<string, SnSection[]>()
+    const topLevel: SnSection[] = []
 
     for (const section of sections) {
       if (section._parent) {
-        if (!map.has(section._parent)) map.set(section._parent, []);
-        map.get(section._parent)!.push(section);
+        if (!map.has(section._parent)) map.set(section._parent, [])
+        map.get(section._parent)!.push(section)
       } else if (section.captionDisplay) {
-        topLevel.push(section);
+        topLevel.push(section)
       }
     }
 
-    return { nestedMap: map, topLevelSections: topLevel };
-  }, [sections]);
+    return { nestedMap: map, topLevelSections: topLevel }
+  }, [sections])
 
-  const primarySection = topLevelSections[0];
-  const tabSections = topLevelSections.slice(1);
+  const primarySection = topLevelSections[0]
+  const tabSections = topLevelSections.slice(1)
 
   const fieldToTab = useMemo(() => {
-    const map: Record<string, string> = {};
+    const map: Record<string, string> = {}
     const collectFields = (sect: SnSection, tabKey: string) => {
       for (const column of sect.columns) {
         for (const field of column.fields) {
-          map[field.name] = tabKey;
+          map[field.name] = tabKey
         }
       }
-    };
+    }
 
     tabSections.forEach(section => {
-      const tabKey = section.id;
-      const children = nestedMap.get(section.id) ?? [];
-      collectFields(section, tabKey);
-      children.forEach(child => collectFields(child, tabKey));
-    });
+      const tabKey = section.id
+      const children = nestedMap.get(section.id) ?? []
+      collectFields(section, tabKey)
+      children.forEach(child => collectFields(child, tabKey))
+    })
 
-    return map;
-  }, [tabSections, nestedMap]);
+    return map
+  }, [tabSections, nestedMap])
 
   useEffect(() => {
-    onFieldTabMap?.(fieldToTab);
-  }, [fieldToTab, onFieldTabMap]);
+    onFieldTabMap?.(fieldToTab)
+  }, [fieldToTab, onFieldTabMap])
 
   const tabs = tabSections.map(section => {
-    const tabKey = section.id;
-    const children = nestedMap.get(section.id) ?? [];
+    const tabKey = section.id
+    const children = nestedMap.get(section.id) ?? []
 
     return {
       key: tabKey,
@@ -95,8 +85,8 @@ export function SnFormLayout({
           ))}
         </div>
       ),
-    };
-  });
+    }
+  })
 
   return (
     <div className="space-y-8">
@@ -113,10 +103,10 @@ export function SnFormLayout({
           tabs={tabs}
           value={overrideTab}
           onValueChange={() => {
-            clearOverrideTab?.();
+            clearOverrideTab?.()
           }}
         />
       )}
     </div>
-  );
+  )
 }

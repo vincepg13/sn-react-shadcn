@@ -54,7 +54,7 @@ export function useClientScripts({
     [gForm]
   );
 
-  //Ecute client script for field change
+  //Execute client script for field change
   const runClientScriptsForFieldChange = useCallback(
     (fieldName: string, oldValue: any, newValue: any, isLoading = false) => {
       const matchingScripts = clientScripts.filter(

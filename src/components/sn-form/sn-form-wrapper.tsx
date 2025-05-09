@@ -1,10 +1,10 @@
-import { SnUiAction, SnFieldsSchema, SnFormConfig, SnClientScript, SnPolicy } from '@kit/types/form-schema'
-import { getFormData } from '@kit/utils/form-api'
-import { useEffect, useState } from 'react'
 import { SnForm } from './sn-form'
-import { Alert, AlertDescription, AlertTitle } from '../ui/alert'
+import { useEffect, useState } from 'react'
 import { AlertCircle } from 'lucide-react'
-import { SnSection } from './sn-form-layout/sn-form-layout'
+import { getFormData } from '@kit/utils/form-api'
+import { SnSection } from '@kit/types/form-schema'
+import { Alert, AlertDescription, AlertTitle } from '../ui/alert'
+import { SnUiAction, SnFieldsSchema, SnFormConfig, SnClientScript, SnPolicy } from '@kit/types/form-schema'
 
 interface SnFormProps {
   table: string

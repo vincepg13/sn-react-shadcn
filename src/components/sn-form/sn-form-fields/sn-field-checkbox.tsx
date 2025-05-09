@@ -7,7 +7,7 @@ export function SnFieldCheckbox({ field, rhfField, onChange }: SnFieldBaseProps<
   if (!field) return null;
 
   return (
-    <div className="flex items-center space-x-2">
+    <div className="flex items-center space-x-2 min-h-[60px]">
       <Checkbox
         id={field.name}
         checked={rhfField.value === true || rhfField.value === 'true'}

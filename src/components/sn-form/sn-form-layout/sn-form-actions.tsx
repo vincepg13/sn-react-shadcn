@@ -31,7 +31,6 @@ export function SnFormActions({
       setIsLoading(action.sys_id)
 
       const values = getValues()
-      console.log("FORM POSTING", values)
       const payload = buildSubmissionPayload(formFields, values)
 
       await triggerNativeUIAction({

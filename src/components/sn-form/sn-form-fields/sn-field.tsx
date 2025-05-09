@@ -1,18 +1,18 @@
-import { ReactNode, useRef, useCallback } from 'react'
 import { useFormContext } from 'react-hook-form'
-import { SnFieldSchema, RHFField, FieldUIState } from '../../../types/form-schema'
+import { SnFieldDate } from './sn-field-date'
 import { SnFieldInput } from './sn-field-input'
-import { SnFieldTextarea } from './sn-field-textarea'
 import { SnFieldChoice } from './sn-field-choice'
+import { SnFieldNumeric } from './SnFieldNumeric'
+import { SnFieldTextarea } from './sn-field-textarea'
+import { SnFieldCheckbox } from './sn-field-checkbox'
+import { ReactNode, useRef, useCallback } from 'react'
+import { SnFieldReference } from './sn-field-reference'
+import { FieldUIContext } from '../contexts/FieldUIContext'
+import { useEffectiveFieldState } from '../hooks/useFieldUiState'
 import { useClientScripts } from '../contexts/SnClientScriptContext'
 import { useUiPoliciesContext } from '../contexts/SnUiPolicyContext'
-import { FieldUIContext } from '../contexts/FieldUIContext'
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '../../ui/form'
-import { useEffectiveFieldState } from '../hooks/useFieldUiState'
-import { SnFieldCheckbox } from './sn-field-checkbox'
-import { SnFieldDate } from './sn-field-date'
-import { SnFieldNumeric } from './SnFieldNumeric'
-import { SnFieldReference } from './sn-field-reference'
+import { SnFieldSchema, RHFField, FieldUIState, SnFieldPrimitive } from '../../../types/form-schema'
 
 interface SnFieldProps {
   field: SnFieldSchema
@@ -21,8 +21,6 @@ interface SnFieldProps {
   table: string
   guid: string
 }
-
-type SnFieldPrimitive = string | string[] | boolean | number
 
 function SnFieldComponent({ field, fieldUIState, guid, table }: SnFieldProps) {
   const { control, getValues, setValue } = useFormContext()
