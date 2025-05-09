@@ -31,25 +31,6 @@ export function usePickerData({ table, fields, query, searchTerm, pageSize, open
   async function fetchRecords(pageNumber: number, search: string, reset = false) {
     setLoading(true)
 
-    // try {
-    //   console.log("ATTEMPTING TEST FETCH");
-
-    //   const results = await getRefData({
-    //     table: 'sys_user',
-    //     targetTable: 'x_bskyb_fn_clb',
-    //     targetField: 'company',
-    //     targetSysId: '216b1ea1c39f9a101f9c384c05013153',
-    //     searchTerm: 'u_descriptionSTARTSWITH^u_descriptionISNOTEMPTY^NQu_company_codeSTARTSWITH^u_company_codeISNOTEMPTY',
-    //     qualifier: 'javascript:new FinanceFdUtils().getGcCompany(current.getValue("territory"))',
-    //     requiredFields: ['u_description', 'u_company_code'],
-    //     recordValues: { "country": "8138b7111b21100763d91eebc0713f1" }
-    //   });
-
-    //   console.log("TEST FETCH RESULTS", results);
-    // } catch (error) {
-    //   console.error("Error fetching TEST data:", error);
-    // }
-
     let queryString = query
     let apiFields = [...fields, 'sys_id', ...metaFields]
 

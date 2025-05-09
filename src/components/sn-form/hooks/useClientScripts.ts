@@ -1,67 +1,102 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useCallback, useEffect } from 'react'
-import { SnClientScript, FieldUIState, SnFieldsSchema } from '@kit/types/form-schema'
-import { createGFormBridge } from '@kit/utils/form-client'
-import { getDefaultValue } from '@kit/utils/form-client'
+import { useCallback, useEffect } from 'react';
+import { SnClientScript, SnFieldsSchema } from '@kit/types/form-schema';
+import { getDefaultValue } from '@kit/utils/form-client';
 
 export function useClientScripts({
   form,
-  table,
-  guid,
   clientScripts,
   formFields,
-  updateFieldUI,
+  gForm,
 }: {
-  form: any
-  table: string
-  guid: string
-  clientScripts: SnClientScript[]
-  formFields: SnFieldsSchema | null  
-  updateFieldUI: (field: string, updates: Partial<FieldUIState>) => void
+  form: any;
+  clientScripts: SnClientScript[];
+  formFields: SnFieldsSchema | null;
+  gForm: any;
 }) {
-  // const [clientScripts, setClientScripts] = useState<SnClientScript[]>([])
 
-  const runClientScriptsForFieldChange = useCallback(
-    (fieldName: string, oldValue: any, newValue: any, isLoading = false) => {
-      const g_form = createGFormBridge(form.getValues, form.setValue, updateFieldUI, table, guid)
-      const matchingScripts = clientScripts.filter(s => s.type === 'onChange' && s.fieldName === fieldName)
+  //Execute any client script
+  const executeClientScript = useCallback(
+    (
+      script: SnClientScript,
+      context: {
+        fieldName?: string;
+        oldValue?: any;
+        newValue?: any;
+        isLoading?: boolean;
+      }
+    ) => {
+      try {
+        const func = new Function(
+          'control',
+          'oldValue',
+          'newValue',
+          'isLoading',
+          'isTemplate',
+          `const g_form = arguments[5];\n${script.script};\nreturn ${
+            script.type === 'onChange' ? 'onChange(control, oldValue, newValue, isLoading, isTemplate);' : 'onLoad();'
+          }`
+        );
 
-      for (const script of matchingScripts) {
-        try {
-          const func = new Function(
-            'control',
-            'oldValue',
-            'newValue',
-            'isLoading',
-            'isTemplate',
-            `const g_form = arguments[5];\n${script.script};\nreturn onChange(control, oldValue, newValue, isLoading, isTemplate);`
-          )
-
-          func(null, oldValue, newValue, isLoading, false, g_form)
-        } catch (e) {
-          console.error(`Failed to run client script for ${fieldName}:`, e)
-        }
+        func(
+          null,
+          context.oldValue,
+          context.newValue,
+          context.isLoading ?? false,
+          false,
+          gForm
+        );
+      } catch (e) {
+        console.error(`Failed to run client script [${script.type}]`, e);
       }
     },
-    [clientScripts, form.getValues, form.setValue, guid, table]
-  )
+    [gForm]
+  );
 
-  // Initial load trigger
+  //Ecute client script for field change
+  const runClientScriptsForFieldChange = useCallback(
+    (fieldName: string, oldValue: any, newValue: any, isLoading = false) => {
+      const matchingScripts = clientScripts.filter(
+        (s) => s.type === 'onChange' && s.fieldName === fieldName
+      );
+
+      for (const script of matchingScripts) {
+        executeClientScript(script, { fieldName, oldValue, newValue, isLoading });
+      }
+    },
+    [clientScripts, executeClientScript]
+  );
+
+  // Execute onLoad client scripts
+  const runOnLoadClientScripts = useCallback(() => {
+    const onLoadScripts = clientScripts.filter((s) => s.type === 'onLoad' && s.tableName != "global");
+
+    for (const script of onLoadScripts) {
+      executeClientScript(script, {});
+    }
+  }, [clientScripts, executeClientScript]);
+
+  //Initial load trigger onload and onchange
   useEffect(() => {
-    if (!formFields) return
+    if (!formFields) return;
 
-    const values = Object.fromEntries(Object.values(formFields).map(f => [f.name, getDefaultValue(f)]))
+    const values = Object.fromEntries(
+      Object.values(formFields).map((f) => [f.name, getDefaultValue(f)])
+    );
 
-    form.reset(values)
+    form.reset(values);
 
     Object.entries(values).forEach(([fieldName, value]) => {
-      runClientScriptsForFieldChange(fieldName, undefined, value, true)
-    })
-  }, [formFields, guid, form])
+      runClientScriptsForFieldChange(fieldName, undefined, value, true);
+    });
+
+    runOnLoadClientScripts();
+  }, [formFields, form, runClientScriptsForFieldChange, runOnLoadClientScripts]);
 
   return {
     clientScripts,
     runClientScriptsForFieldChange,
-  }
+    runOnLoadClientScripts,
+  };
 }

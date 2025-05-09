@@ -57,6 +57,8 @@ const _formField = z.object({
   mandatory: z.boolean(),
   visible: z.boolean(),
   readonly: z.boolean(),
+  sys_readonly: z.boolean().optional(),
+  sys_mandatory: z.boolean().optional(),
   type: z.string(),//z.enum(['string', 'choice', 'glide_date', 'glide_date_time', 'reference', 'boolean']),
   max_length: z.number().optional(),
   choice: z.number().optional(),

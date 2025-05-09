@@ -2,9 +2,9 @@
 import { getAxiosInstance } from './axios-client'
 import { SnFieldsSchema } from '@kit/types/form-schema'
 
-export function getFormData(table: string, guid: string, controller: AbortController): Promise<any> {
+export function getFormData(metadataApi: string, controller: AbortController): Promise<any> {
   const axios = getAxiosInstance()
-  return axios.get(`/api/bskyb/react_form/fd/${table}/${guid}`, {
+  return axios.get(metadataApi, {
     signal: controller.signal,
     validateStatus: status => status >= 200 && status < 300,
   })
@@ -101,7 +101,6 @@ export function getRefData({
   return axios
     .post("/angular.do?sysparm_type=sp_ref_list_data&sysparm_cancelable=true", payload)
     .then((res) => {
-      console.log("SN REF PICKER DATA FETCHER RAWWWW", res);
       return res.data?.items || []
     });
 }

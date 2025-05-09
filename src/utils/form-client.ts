@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { RefObject } from 'react'
 import { FieldUIState, SnFieldSchema, SnFieldsSchema } from '../types/form-schema'
 import { postFormAction } from './form-api'
 import { toast } from 'sonner'
@@ -20,14 +21,14 @@ export function createGFormBridge(
   getValues: () => any,
   setValue: (field: string, value: any) => void,
   updateFieldUI: (field: string, updates: Partial<FieldUIState>) => void,
+  fieldChangeHandlers: RefObject<Record<string, (value: any) => void>>,
   table?: string,
-  guid?: string
+  guid?: string,
 ) {
   return {
     getValue: (field: string) => getValues()[field],
     getTableName: () => table,
     getBooleanValue: (field: string) => getValues()[field] === true || getValues()[field] === 'true',
-    setValue: (field: string, value: any) => setValue(field, value),
     setReadOnly: (field: string, state: boolean) => updateFieldUI(field, { readonly: state }),
     setDisplay: (field: string, state: boolean) => updateFieldUI(field, { visible: state }),
     setVisible: (field: string, state: boolean) => updateFieldUI(field, { visible: state }),
@@ -40,6 +41,15 @@ export function createGFormBridge(
     },
     addInfoMessage: (message: string) => {
       toast.info(message, { duration: 5000 })
+    },
+
+    setValue(fieldName: string, value: any) {
+      setValue(fieldName, value);
+      const handlers = fieldChangeHandlers.current;
+
+      if (handlers?.[fieldName]) {
+        handlers[fieldName](value);
+      }
     },
   }
 }

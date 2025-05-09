@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { getRefData } from '../../../../utils/form-api'
 import { SnRefFieldEd } from '@kit/types/form-schema'
 
@@ -32,12 +32,12 @@ export function useReferenceRecords({
   const [hasMore, setHasMore] = useState(true)
   const [loading, setLoading] = useState(false)
 
-  const recordValues = {
+  const recordValues = useMemo(() => ({
     ...(formValues || {}),
     ...(ed.dependent_field
       ? { [ed.dependent_field]: formValues[ed.dependent_field] }
       : {}),
-  }
+  }), [formValues, ed.dependent_field])
 
   const fetchPage = useCallback(
     async (q: string, pageNumber: number, reset = false) => {
@@ -75,7 +75,7 @@ export function useReferenceRecords({
         setLoading(false)
       }
     },
-    [ed.reference, fieldName, table, recordSysId, displayCols.join(','), JSON.stringify(recordValues)]
+    [loading, hasMore, ed.reference, ed.qualifier, table, fieldName, recordSysId, displayCols, recordValues]
   )
 
   return {

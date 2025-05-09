@@ -6,16 +6,16 @@ import {
   SelectLabel,
   SelectTrigger,
   SelectValue,
-} from '../../ui/select';
-import { X } from 'lucide-react';
-import { SnFieldSchema, RHFField } from '../../../types/form-schema';
-import { useRef } from 'react';
-import { useFieldUI } from "../contexts/FieldUIContext"
+} from '../../ui/select'
+import { X } from 'lucide-react'
+import { SnFieldSchema, RHFField } from '../../../types/form-schema'
+import { useRef } from 'react'
+import { useFieldUI } from '../contexts/FieldUIContext'
 
 interface SnFieldChoiceProps {
-  field: SnFieldSchema;
-  rhfField: RHFField;
-  onChange: (val: string) => void;
+  field: SnFieldSchema
+  rhfField: RHFField
+  onChange: (val: string) => void
 }
 
 export function SnFieldChoice({ field, rhfField, onChange }: SnFieldChoiceProps) {
@@ -25,26 +25,22 @@ export function SnFieldChoice({ field, rhfField, onChange }: SnFieldChoiceProps)
   const handleValueChange = (val: string) => {
     if (!didMount.current) {
       didMount.current = true
+      // if (field.value != val) onChange(val)
       return
     }
-
     onChange(val)
   }
   return (
     <div className="relative w-full">
-      <Select
-        value={(rhfField.value ?? '') + ''}
-        onValueChange={handleValueChange}
-        disabled={readonly}
-      >
+      <Select value={(rhfField.value ?? '') + ''} onValueChange={handleValueChange} disabled={readonly}>
         <SelectTrigger className="w-full">
           <SelectValue placeholder="-- Select Option --" />
         </SelectTrigger>
         <SelectContent>
           <SelectGroup>
             <SelectLabel>{field.label}</SelectLabel>
-            {field.choices!
-              .filter(c => !!c.value)
+            {field
+              .choices!.filter(c => !!c.value)
               .map(choice => (
                 <SelectItem key={choice.value} value={choice.value}>
                   {choice.label}
@@ -55,12 +51,12 @@ export function SnFieldChoice({ field, rhfField, onChange }: SnFieldChoiceProps)
       </Select>
 
       {/* Clear button */}
-      {rhfField.value && (
+      {rhfField.value && !readonly && (
         <X
           className="absolute right-8 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground cursor-pointer hover:text-destructive"
           onClick={() => onChange('')}
         />
       )}
     </div>
-  );
+  )
 }

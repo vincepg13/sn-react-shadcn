@@ -1,18 +1,27 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useCallback, useEffect, useMemo, useState, useRef } from 'react'
-import { useForm, FormProvider } from 'react-hook-form'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useForm, FormProvider, FieldErrors } from 'react-hook-form'
 import { z, ZodTypeAny } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { FieldUIState, SnClientScript, SnFieldsSchema, SnFormConfig, SnPolicy, SnUiAction } from '@kit/types/form-schema'
 import { SnField } from './sn-form-fields/sn-field'
 import { Toaster } from '../../components/ui/sonner'
-import { SnFormActions, SnFormActionsRef } from './sn-form-actions'
+import { SnFormActions } from './sn-form-layout/sn-form-actions'
 import { SnClientScriptContext } from './contexts/SnClientScriptContext'
+import { SnUiPolicyContext } from './contexts/SnUiPolicyContext'
 import { mapFieldToZod } from '@kit/utils/form-zod'
 import { useClientScripts } from './hooks/useClientScripts'
 import { useUiPolicies } from './hooks/useUiPolicies'
-import { SnUiPolicyContext } from './contexts/SnUiPolicyContext'
+import { SnFormLayout, SnSection } from './sn-form-layout/sn-form-layout'
+
+import {
+  FieldUIState,
+  SnClientScript,
+  SnFieldsSchema,
+  SnFormConfig,
+  SnPolicy,
+  SnUiAction,
+} from '@kit/types/form-schema'
+import { createGFormBridge } from '@kit/utils/form-client'
 
 interface SnFormProps {
   table: string
@@ -22,12 +31,24 @@ interface SnFormProps {
   formConfig: SnFormConfig
   clientScripts: SnClientScript[]
   uiPolicies: SnPolicy[]
+  sections: SnSection[]
 }
 
-export function SnForm({ table, guid, uiActions, formFields, formConfig, clientScripts, uiPolicies }: SnFormProps) {
-  const actionRef = useRef<SnFormActionsRef>(null)
+export function SnForm({
+  table,
+  guid,
+  uiActions,
+  formFields,
+  formConfig,
+  clientScripts,
+  uiPolicies,
+  sections,
+}: SnFormProps) {
   const [fieldUIState, setFieldUIState] = useState<Record<string, FieldUIState>>({})
   const [hasReset, setHasReset] = useState(false)
+  const fieldTabMapRef = useRef<Record<string, string>>({})
+  const [overrideTab, setOverrideTab] = useState<string | undefined>()
+  const fieldChangeHandlersRef = useRef<Record<string, (val: any) => void>>({})
 
   const updateFieldUI = useCallback((field: string, updates: Partial<FieldUIState>) => {
     setFieldUIState(prev => ({
@@ -61,19 +82,25 @@ export function SnForm({ table, guid, uiActions, formFields, formConfig, clientS
     mode: 'onBlur',
   })
 
+  const gForm = useMemo(() => {
+    return createGFormBridge(
+      form.getValues,
+      form.setValue,
+      updateFieldUI,
+      fieldChangeHandlersRef,
+      table,
+      guid,
+    );
+  }, [form, guid, table, updateFieldUI]);
+
   const { runClientScriptsForFieldChange } = useClientScripts({
     form,
-    table,
-    guid,
     clientScripts: clientScripts || [],
     formFields,
-    updateFieldUI,
+    gForm
   })
 
-  const {
-    runUiPolicies,
-    runUiPoliciesForField,
-  } = useUiPolicies({
+  const { runUiPolicies, runUiPoliciesForField } = useUiPolicies({
     form,
     formFields,
     uiPolicies,
@@ -84,38 +111,71 @@ export function SnForm({ table, guid, uiActions, formFields, formConfig, clientS
   useEffect(() => {
     if (!schema || !formFields || hasReset) return
     const values = form.getValues()
-  
+
+    console.log("FORM RESET", values)
+
     form.reset(values, {
       keepErrors: true,
       keepDirty: true,
       keepTouched: true,
     })
-  
+
     setHasReset(true)
-  }, [schema, formFields, hasReset])
-  
-  const onSubmit = () => {
-    actionRef.current?.triggerPrimaryAction()
+  }, [schema, formFields, hasReset, form])
+
+  const handleValidationError = (errors: FieldErrors) => {
+    const firstErrorField = Object.keys(errors)[0]
+    const tabKey = fieldTabMapRef.current[firstErrorField]
+    if (tabKey) {
+      setOverrideTab(tabKey)
+    }
   }
 
   return (
-    <SnClientScriptContext.Provider value={{ runClientScriptsForFieldChange }}>
+    <SnClientScriptContext.Provider
+      value={{
+        runClientScriptsForFieldChange,
+        fieldChangeHandlers: fieldChangeHandlersRef.current,
+        gForm
+      }}
+    >
       <SnUiPolicyContext.Provider value={{ formConfig, runUiPolicies, runUiPoliciesForField }}>
         <FormProvider {...form}>
           <Toaster position="top-center" expand={true} richColors />
           <div className="w-full px-4">
-            <form onSubmit={form.handleSubmit(onSubmit)} className="w-full max-w-4xl mx-auto space-y-6">
-              {Object.values(formFields).map(field => (
-                <SnField
-                  key={field.name}
-                  field={field}
-                  fieldUIState={fieldUIState}
-                  updateFieldUI={updateFieldUI}
-                  table={table}
-                  guid={guid}
-                />
-              ))}
-              <SnFormActions ref={actionRef} table={table} recordID={guid} uiActions={uiActions} formFields={formFields} />
+            <form className="w-full max-w-4xl mx-auto space-y-6">
+              <SnFormLayout
+                sections={sections}
+                overrideTab={overrideTab}
+                clearOverrideTab={() => setOverrideTab(undefined)}
+                onFieldTabMap={map => {
+                  fieldTabMapRef.current = map
+                }}
+                renderField={name => {
+                  const field = formFields[name]
+                  if (!field) return null
+
+                  return (
+                    <SnField
+                      key={field.name}
+                      field={field}
+                      fieldUIState={fieldUIState}
+                      updateFieldUI={updateFieldUI}
+                      table={table}
+                      guid={guid}
+                    />
+                  )
+                }}
+              />
+
+              <SnFormActions
+                table={table}
+                recordID={guid}
+                uiActions={uiActions}
+                formFields={formFields}
+                handleSubmit={form.handleSubmit}
+                onValidationError={handleValidationError}
+              />
             </form>
           </div>
         </FormProvider>

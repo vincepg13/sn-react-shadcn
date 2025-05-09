@@ -144,7 +144,7 @@ export function SnFieldReference({ field, onChange, formValues, table, recordSys
           )}
         </PopoverTrigger>
 
-        {selectedRecords.length > 0 && (
+        {selectedRecords.length > 0 && !readonly && (
           <X
             className={cn(
               'absolute top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground cursor-pointer',

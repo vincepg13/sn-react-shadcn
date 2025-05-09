@@ -3,6 +3,7 @@ import { forwardRef, RefObject, useCallback, useEffect, useState, useRef } from 
 import { NumericFormat, NumericFormatProps } from 'react-number-format'
 import { Button } from '../../ui/button'
 import { Input } from '../../ui/input'
+import { useFieldUI } from '../contexts/FieldUIContext'
 
 export interface NumberInputProps extends Omit<NumericFormatProps, 'value' | 'onValueChange'> {
   stepper?: number
@@ -40,6 +41,7 @@ export const SnFieldNumeric = forwardRef<HTMLInputElement, NumberInputProps>(
   ) => {
     const internalRef = useRef<HTMLInputElement>(null)
     const combinedRef = ref || internalRef
+    const { readonly } = useFieldUI()
     const [value, setValue] = useState<number | undefined>(controlledValue ?? defaultValue)
 
     const handleIncrement = useCallback(() => {
@@ -104,6 +106,7 @@ export const SnFieldNumeric = forwardRef<HTMLInputElement, NumberInputProps>(
           allowNegative={min < 0}
           valueIsNumericString
           onBlur={handleBlur}
+          disabled={readonly}
           max={max}
           min={min}
           suffix={suffix}
@@ -114,28 +117,28 @@ export const SnFieldNumeric = forwardRef<HTMLInputElement, NumberInputProps>(
           getInputRef={combinedRef} // Use combined ref
           {...props}
         />
-    <div className="flex flex-col h-9">
-      <Button
-        type="button"
-        aria-label="Increase value"
-        className="h-1/2 px-2 rounded-l-none rounded-br-none border-input border-l-0 border-b-[0.5px] focus-visible:relative"
-        variant="outline"
-        onClick={handleIncrement}
-        disabled={value === max}
-      >
-        <ChevronUp size={10} />
-      </Button>
-      <Button
-        type="button"
-        aria-label="Decrease value"
-        className="h-1/2 px-2 rounded-l-none rounded-tr-none border-input border-l-0 border-t-[0.5px] focus-visible:relative"
-        variant="outline"
-        onClick={handleDecrement}
-        disabled={value === min}
-      >
-        <ChevronDown size={10} />
-      </Button>
-    </div>
+        <div className="flex flex-col h-9">
+          <Button
+            type="button"
+            aria-label="Increase value"
+            className="h-1/2 px-2 rounded-l-none rounded-br-none border-input border-l-0 border-b-[0.5px] focus-visible:relative"
+            variant="outline"
+            onClick={handleIncrement}
+            disabled={readonly || value === max}
+          >
+            <ChevronUp size={10} />
+          </Button>
+          <Button
+            type="button"
+            aria-label="Decrease value"
+            className="h-1/2 px-2 rounded-l-none rounded-tr-none border-input border-l-0 border-t-[0.5px] focus-visible:relative"
+            variant="outline"
+            onClick={handleDecrement}
+            disabled={readonly || value === min}
+          >
+            <ChevronDown size={10} />
+          </Button>
+        </div>
       </div>
     )
   }

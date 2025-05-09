@@ -1,4 +1,4 @@
-import { ReactNode, useRef } from 'react'
+import { ReactNode, useRef, useCallback } from 'react'
 import { useFormContext } from 'react-hook-form'
 import { SnFieldSchema, RHFField, FieldUIState } from '../../../types/form-schema'
 import { SnFieldInput } from './sn-field-input'
@@ -6,7 +6,6 @@ import { SnFieldTextarea } from './sn-field-textarea'
 import { SnFieldChoice } from './sn-field-choice'
 import { useClientScripts } from '../contexts/SnClientScriptContext'
 import { useUiPoliciesContext } from '../contexts/SnUiPolicyContext'
-import { createGFormBridge } from '../../../utils/form-client'
 import { FieldUIContext } from '../contexts/FieldUIContext'
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '../../ui/form'
 import { useEffectiveFieldState } from '../hooks/useFieldUiState'
@@ -25,16 +24,30 @@ interface SnFieldProps {
 
 type SnFieldPrimitive = string | string[] | boolean | number
 
-function SnFieldComponent({ field, fieldUIState, updateFieldUI, guid, table }: SnFieldProps) {
-  const { control, getValues, setValue /*, watch */ } = useFormContext()
-  const { runClientScriptsForFieldChange } = useClientScripts()
+function SnFieldComponent({ field, fieldUIState, guid, table }: SnFieldProps) {
+  const { control, getValues, setValue } = useFormContext()
+  const { runClientScriptsForFieldChange, fieldChangeHandlers } = useClientScripts()
   const { runUiPoliciesForField } = useUiPoliciesContext()
+
   const oldValueRef = useRef<SnFieldPrimitive>(field.value)
 
   const fieldUI = useEffectiveFieldState({
     field,
     uiState: fieldUIState,
+    fieldVal: String(getValues()[field.name]),
   })
+
+  const handleChange = useCallback(
+    (newValue: SnFieldPrimitive) => {
+      setValue(field.name, newValue, { shouldDirty: true, shouldTouch: true })
+      runClientScriptsForFieldChange(field.name, oldValueRef.current, newValue, false)
+      runUiPoliciesForField(field.name)
+      oldValueRef.current = newValue
+    },
+    [field.name, setValue, runClientScriptsForFieldChange, runUiPoliciesForField]
+  )
+
+  fieldChangeHandlers[field.name] = handleChange
 
   if (!fieldUI.visible) return null
 
@@ -44,25 +57,10 @@ function SnFieldComponent({ field, fieldUIState, updateFieldUI, guid, table }: S
         name={field.name}
         control={control}
         render={({ field: rhfField }) => {
-          const handleFocus = () => {
-            //oldValueRef.current = getValues()[field.name]
-          }
-
-          const handleChange = (newValue: SnFieldPrimitive) => {
-            // console.log('SN FIELD CHANGE', field.name, newValue)
-            // if (oldValueRef.current === undefined) {
-            //   oldValueRef.current = getValues()[field.name]
-            // }
-            // const oldValue = oldValueRef.current
-            rhfField.onChange(newValue)
-
-            const g_form = createGFormBridge(getValues, setValue, updateFieldUI, table, guid)
-            runClientScriptsForFieldChange(field.name, oldValueRef.current, newValue, false, g_form)
-            runUiPoliciesForField(field.name)
-            oldValueRef.current = newValue
-          }
+          const handleFocus = () => {}
 
           const input = renderFieldComponent(table, guid, field, rhfField, handleChange, handleFocus, getValues())
+
           if (!input) return <></>
 
           return (
@@ -89,7 +87,7 @@ function renderFieldComponent(
   guid: string,
   field: SnFieldSchema,
   rhfField: RHFField,
-  handleChange: (value: string | string[] | number | boolean) => void,
+  handleChange: (value: SnFieldPrimitive) => void,
   handleFocus: () => void,
   formValues: Record<string, string>
 ): ReactNode {
@@ -105,7 +103,15 @@ function renderFieldComponent(
       return <SnFieldCheckbox field={field} rhfField={rhfField} onChange={handleChange} />
     case 'reference':
     case 'glide_list':
-      return <SnFieldReference field={field} table={table} recordSysId={guid} formValues={formValues} onChange={handleChange}/>
+      return (
+        <SnFieldReference
+          field={field}
+          table={table}
+          recordSysId={guid}
+          formValues={formValues}
+          onChange={handleChange}
+        />
+      )
     case 'glide_date':
     case 'glide_date_time':
       return <SnFieldDate field={field} rhfField={rhfField} onChange={handleChange} />
@@ -115,7 +121,7 @@ function renderFieldComponent(
       return (
         <SnFieldNumeric
           value={rhfField.value as number}
-          onValueChange={(value) => handleChange(value ?? '')}
+          onValueChange={value => handleChange(value ?? '')}
           onFocus={handleFocus}
           thousandSeparator=","
           decimalScale={field.type === 'float' || field.type === 'decimal' ? 2 : 0}

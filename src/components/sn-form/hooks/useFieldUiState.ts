@@ -4,16 +4,28 @@ import { FieldUIState } from "../../../types/form-schema";
 
 interface Props {
   field: SnFieldSchema;
+  fieldVal: string;
   uiState: Record<string, FieldUIState>;
 }
 
-export function useEffectiveFieldState({ field, uiState }: Props): FieldUIState {
+export function useEffectiveFieldState({ field, fieldVal, uiState }: Props): FieldUIState {
   return useMemo(() => {
+    function isReadonly(sysRo: boolean, ro: boolean, man: boolean): boolean {
+      return sysRo ? true : ro && !!(fieldVal || !man);
+    }
+
+    function isMandatory(sysRo: boolean, man: boolean): boolean {
+      return sysRo ? false : man;
+    }
+
     const overrides = uiState[field.name] || {};
+    const ro = overrides.readonly ?? field.readonly ?? false;
+    const man = overrides.mandatory ?? field.mandatory ?? false;
+
     return {
-      readonly: overrides.readonly ?? field.readonly ?? false,
+      readonly: isReadonly(!!field.sys_readonly, ro, man),
       visible: overrides.visible ?? true,
-      mandatory: overrides.mandatory ?? field.mandatory ?? false,
+      mandatory: isMandatory(!!field.sys_readonly, man),
     };
-  }, [field, uiState]);
+  }, [field, uiState, fieldVal]);
 }
