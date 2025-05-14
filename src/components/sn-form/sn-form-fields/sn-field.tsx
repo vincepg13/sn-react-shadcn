@@ -13,6 +13,7 @@ import { useClientScripts } from '../contexts/SnClientScriptContext'
 import { useUiPoliciesContext } from '../contexts/SnUiPolicyContext'
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '../../ui/form'
 import { SnFieldSchema, RHFField, FieldUIState, SnFieldPrimitive } from '../../../types/form-schema'
+import { SnFieldTime } from './sn-field-time'
 
 interface SnFieldProps {
   field: SnFieldSchema
@@ -113,6 +114,8 @@ function renderFieldComponent(
     case 'glide_date':
     case 'glide_date_time':
       return <SnFieldDate field={field} rhfField={rhfField} onChange={handleChange} />
+    case 'glide_time':
+      return <SnFieldTime rhfField={rhfField} onChange={handleChange} />
     case 'integer':
     case 'float':
     case 'decimal':
