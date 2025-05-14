@@ -31,13 +31,17 @@ export function useReferenceRecords({
   const [page, setPage] = useState(0)
   const [hasMore, setHasMore] = useState(true)
   const [loading, setLoading] = useState(false)
+  
 
-  const recordValues = useMemo(() => ({
-    ...(formValues || {}),
-    ...(ed.dependent_field
+  // ✅ Serialize only the relevant dependent field(s)
+  const recordValuesKey = useMemo(() => {
+    const values = ed.dependent_field
       ? { [ed.dependent_field]: formValues[ed.dependent_field] }
-      : {}),
-  }), [formValues, ed.dependent_field])
+      : {}
+    return JSON.stringify(values)
+  }, [formValues, ed.dependent_field])
+
+  
 
   const fetchPage = useCallback(
     async (q: string, pageNumber: number, reset = false) => {
@@ -45,6 +49,8 @@ export function useReferenceRecords({
 
       setLoading(true)
       try {
+        const recordValues = JSON.parse(recordValuesKey)
+
         const results = await getRefData({
           table: ed.reference,
           targetTable: table,
@@ -60,7 +66,8 @@ export function useReferenceRecords({
 
         const mapped = results.map((item: RefRecordRaw) => ({
           value: item.sys_id,
-          display_value: item[displayCols[0]] || item.name || item.title || item.sys_id,
+          display_value:
+            item[displayCols[0]] || item.name || item.title || item.sys_id,
           primary: item[displayCols[1]] || '',
           secondary: item[displayCols[2]] || '',
           raw: item,
@@ -75,7 +82,17 @@ export function useReferenceRecords({
         setLoading(false)
       }
     },
-    [loading, hasMore, ed.reference, ed.qualifier, table, fieldName, recordSysId, displayCols, recordValues]
+    [
+      loading,
+      hasMore,
+      ed.reference,
+      ed.qualifier,
+      table,
+      fieldName,
+      recordSysId,
+      displayCols,
+      recordValuesKey, // ✅ stable dependency
+    ]
   )
 
   return {

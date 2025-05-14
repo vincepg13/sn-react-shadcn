@@ -32,6 +32,7 @@ export function SnFormActions({
 
       const values = getValues()
       const payload = buildSubmissionPayload(formFields, values)
+      // console.log("UI ACTION PAYLOAD", payload)
 
       await triggerNativeUIAction({
         table,
