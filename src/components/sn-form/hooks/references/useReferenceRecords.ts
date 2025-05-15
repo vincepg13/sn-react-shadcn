@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useState } from 'react'
 import { getRefData } from '../../../../utils/form-api'
 import { SnRefFieldEd } from '@kit/types/form-schema'
 
@@ -31,17 +31,6 @@ export function useReferenceRecords({
   const [page, setPage] = useState(0)
   const [hasMore, setHasMore] = useState(true)
   const [loading, setLoading] = useState(false)
-  
-
-  // ✅ Serialize only the relevant dependent field(s)
-  const recordValuesKey = useMemo(() => {
-    const values = ed.dependent_field
-      ? { [ed.dependent_field]: formValues[ed.dependent_field] }
-      : {}
-    return JSON.stringify(values)
-  }, [formValues, ed.dependent_field])
-
-  
 
   const fetchPage = useCallback(
     async (q: string, pageNumber: number, reset = false) => {
@@ -49,8 +38,6 @@ export function useReferenceRecords({
 
       setLoading(true)
       try {
-        const recordValues = JSON.parse(recordValuesKey)
-
         const results = await getRefData({
           table: ed.reference,
           targetTable: table,
@@ -59,7 +46,7 @@ export function useReferenceRecords({
           q,
           qualifier: ed.qualifier || '',
           requiredFields: displayCols,
-          recordValues,
+          recordValues: formValues,
           start: pageNumber * 20,
           count: 20,
         })
@@ -91,7 +78,7 @@ export function useReferenceRecords({
       fieldName,
       recordSysId,
       displayCols,
-      recordValuesKey, // ✅ stable dependency
+      formValues,
     ]
   )
 

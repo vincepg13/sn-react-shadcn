@@ -106,6 +106,7 @@ export const SnFieldNumeric = forwardRef<HTMLInputElement, NumberInputProps>(
           allowNegative={min < 0}
           valueIsNumericString
           onBlur={handleBlur}
+          required={true}
           disabled={readonly}
           max={max}
           min={min}

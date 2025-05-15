@@ -49,6 +49,11 @@ const _ed = z.object({
   }),
 })
 
+const _currencyCode = z.object({
+  code: z.string(),
+  symbol: z.string(),
+})
+
 const _formField = z.object({
   name: z.string(),
   label: z.string(),
@@ -63,6 +68,9 @@ const _formField = z.object({
   max_length: z.number().optional(),
   choice: z.number().optional(),
   ed: _ed.optional(),
+  currencyCode: z.string().optional(),
+  currencyValue: z.string().optional(),
+  currencyCodes: _currencyCode.array().optional(),
   choices: z
     .array(
       z.object({

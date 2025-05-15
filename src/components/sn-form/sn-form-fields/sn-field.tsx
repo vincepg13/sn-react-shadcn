@@ -14,6 +14,8 @@ import { useUiPoliciesContext } from '../contexts/SnUiPolicyContext'
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '../../ui/form'
 import { SnFieldSchema, RHFField, FieldUIState, SnFieldPrimitive } from '../../../types/form-schema'
 import { SnFieldTime } from './sn-field-time'
+import { SnFieldUrl } from './sn-field-url'
+import { SnFieldCurrency } from './sn-field-currency'
 
 interface SnFieldProps {
   field: SnFieldSchema
@@ -38,6 +40,7 @@ function SnFieldComponent({ field, fieldUIState, guid, table }: SnFieldProps) {
 
   const handleChange = useCallback(
     (newValue: SnFieldPrimitive) => {
+      console.log("SN FIELD CHANGE", field.name, newValue)
       setValue(field.name, newValue, { shouldDirty: true, shouldTouch: true })
       runClientScriptsForFieldChange(field.name, oldValueRef.current, newValue, false)
       runUiPoliciesForField(field.name)
@@ -56,7 +59,7 @@ function SnFieldComponent({ field, fieldUIState, guid, table }: SnFieldProps) {
         name={field.name}
         control={control}
         render={({ field: rhfField }) => {
-          const handleFocus = () => {}
+          const handleFocus = () => console.log("FOCUS CHANGE", field.name)
 
           const input = renderFieldComponent(table, guid, field, rhfField, handleChange, handleFocus, getValues())
 
@@ -116,6 +119,11 @@ function renderFieldComponent(
       return <SnFieldDate field={field} rhfField={rhfField} onChange={handleChange} />
     case 'glide_time':
       return <SnFieldTime rhfField={rhfField} onChange={handleChange} />
+    case 'url':
+      return <SnFieldUrl rhfField={rhfField} onChange={handleChange} />
+    case 'price':
+    case 'currency':
+      return <SnFieldCurrency field={field} rhfField={rhfField} onChange={handleChange} />
     case 'integer':
     case 'float':
     case 'decimal':
@@ -125,6 +133,7 @@ function renderFieldComponent(
           onValueChange={value => handleChange(value ?? '')}
           onFocus={handleFocus}
           thousandSeparator=","
+          decimalSeparator="."
           decimalScale={field.type === 'float' || field.type === 'decimal' ? 2 : 0}
           fixedDecimalScale={field.type === 'decimal'}
         />

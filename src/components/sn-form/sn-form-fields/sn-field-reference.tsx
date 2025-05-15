@@ -20,13 +20,7 @@ interface SnReferenceProps {
   recordSysId: string
 }
 
-export function SnFieldReference({
-  field,
-  onChange,
-  formValues,
-  table,
-  recordSysId,
-}: SnReferenceProps) {
+export function SnFieldReference({ field, onChange, formValues, table, recordSysId }: SnReferenceProps) {
   const { readonly } = useFieldUI()
   const [open, setOpen] = useState(false)
   const [search, setSearch] = useState('')
@@ -36,11 +30,8 @@ export function SnFieldReference({
 
   const ed = field.ed!
   const isMultiple = field.type === 'glide_list'
-  
-  const orderBy = useMemo(
-    () => ed.attributes?.ref_ac_order_by?.split(';') || [],
-    [ed.attributes?.ref_ac_order_by]
-  )
+
+  const orderBy = useMemo(() => ed.attributes?.ref_ac_order_by?.split(';') || [], [ed.attributes?.ref_ac_order_by])
   const displayCols = useMemo(
     () => ed.attributes?.ref_ac_columns?.split(';') || [ed.searchField || 'name'],
     [ed.attributes?.ref_ac_columns, ed.searchField]
@@ -49,19 +40,18 @@ export function SnFieldReference({
   const { value: rawValue, display: rawDisplay } = useReferenceSelected(field)
 
   const selected = useMemo(() => {
-    return rawValue.map((v, i): RefRecord => ({
-      value: v,
-      display_value: rawDisplay[i] || v,
-      raw: {},
-    }))
+    return rawValue.map(
+      (v, i): RefRecord => ({
+        value: v,
+        display_value: rawDisplay[i] || v,
+        raw: {},
+      })
+    )
   }, [rawValue, rawDisplay])
 
   const [selectedRecords, setSelectedRecords] = useState<RefRecord[]>(selected)
 
-  const excludeValues = useMemo(
-    () => (isMultiple ? selected.map(r => r.value) : []),
-    [isMultiple, selected]
-  )
+  const excludeValues = useMemo(() => (isMultiple ? selected.map(r => r.value) : []), [isMultiple, selected])
 
   const query = useMemo(() => {
     return buildReferenceQuery({
@@ -82,18 +72,17 @@ export function SnFieldReference({
     formValues,
   })
 
+  const fetchPageRef = useRef(fetchPage)
   useEffect(() => {
-    if (open && !wasOpen.current) {
-      fetchPage(query, 0, true)
-    }
-    wasOpen.current = open
-  }, [open])
+    fetchPageRef.current = fetchPage
+  }, [fetchPage])
 
   useEffect(() => {
-    if (open) {
-      fetchPage(query, 0, true)
+    if (query || (open && !wasOpen.current)) {
+      fetchPageRef.current(query, 0, true)
     }
-  }, [query])
+    wasOpen.current = open
+  }, [open, query])
 
   const handleScroll = (e: UIEvent<HTMLDivElement>) => {
     const el = e.currentTarget
@@ -109,9 +98,7 @@ export function SnFieldReference({
     if (!record) return
 
     if (isMultiple) {
-      const updated = isSelected(val)
-        ? selectedRecords.filter(r => r.value !== val)
-        : [...selectedRecords, record]
+      const updated = isSelected(val) ? selectedRecords.filter(r => r.value !== val) : [...selectedRecords, record]
       setSelectedRecords(updated)
       onChange(updated.map(r => r.value))
     } else {
@@ -143,9 +130,7 @@ export function SnFieldReference({
                 'bg-background text-foreground cursor-pointer hover:bg-accent hover:text-accent-foreground focus:outline-none focus:ring-2 focus:ring-ring'
               )}
             >
-              {selectedRecords.length === 0 && (
-                <span className="text-muted-foreground">{field.label}</span>
-              )}
+              {selectedRecords.length === 0 && <span className="text-muted-foreground">{field.label}</span>}
               {selectedRecords.map(record => (
                 <div
                   key={record.value}
@@ -173,9 +158,7 @@ export function SnFieldReference({
               className="w-full justify-between pr-8 min-h-[40px]"
             >
               <span className="truncate text-left">
-                {selectedRecords[0]?.display_value || (
-                  <span className="text-muted-foreground">{field.label}</span>
-                )}
+                {selectedRecords[0]?.display_value || <span className="text-muted-foreground">{field.label}</span>}
               </span>
               <ChevronsUpDown className="h-4 w-4 opacity-50 ml-2" />
             </Button>
@@ -196,12 +179,7 @@ export function SnFieldReference({
       <PopoverContent className="w-full max-w-[500px] p-0">
         <Command shouldFilter={false}>
           <div className="relative">
-            <CommandInput
-              placeholder="Search..."
-              value={search}
-              onValueChange={setSearch}
-              className="pr-10"
-            />
+            <CommandInput placeholder="Search..." value={search} onValueChange={setSearch} className="pr-10" />
             {loading && (
               <Loader2 className="absolute right-2 top-1/2 h-4 w-4 animate-spin text-muted-foreground transform -translate-y-1/2" />
             )}
@@ -214,9 +192,7 @@ export function SnFieldReference({
                   <div className="flex flex-col gap-1">
                     {r.display_value}
                     {r.primary && <span className="text-muted-foreground text-sm">{r.primary}</span>}
-                    {r.secondary && (
-                      <span className="text-muted-foreground text-sm">{r.secondary}</span>
-                    )}
+                    {r.secondary && <span className="text-muted-foreground text-sm">{r.secondary}</span>}
                   </div>
                   <Check
                     className={cn('ml-auto', {
