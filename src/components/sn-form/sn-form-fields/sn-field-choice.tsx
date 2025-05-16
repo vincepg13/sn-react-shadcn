@@ -1,6 +1,6 @@
 import { X } from 'lucide-react'
 import { useFieldUI } from '../contexts/FieldUIContext'
-import { SnFieldSchema, RHFField } from '../../../types/form-schema'
+import { SnFieldSchema, SnFieldBaseProps } from '../../../types/form-schema'
 import {
   Select,
   SelectContent,
@@ -11,10 +11,8 @@ import {
   SelectValue,
 } from '../../ui/select'
 
-interface SnFieldChoiceProps {
+interface SnFieldChoiceProps extends Omit<SnFieldBaseProps<string>, "field"> {
   field: SnFieldSchema
-  rhfField: RHFField
-  onChange: (val: string) => void
 }
 
 export function SnFieldChoice({ field, rhfField, onChange }: SnFieldChoiceProps) {

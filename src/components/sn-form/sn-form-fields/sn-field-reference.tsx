@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, UIEvent, MouseEvent, useMemo } from 'react'
+import { useEffect, useRef, useState, UIEvent, MouseEvent, useMemo, useCallback } from 'react'
 import { cn } from '@kit/lib/utils'
 import { Button } from '@kit/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@kit/components/ui/popover'
@@ -10,7 +10,7 @@ import { useDebounce } from '../hooks/useDebounce'
 import { useFieldUI } from '../contexts/FieldUIContext'
 import { useReferenceSelected } from '../hooks/references/useReferenceSelected'
 import { useReferenceRecords, RefRecord } from '../hooks/references/useReferenceRecords'
-import { buildReferenceQuery } from '../../../utils/form-api'
+import { buildReferenceQuery, getTableDisplayFields } from '../../../utils/form-api'
 
 interface SnReferenceProps {
   field: SnFieldSchema
@@ -18,9 +18,17 @@ interface SnReferenceProps {
   formValues: Record<string, string>
   table: string
   recordSysId: string
+  dependentValue?: string
 }
 
-export function SnFieldReference({ field, onChange, formValues, table, recordSysId }: SnReferenceProps) {
+export function SnFieldReference({
+  field,
+  onChange,
+  formValues,
+  table,
+  recordSysId,
+  dependentValue,
+}: SnReferenceProps) {
   const { readonly } = useFieldUI()
   const [open, setOpen] = useState(false)
   const [search, setSearch] = useState('')
@@ -28,8 +36,31 @@ export function SnFieldReference({ field, onChange, formValues, table, recordSys
   const listRef = useRef<HTMLDivElement>(null)
   const wasOpen = useRef(false)
 
-  const ed = field.ed!
-  const isMultiple = field.type === 'glide_list'
+  const type = field.type
+  const isMultiple = type === 'glide_list'
+
+  const ed = useMemo(() => {
+    const clonedEd = { ...field.ed! }
+
+    if (type === 'document_id') {
+      clonedEd.reference = dependentValue ?? field.ed!.dependent_value!
+
+      const fetchDisplays = async () => {
+        try {
+          const displayFields = await getTableDisplayFields(clonedEd.reference)
+          let fields = displayFields
+          if (!fields || !fields.length) fields = ['james', 'number']
+          clonedEd.attributes = { ref_ac_columns: fields.join(';') }
+        } catch (error) {
+          console.error('Error fetching table display fields:', error)
+        }
+      }
+
+      fetchDisplays()
+    }
+
+    return clonedEd
+  }, [type, dependentValue, field.ed])
 
   const orderBy = useMemo(() => ed.attributes?.ref_ac_order_by?.split(';') || [], [ed.attributes?.ref_ac_order_by])
   const displayCols = useMemo(
@@ -70,6 +101,7 @@ export function SnFieldReference({ field, onChange, formValues, table, recordSys
     recordSysId,
     displayCols,
     formValues,
+    fetchable: open,
   })
 
   const fetchPageRef = useRef(fetchPage)
@@ -109,16 +141,27 @@ export function SnFieldReference({ field, onChange, formValues, table, recordSys
     }
   }
 
-  const handleClear = (e: MouseEvent) => {
-    e.stopPropagation()
-    setSelectedRecords([])
-    onChange(isMultiple ? [] : '')
-  }
+  const handleClear = useCallback(
+    (e?: MouseEvent) => {
+      if (e) e.stopPropagation()
+      setSelectedRecords([])
+      onChange(isMultiple ? [] : '')
+    },
+    [onChange, isMultiple]
+  )
+
+  const previousDependentValue = useRef<string | undefined>(dependentValue)
+  useEffect(() => {
+    if (previousDependentValue.current !== undefined && previousDependentValue.current !== dependentValue) {
+      handleClear()
+    }
+    previousDependentValue.current = dependentValue
+  }, [dependentValue, handleClear])
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <div className="relative w-full">
-        <PopoverTrigger asChild>
+      <div className="relative w-full overflow-hidden">
+        <PopoverTrigger asChild className="overflow-hidden">
           {isMultiple ? (
             <div
               role="combobox"
@@ -155,7 +198,7 @@ export function SnFieldReference({ field, onChange, formValues, table, recordSys
               variant="outline"
               role="combobox"
               aria-expanded={open}
-              className="w-full justify-between pr-8 min-h-[40px]"
+              className="w-full justify-between pr-8 min-h-[40px] overflow-hidden"
             >
               <span className="truncate text-left">
                 {selectedRecords[0]?.display_value || <span className="text-muted-foreground">{field.label}</span>}

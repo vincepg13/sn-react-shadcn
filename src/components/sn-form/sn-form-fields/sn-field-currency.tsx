@@ -24,10 +24,8 @@ export function SnFieldCurrency({ field, onChange }: SnFieldCurrencyProps) {
   const [currencyValue, setCurrencyValue] = useState<number|undefined>(field.currencyValue ? +field.currencyValue : 0)
 
   const handleChange = (code: string, value: number|undefined) => {
-    console.log('CURRENCY PART CHANGE', code, value)
     setCurrency(code)
     setCurrencyValue(value)
-    // rhfField.onChange(value)
     onChange(code + ';' + value)
   }
 

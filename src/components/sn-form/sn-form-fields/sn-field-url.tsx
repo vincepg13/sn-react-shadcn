@@ -1,16 +1,11 @@
 import { useState } from 'react'
-import { RHFField } from '@kit/types/form-schema'
+import { SnFieldBaseProps } from '@kit/types/form-schema'
 import { Input } from '@kit/components/ui/input'
 import { useFieldUI } from '../contexts/FieldUIContext'
 import { Button } from '@kit/components/ui/button'
 import { LockKeyhole, LockKeyholeOpen } from 'lucide-react'
 
-interface SnFieldUrlProps {
-  rhfField: RHFField
-  onChange: (val: string) => void
-}
-
-export function SnFieldUrl({ rhfField, onChange }: SnFieldUrlProps) {
+export function SnFieldUrl({ rhfField, onChange }: SnFieldBaseProps<string>) {
   const { readonly } = useFieldUI()
   const [locked, setLocked] = useState(!rhfField.value)
 

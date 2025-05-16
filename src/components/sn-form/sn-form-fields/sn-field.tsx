@@ -5,6 +5,7 @@ import { SnFieldChoice } from './sn-field-choice'
 import { SnFieldNumeric } from './SnFieldNumeric'
 import { SnFieldTextarea } from './sn-field-textarea'
 import { SnFieldCheckbox } from './sn-field-checkbox'
+import { SnFieldTableName } from './sn-field-table'
 import { ReactNode, useRef, useCallback } from 'react'
 import { SnFieldReference } from './sn-field-reference'
 import { FieldUIContext } from '../contexts/FieldUIContext'
@@ -26,7 +27,7 @@ interface SnFieldProps {
 }
 
 function SnFieldComponent({ field, fieldUIState, guid, table }: SnFieldProps) {
-  const { control, getValues, setValue } = useFormContext()
+  const { control, getValues, setValue, watch } = useFormContext()
   const { runClientScriptsForFieldChange, fieldChangeHandlers } = useClientScripts()
   const { runUiPoliciesForField } = useUiPoliciesContext()
 
@@ -40,7 +41,7 @@ function SnFieldComponent({ field, fieldUIState, guid, table }: SnFieldProps) {
 
   const handleChange = useCallback(
     (newValue: SnFieldPrimitive) => {
-      console.log("SN FIELD CHANGE", field.name, newValue)
+      console.log('SN FIELD CHANGE', field.name, newValue)
       setValue(field.name, newValue, { shouldDirty: true, shouldTouch: true })
       runClientScriptsForFieldChange(field.name, oldValueRef.current, newValue, false)
       runUiPoliciesForField(field.name)
@@ -59,9 +60,9 @@ function SnFieldComponent({ field, fieldUIState, guid, table }: SnFieldProps) {
         name={field.name}
         control={control}
         render={({ field: rhfField }) => {
-          const handleFocus = () => console.log("FOCUS CHANGE", field.name)
+          const handleFocus = () => {}
 
-          const input = renderFieldComponent(table, guid, field, rhfField, handleChange, handleFocus, getValues())
+          const input = renderFieldComponent(table, guid, field, rhfField, handleChange, handleFocus, getValues(), watch)
 
           if (!input) return <></>
 
@@ -91,9 +92,11 @@ function renderFieldComponent(
   rhfField: RHFField,
   handleChange: (value: SnFieldPrimitive) => void,
   handleFocus: () => void,
-  formValues: Record<string, string>
+  formValues: Record<string, string>,
+  watch: ReturnType<typeof useFormContext>['watch']
 ): ReactNode {
   switch (field.type) {
+    case 'email':
     case 'string':
       if (field.max_length && field.max_length >= 200) {
         return <SnFieldTextarea field={field} rhfField={rhfField} onChange={handleChange} onFocus={handleFocus} />
@@ -103,8 +106,14 @@ function renderFieldComponent(
       return <SnFieldChoice field={field} rhfField={rhfField} onChange={handleChange} />
     case 'boolean':
       return <SnFieldCheckbox field={field} rhfField={rhfField} onChange={handleChange} />
+    case 'table_name':
+      return <SnFieldTableName field={field} rhfField={rhfField} onChange={handleChange} />
     case 'reference':
-    case 'glide_list':
+    case 'document_id':
+    case 'glide_list': {
+      const depField = field.dependentField || ''
+      const depValue = depField ? watch(depField) : undefined
+      
       return (
         <SnFieldReference
           field={field}
@@ -112,8 +121,10 @@ function renderFieldComponent(
           recordSysId={guid}
           formValues={formValues}
           onChange={handleChange}
+          dependentValue={depValue}
         />
       )
+    }
     case 'glide_date':
     case 'glide_date_time':
       return <SnFieldDate field={field} rhfField={rhfField} onChange={handleChange} />

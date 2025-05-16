@@ -19,6 +19,7 @@ export function useReferenceRecords({
   recordSysId,
   displayCols,
   formValues,
+  fetchable = false,
 }: {
   ed: SnRefFieldEd
   table: string
@@ -26,6 +27,7 @@ export function useReferenceRecords({
   recordSysId: string
   displayCols: string[]
   formValues: Record<string, string>
+  fetchable: boolean
 }) {
   const [records, setRecords] = useState<RefRecord[]>([])
   const [page, setPage] = useState(0)
@@ -34,7 +36,8 @@ export function useReferenceRecords({
 
   const fetchPage = useCallback(
     async (q: string, pageNumber: number, reset = false) => {
-      if (loading || (pageNumber > 0 && !hasMore)) return
+      if (!fetchable) setRecords([])
+      if (loading || !fetchable || (pageNumber > 0 && !hasMore)) return
 
       setLoading(true)
       try {
@@ -53,8 +56,7 @@ export function useReferenceRecords({
 
         const mapped = results.map((item: RefRecordRaw) => ({
           value: item.sys_id,
-          display_value:
-            item[displayCols[0]] || item.name || item.title || item.sys_id,
+          display_value: item[displayCols[0]] || item.name || item.title || item.sys_id,
           primary: item[displayCols[1]] || '',
           secondary: item[displayCols[2]] || '',
           raw: item,
@@ -69,17 +71,7 @@ export function useReferenceRecords({
         setLoading(false)
       }
     },
-    [
-      loading,
-      hasMore,
-      ed.reference,
-      ed.qualifier,
-      table,
-      fieldName,
-      recordSysId,
-      displayCols,
-      formValues,
-    ]
+    [fetchable, loading, hasMore, ed.reference, ed.qualifier, table, fieldName, recordSysId, displayCols, formValues]
   )
 
   return {

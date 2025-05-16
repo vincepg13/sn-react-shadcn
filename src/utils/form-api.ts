@@ -19,6 +19,15 @@ export function postFormAction(table: string, recordID: string, action: string, 
   })
 }
 
+export async function getTableDisplayFields(table: string): Promise<string[]> {
+  const axios = getAxiosInstance()
+  return axios
+    .get(`/api/now/table/sys_dictionary?sysparm_query=name=${table}^display=true`)
+    .then((res) => {
+      return res.data.result.map((item: {element: string}) => item.element)
+    })
+}
+
 export function buildReferenceQuery({
   columns,
   term,

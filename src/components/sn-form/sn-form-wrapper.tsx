@@ -33,6 +33,7 @@ export function SnFormWrapper({ api, table, guid }: SnFormProps) {
     const getForm = async () => {
       const controller = new AbortController()
       try {
+        setLoading(true)
         const response = await getFormData(api, controller)
         if (response.status === 200) {
           console.log('Form data:', response.data)

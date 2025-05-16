@@ -38,7 +38,7 @@ const _clientScript = z.object({
 const _ed = z.object({
   reference: z.string(),
   qualifier: z.string(),
-  dependent_field: z.string().optional(),
+  dependent_value: z.string().optional(),
   defaultOperator: z.string().optional(),
   searchField: z.string().optional(),
   attributes: z.object({
@@ -71,6 +71,7 @@ const _formField = z.object({
   currencyCode: z.string().optional(),
   currencyValue: z.string().optional(),
   currencyCodes: _currencyCode.array().optional(),
+  dependentField: z.string().optional(),
   choices: z
     .array(
       z.object({

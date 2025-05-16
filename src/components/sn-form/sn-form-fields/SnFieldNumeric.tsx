@@ -5,7 +5,7 @@ import { Button } from '../../ui/button'
 import { Input } from '../../ui/input'
 import { useFieldUI } from '../contexts/FieldUIContext'
 
-export interface NumberInputProps extends Omit<NumericFormatProps, 'value' | 'onValueChange'> {
+interface NumberInputProps extends Omit<NumericFormatProps, 'value' | 'onValueChange'> {
   stepper?: number
   thousandSeparator?: string
   placeholder?: string
