@@ -147,3 +147,8 @@ export type SnSection = {
   _bootstrap_cells: number
   columns: SnSectionColumn[]
 }
+
+export type SnFormApis = {
+  formData: string,
+  refDisplay?: string,
+}

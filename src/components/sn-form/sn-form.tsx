@@ -18,6 +18,7 @@ import {
   FieldUIState,
   SnClientScript,
   SnFieldsSchema,
+  SnFormApis,
   SnFormConfig,
   SnPolicy,
   SnSection,
@@ -33,6 +34,7 @@ interface SnFormProps {
   clientScripts: SnClientScript[]
   uiPolicies: SnPolicy[]
   sections: SnSection[]
+  apis?: SnFormApis
 }
 
 export function SnForm({
@@ -44,6 +46,7 @@ export function SnForm({
   clientScripts,
   uiPolicies,
   sections,
+  apis,
 }: SnFormProps) {
   const [fieldUIState, setFieldUIState] = useState<Record<string, FieldUIState>>({})
   const [hasReset, setHasReset] = useState(false)
@@ -129,6 +132,7 @@ export function SnForm({
         runClientScriptsForFieldChange,
         fieldChangeHandlers: fieldChangeHandlersRef.current,
         gForm,
+        apis,
       }}
     >
       <SnUiPolicyContext.Provider value={{ formConfig, runUiPolicies, runUiPoliciesForField }}>

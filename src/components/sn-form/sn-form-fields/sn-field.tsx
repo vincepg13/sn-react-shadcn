@@ -17,6 +17,7 @@ import { SnFieldSchema, RHFField, FieldUIState, SnFieldPrimitive } from '../../.
 import { SnFieldTime } from './sn-field-time'
 import { SnFieldUrl } from './sn-field-url'
 import { SnFieldCurrency } from './sn-field-currency'
+import { SnFieldHtml } from './sn-field-html'
 
 interface SnFieldProps {
   field: SnFieldSchema
@@ -62,7 +63,16 @@ function SnFieldComponent({ field, fieldUIState, guid, table }: SnFieldProps) {
         render={({ field: rhfField }) => {
           const handleFocus = () => {}
 
-          const input = renderFieldComponent(table, guid, field, rhfField, handleChange, handleFocus, getValues(), watch)
+          const input = renderFieldComponent(
+            table,
+            guid,
+            field,
+            rhfField,
+            handleChange,
+            handleFocus,
+            getValues(),
+            watch
+          )
 
           if (!input) return <></>
 
@@ -113,7 +123,7 @@ function renderFieldComponent(
     case 'glide_list': {
       const depField = field.dependentField || ''
       const depValue = depField ? watch(depField) : undefined
-      
+
       return (
         <SnFieldReference
           field={field}
@@ -149,6 +159,8 @@ function renderFieldComponent(
           fixedDecimalScale={field.type === 'decimal'}
         />
       )
+    case 'html':
+      return <SnFieldHtml rhfField={rhfField} onChange={handleChange}/>
     default:
       return null
   }

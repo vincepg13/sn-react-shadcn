@@ -2,14 +2,14 @@ import { SnForm } from './sn-form'
 import { useEffect, useState } from 'react'
 import { AlertCircle } from 'lucide-react'
 import { getFormData } from '@kit/utils/form-api'
-import { SnSection } from '@kit/types/form-schema'
+import { SnFormApis, SnSection } from '@kit/types/form-schema'
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert'
 import { SnUiAction, SnFieldsSchema, SnFormConfig, SnClientScript, SnPolicy } from '@kit/types/form-schema'
 
 interface SnFormProps {
   table: string
   guid: string
-  api: string
+  apis: SnFormApis
 }
 
 function unionClientScripts(scripts: Record<string, SnClientScript[]>) {
@@ -19,7 +19,7 @@ function unionClientScripts(scripts: Record<string, SnClientScript[]>) {
   }, [] as SnClientScript[])
 }
 
-export function SnFormWrapper({ api, table, guid }: SnFormProps) {
+export function SnFormWrapper({ apis, table, guid }: SnFormProps) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [uiActions, setUiActions] = useState<SnUiAction[]>([])
@@ -33,8 +33,9 @@ export function SnFormWrapper({ api, table, guid }: SnFormProps) {
     const getForm = async () => {
       const controller = new AbortController()
       try {
+        console.log('Fetching form data...', apis.formData)
         setLoading(true)
-        const response = await getFormData(api, controller)
+        const response = await getFormData(apis.formData, controller)
         if (response.status === 200) {
           console.log('Form data:', response.data)
           const form = response.data.result
@@ -53,7 +54,7 @@ export function SnFormWrapper({ api, table, guid }: SnFormProps) {
       }
     }
     getForm()
-  }, [api, table, guid])
+  }, [apis.formData, table, guid])
 
   if (loading) return <div>Loading form...</div>
 
@@ -85,6 +86,7 @@ export function SnFormWrapper({ api, table, guid }: SnFormProps) {
           clientScripts={clientScripts}
           uiPolicies={uiPolicies}
           sections={sections}
+          apis={apis}
         ></SnForm>
       )}
     </>

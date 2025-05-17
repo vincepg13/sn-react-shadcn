@@ -4,7 +4,7 @@ import { Button } from '@kit/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@kit/components/ui/popover'
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@kit/components/ui/command'
 import { Check, ChevronsUpDown, Loader2, X } from 'lucide-react'
-
+import { useClientScripts } from '../contexts/SnClientScriptContext'
 import { SnFieldSchema } from '@kit/types/form-schema'
 import { useDebounce } from '../hooks/useDebounce'
 import { useFieldUI } from '../contexts/FieldUIContext'
@@ -36,6 +36,7 @@ export function SnFieldReference({
   const listRef = useRef<HTMLDivElement>(null)
   const wasOpen = useRef(false)
 
+  const { apis } = useClientScripts()
   const type = field.type
   const isMultiple = type === 'glide_list'
 
@@ -47,7 +48,7 @@ export function SnFieldReference({
 
       const fetchDisplays = async () => {
         try {
-          const displayFields = await getTableDisplayFields(clonedEd.reference)
+          const displayFields = await getTableDisplayFields(clonedEd.reference, apis?.refDisplay)
           let fields = displayFields
           if (!fields || !fields.length) fields = ['james', 'number']
           clonedEd.attributes = { ref_ac_columns: fields.join(';') }
@@ -60,7 +61,7 @@ export function SnFieldReference({
     }
 
     return clonedEd
-  }, [type, dependentValue, field.ed])
+  }, [type, dependentValue, field.ed, apis?.refDisplay])
 
   const orderBy = useMemo(() => ed.attributes?.ref_ac_order_by?.split(';') || [], [ed.attributes?.ref_ac_order_by])
   const displayCols = useMemo(

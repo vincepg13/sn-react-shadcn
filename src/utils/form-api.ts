@@ -19,47 +19,66 @@ export function postFormAction(table: string, recordID: string, action: string, 
   })
 }
 
-export async function getTableDisplayFields(table: string): Promise<string[]> {
+export async function getTableDisplayFields(table: string, customApi?: string) {
+  if (!customApi) return _getTableDisplayFieldDictionary(table)
+
+  try {
+    var t = await _getTableDisplayFieldCustom(customApi, table)
+    return t
+  } catch (error) {
+    console.error('Error fetching custom display fields, falling back to dictionary:', error)
+  }
+  return _getTableDisplayFieldDictionary(table)
+}
+
+async function _getTableDisplayFieldCustom(fieldDisplayApi: string, table: string): Promise<string[]> {
   const axios = getAxiosInstance()
-  return axios
-    .get(`/api/now/table/sys_dictionary?sysparm_query=name=${table}^display=true`)
-    .then((res) => {
-      return res.data.result.map((item: {element: string}) => item.element)
-    })
+  const customDisplay = await axios.get(`${fieldDisplayApi}/${table}`).then(res => {
+    return res.data.result.display
+  })
+  return [customDisplay]
+}
+
+async function _getTableDisplayFieldDictionary(table: string): Promise<string[]> {
+  const axios = getAxiosInstance()
+  const dictionaryDisplay = await axios.get(`/api/now/table/sys_dictionary?sysparm_query=name=${table}^display=true`).then(res => {
+    return res.data.result.map((item: { element: string }) => item.element)
+  })
+  return dictionaryDisplay
 }
 
 export function buildReferenceQuery({
   columns,
   term,
-  operator = "LIKE",
+  operator = 'LIKE',
   orderBy,
   excludeValues,
 }: {
-  columns: string[];
-  term: string;
-  operator?: string;
-  orderBy?: string[];
-  excludeValues?: string[];
+  columns: string[]
+  term: string
+  operator?: string
+  orderBy?: string[]
+  excludeValues?: string[]
 }): string {
-  const queryParts = columns.map((col) => {
-    let q = `${col}${operator}${term}`;
-    if (term === "") q += `^${col}ISNOTEMPTY`;
-    return q;
-  });
+  const queryParts = columns.map(col => {
+    let q = `${col}${operator}${term}`
+    if (term === '') q += `^${col}ISNOTEMPTY`
+    return q
+  })
 
-  let query = queryParts.join("^NQ");
+  let query = queryParts.join('^NQ')
 
   if (excludeValues && excludeValues.length > 0) {
-    query += `^sys_idNOT IN${excludeValues.join(",")}`;
+    query += `^sys_idNOT IN${excludeValues.join(',')}`
   }
 
   if (orderBy && orderBy.length > 0) {
-    orderBy.forEach((col) => {
-      query += `^ORDERBY${col}`;
-    });
+    orderBy.forEach(col => {
+      query += `^ORDERBY${col}`
+    })
   }
 
-  return query + "^EQ";
+  return query + '^EQ'
 }
 
 export function getRefData({
@@ -67,25 +86,25 @@ export function getRefData({
   targetTable,
   targetField,
   targetSysId,
-  q, 
+  q,
   qualifier,
   requiredFields,
   recordValues,
   count = 20,
   start = 0,
 }: {
-  table: string;
-  targetTable: string;
-  targetField: string;
-  targetSysId: string;
-  q: string;
-  qualifier: string;
-  requiredFields?: string[];
-  recordValues?: Record<string, any>;
-  count?: number;
-  start?: number;
+  table: string
+  targetTable: string
+  targetField: string
+  targetSysId: string
+  q: string
+  qualifier: string
+  requiredFields?: string[]
+  recordValues?: Record<string, any>
+  count?: number
+  start?: number
 }): Promise<any[]> {
-  const axios = getAxiosInstance();
+  const axios = getAxiosInstance()
 
   const payload: Record<string, any> = {
     start,
@@ -97,19 +116,17 @@ export function getRefData({
     q,
     qualifier,
     r: qualifier,
-  };
+  }
 
   if (requiredFields?.length) {
-    payload.required_fields = requiredFields.join(":");
+    payload.required_fields = requiredFields.join(':')
   }
 
   if (recordValues) {
-    payload.sysparm_record_values = recordValues;
+    payload.sysparm_record_values = recordValues
   }
 
-  return axios
-    .post("/angular.do?sysparm_type=sp_ref_list_data&sysparm_cancelable=true", payload)
-    .then((res) => {
-      return res.data?.items || []
-    });
+  return axios.post('/angular.do?sysparm_type=sp_ref_list_data&sysparm_cancelable=true', payload).then(res => {
+    return res.data?.items || []
+  })
 }
