@@ -15,7 +15,6 @@ export const ImagedFixedSrc = BaseImage.extend({
 
           const baseUrl = typeof window !== 'undefined' ? window.location.origin : ''
           const fullSrc = `${baseUrl}/${src.replace(/^\/+/, '')}`
-          console.log("IMAGE ATTRIBUTE MODIFIED", src, fullSrc)
           return { src: fullSrc }
         },
       },

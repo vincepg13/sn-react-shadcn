@@ -18,6 +18,7 @@ import { SnFieldTime } from './sn-field-time'
 import { SnFieldUrl } from './sn-field-url'
 import { SnFieldCurrency } from './sn-field-currency'
 import { SnFieldHtml } from './sn-field-html'
+import { SnFieldFieldList } from './sn-field-field-list'
 
 interface SnFieldProps {
   field: SnFieldSchema
@@ -42,7 +43,6 @@ function SnFieldComponent({ field, fieldUIState, guid, table }: SnFieldProps) {
 
   const handleChange = useCallback(
     (newValue: SnFieldPrimitive) => {
-      console.log('SN FIELD CHANGE', field.name, newValue)
       setValue(field.name, newValue, { shouldDirty: true, shouldTouch: true })
       runClientScriptsForFieldChange(field.name, oldValueRef.current, newValue, false)
       runUiPoliciesForField(field.name)
@@ -81,7 +81,8 @@ function SnFieldComponent({ field, fieldUIState, guid, table }: SnFieldProps) {
               {field.type !== 'boolean' && (
                 <FormLabel>
                   <span>
-                    {field.label} {fieldUI.mandatory && <span className="text-red-500">*</span>}
+                    {field.label}{' '}
+                    {fieldUI.mandatory && <span className={rhfField.value ? 'text-grey-500' : 'text-red-500'}>*</span>}
                   </span>
                 </FormLabel>
               )}
@@ -105,6 +106,9 @@ function renderFieldComponent(
   formValues: Record<string, string>,
   watch: ReturnType<typeof useFormContext>['watch']
 ): ReactNode {
+  const depField = field.dependentField || ''
+  const depValue = depField ? watch(depField) : undefined
+
   switch (field.type) {
     case 'email':
     case 'string':
@@ -121,9 +125,6 @@ function renderFieldComponent(
     case 'reference':
     case 'document_id':
     case 'glide_list': {
-      const depField = field.dependentField || ''
-      const depValue = depField ? watch(depField) : undefined
-
       return (
         <SnFieldReference
           field={field}
@@ -160,7 +161,9 @@ function renderFieldComponent(
         />
       )
     case 'html':
-      return <SnFieldHtml rhfField={rhfField} onChange={handleChange}/>
+      return <SnFieldHtml rhfField={rhfField} onChange={handleChange} />
+    case 'field_name':
+      return <SnFieldFieldList field={field} rhfField={rhfField} onChange={handleChange} dependentValue={depValue}/>
     default:
       return null
   }

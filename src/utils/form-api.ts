@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { getAxiosInstance } from './axios-client'
-import { SnFieldsSchema } from '@kit/types/form-schema'
+import { SnFieldChoiceItem, SnFieldsSchema } from '@kit/types/form-schema'
 
 export function getFormData(metadataApi: string, controller: AbortController): Promise<any> {
   const axios = getAxiosInstance()
@@ -41,10 +41,27 @@ async function _getTableDisplayFieldCustom(fieldDisplayApi: string, table: strin
 
 async function _getTableDisplayFieldDictionary(table: string): Promise<string[]> {
   const axios = getAxiosInstance()
-  const dictionaryDisplay = await axios.get(`/api/now/table/sys_dictionary?sysparm_query=name=${table}^display=true`).then(res => {
-    return res.data.result.map((item: { element: string }) => item.element)
-  })
+  const dictionaryDisplay = await axios
+    .get(`/api/now/table/sys_dictionary?sysparm_query=name=${table}^display=true`)
+    .then(res => {
+      return res.data.result.map((item: { element: string }) => item.element)
+    })
   return dictionaryDisplay
+}
+
+export async function getFieldList(table: string, controller: AbortController): Promise<SnFieldChoiceItem[]> {
+  let fieldList: SnFieldChoiceItem[] = []
+  const axios = getAxiosInstance()
+  try {
+    fieldList = await axios
+      .get(`/angular.do?sysparm_type=table_fields&exclude_formatters=true&fd_table=${table}`, {
+        signal: controller.signal,
+      })
+      .then(res => res.data)
+  } catch (error) {
+    console.error('Error fetching field list:', error)
+  }
+  return fieldList
 }
 
 export function buildReferenceQuery({

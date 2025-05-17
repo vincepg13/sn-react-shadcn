@@ -1,4 +1,4 @@
-import { z } from 'zod'
+import { boolean, z } from 'zod'
 import { SnRow } from './table-schema'
 import { ControllerRenderProps } from 'react-hook-form'
 import { getAllPredicates } from '@kit/types/predicate-definitions'
@@ -54,6 +54,14 @@ const _currencyCode = z.object({
   symbol: z.string(),
 })
 
+const _fieldChoiceItem = z.object({
+  name: z.string(),
+  label: z.string(),
+  type: z.string(),
+  display: boolean(),
+  value: z.string(),
+})
+
 const _formField = z.object({
   name: z.string(),
   label: z.string(),
@@ -72,14 +80,7 @@ const _formField = z.object({
   currencyValue: z.string().optional(),
   currencyCodes: _currencyCode.array().optional(),
   dependentField: z.string().optional(),
-  choices: z
-    .array(
-      z.object({
-        label: z.string(),
-        value: z.string(),
-      })
-    )
-    .optional(),
+  choices: z.array(_fieldChoiceItem).optional(),
 })
 
 const actionEnum = ['true', 'false', 'ignore'] as const
@@ -120,7 +121,7 @@ export type SnFieldsSchema = Record<string, SnFieldSchema>
 export type SnRecordPickerItem = z.infer<typeof _recordPickerItem>
 export type SnRecordPickerList = SnRecordPickerItem[]
 export type SnRefFieldEd = z.infer<typeof _ed>
-
+export type SnFieldChoiceItem = z.infer<typeof _fieldChoiceItem>
 export type SnFormConfig = z.infer<typeof _formConfig>
 export type FormData = Record<string, string | boolean | number | null>
 export type RHFField = ControllerRenderProps<FormData, string>
@@ -149,6 +150,6 @@ export type SnSection = {
 }
 
 export type SnFormApis = {
-  formData: string,
-  refDisplay?: string,
+  formData: string
+  refDisplay?: string
 }
