@@ -13,6 +13,7 @@ interface SnFormActionsProps {
   formFields: SnFieldsSchema
   handleSubmit: ReturnType<typeof useFormContext>['handleSubmit']
   onValidationError: (errors: FieldErrors) => void
+  runUiActionCallbacks: (type:'pre'|'post') => Promise<void>
 }
 
 export function SnFormActions({
@@ -22,6 +23,7 @@ export function SnFormActions({
   formFields,
   handleSubmit,
   onValidationError,
+  runUiActionCallbacks,
 }: SnFormActionsProps) {
   const { getValues } = useFormContext()
   const [isLoading, setIsLoading] = useState<string | null>(null)
@@ -30,9 +32,9 @@ export function SnFormActions({
     try {
       setIsLoading(action.sys_id)
 
+      await runUiActionCallbacks('pre')
       const values = getValues()
       const payload = buildSubmissionPayload(formFields, values)
-      // console.log("UI ACTION PAYLOAD", payload)
 
       await triggerNativeUIAction({
         table,
@@ -40,6 +42,8 @@ export function SnFormActions({
         actionSysId: action.sys_id,
         data: payload,
       })
+
+      await runUiActionCallbacks('post')
 
       toast.success(`${action.name} executed successfully`)
     } catch (e) {

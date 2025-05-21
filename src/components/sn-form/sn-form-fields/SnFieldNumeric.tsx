@@ -45,11 +45,11 @@ export const SnFieldNumeric = forwardRef<HTMLInputElement, NumberInputProps>(
     const [value, setValue] = useState<number | undefined>(controlledValue ?? defaultValue)
 
     const handleIncrement = useCallback(() => {
-      setValue(prev => (prev === undefined ? stepper ?? 1 : Math.min(prev + (stepper ?? 1), max)))
+      setValue(prev => (prev === undefined ? stepper ?? 1 : Math.min(+prev + (stepper ?? 1), max)))
     }, [stepper, max])
 
     const handleDecrement = useCallback(() => {
-      setValue(prev => (prev === undefined ? -(stepper ?? 1) : Math.max(prev - (stepper ?? 1), min)))
+      setValue(prev => (prev === undefined ? -(stepper ?? 1) : Math.max(+prev - (stepper ?? 1), min)))
     }, [stepper, min])
 
     useEffect(() => {

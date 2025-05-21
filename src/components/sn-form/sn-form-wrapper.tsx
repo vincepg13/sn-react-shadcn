@@ -28,6 +28,9 @@ export function SnFormWrapper({ apis, table, guid }: SnFormProps) {
   const [clientScripts, setClientScripts] = useState<SnClientScript[]>([])
   const [uiPolicies, setUiPolicies] = useState<SnPolicy[]>([])
   const [sections, setSections] = useState<SnSection[]>([])
+  const [attachmentGuid, setAttachmentGuid] = useState<string>(guid)
+
+  
 
   useEffect(() => {
     const getForm = async () => {
@@ -45,6 +48,7 @@ export function SnFormWrapper({ apis, table, guid }: SnFormProps) {
           setClientScripts(unionClientScripts(form.client_script))
           setUiPolicies(form.policy || [])
           setSections(form._sections || [])
+          setAttachmentGuid(form._attachment_guid || guid)
         }
       } catch (error) {
         setError('Error fetching form data, please make sure you have the form metadata api included in your instance')
@@ -79,7 +83,7 @@ export function SnFormWrapper({ apis, table, guid }: SnFormProps) {
       {!error && (
         <SnForm
           table={table}
-          guid={guid}
+          guid={attachmentGuid}
           formFields={formFields!}
           uiActions={uiActions}
           formConfig={formConfig!}

@@ -2,11 +2,17 @@ import { useFormContext } from 'react-hook-form'
 import { SnFieldDate } from './sn-field-date'
 import { SnFieldInput } from './sn-field-input'
 import { SnFieldChoice } from './sn-field-choice'
+import { SnFieldTime } from './sn-field-time'
+import { SnFieldUrl } from './sn-field-url'
+import { SnFieldCurrency } from './sn-field-currency'
+import { SnFieldHtml } from './sn-field-html'
+import { SnFieldFieldList } from './sn-field-field-list'
+import { SnFieldMedia } from './sn-field-media'
 import { SnFieldNumeric } from './SnFieldNumeric'
 import { SnFieldTextarea } from './sn-field-textarea'
 import { SnFieldCheckbox } from './sn-field-checkbox'
 import { SnFieldTableName } from './sn-field-table'
-import { ReactNode, useRef, useCallback } from 'react'
+import { ReactNode, useRef, useCallback, memo } from 'react'
 import { SnFieldReference } from './sn-field-reference'
 import { FieldUIContext } from '../contexts/FieldUIContext'
 import { useEffectiveFieldState } from '../hooks/useFieldUiState'
@@ -14,11 +20,6 @@ import { useClientScripts } from '../contexts/SnClientScriptContext'
 import { useUiPoliciesContext } from '../contexts/SnUiPolicyContext'
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '../../ui/form'
 import { SnFieldSchema, RHFField, FieldUIState, SnFieldPrimitive } from '../../../types/form-schema'
-import { SnFieldTime } from './sn-field-time'
-import { SnFieldUrl } from './sn-field-url'
-import { SnFieldCurrency } from './sn-field-currency'
-import { SnFieldHtml } from './sn-field-html'
-import { SnFieldFieldList } from './sn-field-field-list'
 
 interface SnFieldProps {
   field: SnFieldSchema
@@ -38,11 +39,13 @@ function SnFieldComponent({ field, fieldUIState, guid, table }: SnFieldProps) {
   const fieldUI = useEffectiveFieldState({
     field,
     uiState: fieldUIState,
-    fieldVal: String(getValues()[field.name]),
+    fieldVal: String(getValues(field.name) ?? ''),
+
   })
 
   const handleChange = useCallback(
     (newValue: SnFieldPrimitive) => {
+      // console.log("SNFC", field.name, newValue)
       setValue(field.name, newValue, { shouldDirty: true, shouldTouch: true })
       runClientScriptsForFieldChange(field.name, oldValueRef.current, newValue, false)
       runUiPoliciesForField(field.name)
@@ -164,9 +167,13 @@ function renderFieldComponent(
       return <SnFieldHtml rhfField={rhfField} onChange={handleChange} />
     case 'field_name':
       return <SnFieldFieldList field={field} rhfField={rhfField} onChange={handleChange} dependentValue={depValue}/>
+    case 'user_image':
+      return <SnFieldMedia table={table} attachmentGuid={guid} field={field} rhfField={rhfField} onChange={handleChange} extension='.iix' />
+      case 'video':
+      return <SnFieldMedia table={table} attachmentGuid={guid} field={field} rhfField={rhfField} onChange={handleChange} extension='.vvx' />
     default:
       return null
   }
 }
 
-export const SnField = SnFieldComponent
+export const SnField = memo(SnFieldComponent)

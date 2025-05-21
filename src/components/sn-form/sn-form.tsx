@@ -24,6 +24,7 @@ import {
   SnSection,
   SnUiAction,
 } from '@kit/types/form-schema'
+import { SnFormLifecycleContext } from './contexts/SnFormLifecycleContext'
 
 interface SnFormProps {
   table: string
@@ -48,8 +49,8 @@ export function SnForm({
   sections,
   apis,
 }: SnFormProps) {
+  console.log("FORM RENDER")
   const [fieldUIState, setFieldUIState] = useState<Record<string, FieldUIState>>({})
-  const [hasReset, setHasReset] = useState(false)
   const fieldTabMapRef = useRef<Record<string, string>>({})
   const [overrideTab, setOverrideTab] = useState<string | undefined>()
   const fieldChangeHandlersRef = useRef<Record<string, (val: any) => void>>({})
@@ -80,9 +81,14 @@ export function SnForm({
     return z.object(shape)
   }, [formFields, fieldUIState])
 
+  const defaultValues = useMemo(() => {
+    const raw = Object.fromEntries(Object.entries(formFields).map(([name, field]) => [name, field.value ?? '']))
+    return buildNormalizedValues(formFields, raw)
+  }, [formFields])
+
   const form = useForm({
     resolver: schema ? zodResolver(schema) : undefined,
-    defaultValues: {},
+    defaultValues,
     mode: 'onBlur',
   })
 
@@ -105,18 +111,37 @@ export function SnForm({
     formConfig,
   })
 
-  useEffect(() => {
-    if (!schema || !formFields || hasReset) return
-    const values = form.getValues()
+  function buildNormalizedValues(fields: SnFieldsSchema, currentValues: Record<string, any>) {
+    const values: Record<string, any> = { ...currentValues }
 
-    form.reset(values, {
+    for (const field of Object.values(fields)) {
+      const fieldValue = currentValues[field.name]
+
+      if (field.type === 'user_image') {
+        const hasDisplayValueMismatch =
+          field.displayValue && (!fieldValue || !field.displayValue.startsWith(fieldValue))
+
+        if (hasDisplayValueMismatch) {
+          values[field.name] = field.displayValue.replace(/\.iix$/, '')
+        }
+      }
+    }
+
+    return values
+  }
+
+  useEffect(() => {
+    if (!formFields || !schema) return
+
+    const rawValues = form.getValues()
+    const normalizedValues = buildNormalizedValues(formFields, rawValues)
+
+    form.reset(normalizedValues, {
       keepErrors: true,
       keepDirty: true,
       keepTouched: true,
     })
-
-    setHasReset(true)
-  }, [schema, formFields, hasReset, form])
+  }, [])
 
   const handleValidationError = (errors: FieldErrors) => {
     const firstErrorField = Object.keys(errors)[0]
@@ -126,56 +151,80 @@ export function SnForm({
     }
   }
 
+  //Expose Lifecycle Callbacks
+  const preUiActionCallbacksRef = useRef<Map<string, () => void | Promise<void>>>(new Map())
+  const registerPreUiActionCallback = (fieldKey: string, cb: () => void | Promise<void>) => {
+    preUiActionCallbacksRef.current.set(fieldKey, cb)
+  }
+  const postUiActionCallbacksRef = useRef<Map<string, () => void | Promise<void>>>(new Map())
+  const registerPostUiActionCallback = (fieldKey: string, cb: () => void | Promise<void>) => {
+    preUiActionCallbacksRef.current.set(fieldKey, cb)
+  }
+  const runUiActionCallbacks = async (type: 'pre' | 'post') => {
+    const isPost = type == 'post'
+    const callbacksMap = isPost ? postUiActionCallbacksRef.current : preUiActionCallbacksRef.current
+    const callbacks = [...callbacksMap]
+
+    for (const [, cb] of callbacks) {
+      await cb()
+    }
+
+    callbacksMap.clear()
+  }
+
   return (
-    <SnClientScriptContext.Provider
-      value={{
-        runClientScriptsForFieldChange,
-        fieldChangeHandlers: fieldChangeHandlersRef.current,
-        gForm,
-        apis,
-      }}
-    >
-      <SnUiPolicyContext.Provider value={{ formConfig, runUiPolicies, runUiPoliciesForField }}>
-        <FormProvider {...form}>
-          <Toaster position="top-center" expand={true} richColors />
-          <div className="w-full px-4">
-            <form className="w-full">
-              <SnFormLayout
-                sections={sections}
-                overrideTab={overrideTab}
-                clearOverrideTab={() => setOverrideTab(undefined)}
-                onFieldTabMap={map => {
-                  fieldTabMapRef.current = map
-                }}
-                renderField={name => {
-                  const field = formFields[name]
-                  if (!field) return null
+    <SnFormLifecycleContext.Provider value={{ registerPreUiActionCallback, registerPostUiActionCallback }}>
+      <SnClientScriptContext.Provider
+        value={{
+          runClientScriptsForFieldChange,
+          fieldChangeHandlers: fieldChangeHandlersRef.current,
+          gForm,
+          apis,
+        }}
+      >
+        <SnUiPolicyContext.Provider value={{ formConfig, runUiPolicies, runUiPoliciesForField }}>
+          <FormProvider {...form}>
+            <Toaster position="top-center" expand={true} richColors />
+            <div className="w-full px-4">
+              <form className="w-full">
+                <SnFormLayout
+                  sections={sections}
+                  overrideTab={overrideTab}
+                  clearOverrideTab={() => setOverrideTab(undefined)}
+                  onFieldTabMap={map => {
+                    fieldTabMapRef.current = map
+                  }}
+                  renderField={name => {
+                    const field = formFields[name]
+                    if (!field) return null
 
-                  return (
-                    <SnField
-                      key={field.name}
-                      field={field}
-                      fieldUIState={fieldUIState}
-                      updateFieldUI={updateFieldUI}
-                      table={table}
-                      guid={guid}
-                    />
-                  )
-                }}
-              />
+                    return (
+                      <SnField
+                        key={field.name}
+                        field={field}
+                        fieldUIState={fieldUIState}
+                        updateFieldUI={updateFieldUI}
+                        table={table}
+                        guid={guid}
+                      />
+                    )
+                  }}
+                />
 
-              <SnFormActions
-                table={table}
-                recordID={guid}
-                uiActions={uiActions}
-                formFields={formFields}
-                handleSubmit={form.handleSubmit}
-                onValidationError={handleValidationError}
-              />
-            </form>
-          </div>
-        </FormProvider>
-      </SnUiPolicyContext.Provider>
-    </SnClientScriptContext.Provider>
+                <SnFormActions
+                  table={table}
+                  recordID={guid}
+                  uiActions={uiActions}
+                  formFields={formFields}
+                  handleSubmit={form.handleSubmit}
+                  onValidationError={handleValidationError}
+                  runUiActionCallbacks={runUiActionCallbacks}
+                />
+              </form>
+            </div>
+          </FormProvider>
+        </SnUiPolicyContext.Provider>
+      </SnClientScriptContext.Provider>
+    </SnFormLifecycleContext.Provider>
   )
 }

@@ -5,6 +5,7 @@ import { getAllPredicates } from '@kit/types/predicate-definitions'
 
 const _formConfig = z.object({
   date_format: z.string(),
+  base_url: z.string()
 })
 
 const _recordPickerItem = z.object({
@@ -70,6 +71,7 @@ const _formField = z.object({
   mandatory: z.boolean(),
   visible: z.boolean(),
   readonly: z.boolean(),
+  temp_value: z.string().optional(),
   sys_readonly: z.boolean().optional(),
   sys_mandatory: z.boolean().optional(),
   type: z.string(), //z.enum(['string', 'choice', 'glide_date', 'glide_date_time', 'reference', 'boolean']),

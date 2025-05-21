@@ -20,7 +20,7 @@ export function SnFieldHtml({ rhfField, onChange }: SnFieldBaseProps<string>) {
       editorContentClassName="p-5"
       output="html"
       placeholder="Enter your description..."
-      autofocus={true}
+      autofocus={false}
       editable={!readonly}
       editorClassName="focus:outline-hidden"
     />

@@ -15,7 +15,7 @@ interface SnFieldfListProps extends Omit<SnFieldBaseProps<string>, 'field'> {
 export function SnFieldFieldList({ rhfField, field, dependentValue, onChange }: SnFieldfListProps) {
   const mounted = useRef(false)
   const [open, setOpen] = useState(false)
-  const [fieldList, setFieldList] = useState(field.choices || [])
+  const [fieldList, setFieldList] = useState(Array.isArray(field.choices) ? field.choices || [] : [])
 
   useEffect(() => {
     if (!mounted.current) {
@@ -51,19 +51,20 @@ export function SnFieldFieldList({ rhfField, field, dependentValue, onChange }: 
           <CommandList>
             <CommandEmpty>No field found.</CommandEmpty>
             <CommandGroup>
-              {fieldList.map(fName => (
-                <CommandItem
-                  key={fName.name}
-                  value={fName.name}
-                  onSelect={currentValue => {
-                    onChange(currentValue === rhfField.value ? '' : currentValue)
-                    setOpen(false)
-                  }}
-                >
-                  {fName.label}
-                  <Check className={cn('ml-auto', rhfField.value === fName.name ? 'opacity-100' : 'opacity-0')} />
-                </CommandItem>
-              ))}
+              {fieldList &&
+                fieldList.map(fName => (
+                  <CommandItem
+                    key={fName.name}
+                    value={fName.name}
+                    onSelect={currentValue => {
+                      onChange(currentValue === rhfField.value ? '' : currentValue)
+                      setOpen(false)
+                    }}
+                  >
+                    {fName.label}
+                    <Check className={cn('ml-auto', rhfField.value === fName.name ? 'opacity-100' : 'opacity-0')} />
+                  </CommandItem>
+                ))}
             </CommandGroup>
           </CommandList>
         </Command>
