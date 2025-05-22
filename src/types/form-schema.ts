@@ -151,6 +151,13 @@ export type SnSection = {
   columns: SnSectionColumn[]
 }
 
+export type SnAttachment = {
+  id: string,
+  file_name: string,
+  content_type: string,
+  url: string
+}
+
 export type SnFormApis = {
   formData: string
   refDisplay?: string

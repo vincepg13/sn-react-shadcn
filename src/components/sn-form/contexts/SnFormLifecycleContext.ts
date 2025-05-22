@@ -1,9 +1,13 @@
+import { SnFormConfig } from './../../../types/form-schema';
 import { createContext, useContext } from 'react'
 
-export const SnFormLifecycleContext = createContext<{
-  registerPreUiActionCallback: (fieldKey: string, cb: () => void | Promise<void>) => void
+type SnFormLifecycleContextType = {
+  formConfig: SnFormConfig,
+  registerPreUiActionCallback: (fieldKey: string, cb: () => void | Promise<void>) => void,
   registerPostUiActionCallback: (fieldKey: string, cb: () => void | Promise<void>) => void
-} | null>(null)
+};
+
+export const SnFormLifecycleContext = createContext<SnFormLifecycleContextType | null>(null);
 
 export const useFormLifecycle = () => {
   const ctx = useContext(SnFormLifecycleContext)

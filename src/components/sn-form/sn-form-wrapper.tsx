@@ -1,8 +1,9 @@
+import axios from 'axios'
 import { SnForm } from './sn-form'
 import { useEffect, useState } from 'react'
 import { AlertCircle } from 'lucide-react'
 import { getFormData } from '@kit/utils/form-api'
-import { SnFormApis, SnSection } from '@kit/types/form-schema'
+import { SnAttachment, SnFormApis, SnSection } from '@kit/types/form-schema'
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert'
 import { SnUiAction, SnFieldsSchema, SnFormConfig, SnClientScript, SnPolicy } from '@kit/types/form-schema'
 
@@ -28,11 +29,11 @@ export function SnFormWrapper({ apis, table, guid }: SnFormProps) {
   const [clientScripts, setClientScripts] = useState<SnClientScript[]>([])
   const [uiPolicies, setUiPolicies] = useState<SnPolicy[]>([])
   const [sections, setSections] = useState<SnSection[]>([])
+  const [attachments, setAttachments] = useState<SnAttachment[]>([])
   const [attachmentGuid, setAttachmentGuid] = useState<string>(guid)
 
-  
-
   useEffect(() => {
+    setError(null)
     const getForm = async () => {
       const controller = new AbortController()
       try {
@@ -48,10 +49,17 @@ export function SnFormWrapper({ apis, table, guid }: SnFormProps) {
           setClientScripts(unionClientScripts(form.client_script))
           setUiPolicies(form.policy || [])
           setSections(form._sections || [])
+          setAttachments(form.attachments || [])
           setAttachmentGuid(form._attachment_guid || guid)
         }
-      } catch (error) {
-        setError('Error fetching form data, please make sure you have the form metadata api included in your instance')
+      } catch (error: unknown) {
+        if (axios.isAxiosError(error) && error.response?.data?.error?.message) {
+          setError(error.response.data.error.message)
+        } else {
+          setError(
+            'Error fetching form data, please make sure you have the form metadata api included in your instance'
+          )
+        }
         console.error('Error fetching form data:', error)
       } finally {
         setLoading(false)
@@ -67,7 +75,7 @@ export function SnFormWrapper({ apis, table, guid }: SnFormProps) {
       <Alert variant="destructive" className="max-w-4xl mx-auto mt-4">
         <AlertCircle className="h-4 w-4" />
         <AlertTitle>Metadata Error</AlertTitle>
-        <AlertDescription>Error whilst fetching metadata</AlertDescription>
+        <AlertDescription>{error || 'Error whilst fetching metadata'}</AlertDescription>
       </Alert>
     )
 
@@ -91,6 +99,8 @@ export function SnFormWrapper({ apis, table, guid }: SnFormProps) {
           uiPolicies={uiPolicies}
           sections={sections}
           apis={apis}
+          attachments={attachments}
+          setAttachments={setAttachments}
         ></SnForm>
       )}
     </>

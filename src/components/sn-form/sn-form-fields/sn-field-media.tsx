@@ -1,7 +1,6 @@
 import { Input } from '@kit/components/ui/input'
 import { SnFieldBaseProps, SnFieldSchema } from '@kit/types/form-schema'
 import { ChangeEvent, useEffect, useRef, useState } from 'react'
-import { useUiPoliciesContext } from '../contexts/SnUiPolicyContext'
 import { useFieldUI } from '../contexts/FieldUIContext'
 import { Trash } from 'lucide-react'
 import { Button } from '@kit/components/ui/button'
@@ -29,8 +28,7 @@ export function SnFieldMedia({ field, rhfField, onChange, table, extension, atta
   const snFixedValue = field.displayValue ? field.displayValue.replace(extension, '') : ''
 
   const { readonly } = useFieldUI()
-  const { formConfig } = useUiPoliciesContext()
-  const { registerPreUiActionCallback } = useFormLifecycle()
+  const { formConfig, registerPreUiActionCallback } = useFormLifecycle()
 
   const [file, setFile] = useState<File | null>(null)
   const [source, setSource] = useState<string | null>(null)
@@ -127,12 +125,12 @@ export function SnFieldMedia({ field, rhfField, onChange, table, extension, atta
       )}
       {extension === '.iix' && previewUrl && (
         <div>
-          <img src={previewUrl} className="max-w-[250px] max-h-[250px]" alt="preview" />
+          <img src={previewUrl} className="w-full max-h-[250px] object-contain" alt="preview" />
         </div>
       )}
       {extension === '.vvx' && previewUrl && (
         <div>
-          <video ref={videoRef} className="w-full max-h-[300px]" controls preload="auto">
+          <video ref={videoRef} className="w-full max-h-[250px] object-contain" controls preload="auto">
             <source src={previewUrl} type="video/mp4" />
             Your browser does not support the video tag.
           </video>

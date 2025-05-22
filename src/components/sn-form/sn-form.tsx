@@ -16,6 +16,7 @@ import { SnClientScriptContext } from './contexts/SnClientScriptContext'
 
 import {
   FieldUIState,
+  SnAttachment,
   SnClientScript,
   SnFieldsSchema,
   SnFormApis,
@@ -35,7 +36,9 @@ interface SnFormProps {
   clientScripts: SnClientScript[]
   uiPolicies: SnPolicy[]
   sections: SnSection[]
-  apis?: SnFormApis
+  apis: SnFormApis
+  attachments: SnAttachment[]
+  setAttachments: (attachments: SnAttachment[]) => void
 }
 
 export function SnForm({
@@ -48,6 +51,8 @@ export function SnForm({
   uiPolicies,
   sections,
   apis,
+  attachments,
+  setAttachments
 }: SnFormProps) {
   console.log("FORM RENDER")
   const [fieldUIState, setFieldUIState] = useState<Record<string, FieldUIState>>({})
@@ -141,6 +146,7 @@ export function SnForm({
       keepDirty: true,
       keepTouched: true,
     })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const handleValidationError = (errors: FieldErrors) => {
@@ -173,7 +179,7 @@ export function SnForm({
   }
 
   return (
-    <SnFormLifecycleContext.Provider value={{ registerPreUiActionCallback, registerPostUiActionCallback }}>
+    <SnFormLifecycleContext.Provider value={{ formConfig, registerPreUiActionCallback, registerPostUiActionCallback }}>
       <SnClientScriptContext.Provider
         value={{
           runClientScriptsForFieldChange,
@@ -216,6 +222,8 @@ export function SnForm({
                   recordID={guid}
                   uiActions={uiActions}
                   formFields={formFields}
+                  attachments={attachments}
+                  setAttachments={setAttachments}
                   handleSubmit={form.handleSubmit}
                   onValidationError={handleValidationError}
                   runUiActionCallbacks={runUiActionCallbacks}

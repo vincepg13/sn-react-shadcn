@@ -32,9 +32,9 @@ export async function uploadFieldAttachment(
   formData.append('sysparm_sys_id', sysId)
   formData.append('sysparm_nostack', 'yes')
 
-  const ck = window.g_ck || ''
-  formData.append('sysparm_encryption_context', '')
-  formData.append('sysparm_ck', ck)
+  //const ck = window.g_ck || ''
+  //formData.append('sysparm_encryption_context', '')
+  //formData.append('sysparm_ck', ck)
   formData.append('sysparm_fieldname', fieldName)
   formData.append('attachFile', file)
 
