@@ -113,7 +113,6 @@ function renderFieldComponent(
   const depValue = depField ? watch(depField) : undefined
 
   // TODO:
-  // - Duration
   // - File Attachment
   // - User Roles 
   // - Field List
