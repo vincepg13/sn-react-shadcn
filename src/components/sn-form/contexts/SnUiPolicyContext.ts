@@ -2,7 +2,7 @@ import { SnFormConfig } from './../../../types/form-schema';
 import { createContext, useContext } from 'react'
 
 export const SnUiPolicyContext = createContext({
-  formConfig: {} as SnFormConfig | null,
+  formConfig: {} as SnFormConfig,
   runUiPolicies: () => {},
   runUiPoliciesForField: (_fieldName: string) => {},
 })

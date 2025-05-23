@@ -1,16 +1,16 @@
-import { useEffect, useRef, useState, UIEvent, MouseEvent, useMemo } from 'react'
+import { useEffect, useRef, useState, UIEvent, MouseEvent, useMemo, useCallback } from 'react'
 import { cn } from '@kit/lib/utils'
 import { Button } from '@kit/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@kit/components/ui/popover'
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@kit/components/ui/command'
 import { Check, ChevronsUpDown, Loader2, X } from 'lucide-react'
-
+import { useClientScripts } from '../contexts/SnClientScriptContext'
 import { SnFieldSchema } from '@kit/types/form-schema'
 import { useDebounce } from '../hooks/useDebounce'
 import { useFieldUI } from '../contexts/FieldUIContext'
 import { useReferenceSelected } from '../hooks/references/useReferenceSelected'
 import { useReferenceRecords, RefRecord } from '../hooks/references/useReferenceRecords'
-import { buildReferenceQuery } from '../../../utils/form-api'
+import { buildReferenceQuery, getTableDisplayFields } from '../../../utils/form-api'
 
 interface SnReferenceProps {
   field: SnFieldSchema
@@ -18,6 +18,7 @@ interface SnReferenceProps {
   formValues: Record<string, string>
   table: string
   recordSysId: string
+  dependentValue?: string
 }
 
 export function SnFieldReference({
@@ -26,6 +27,7 @@ export function SnFieldReference({
   formValues,
   table,
   recordSysId,
+  dependentValue,
 }: SnReferenceProps) {
   const { readonly } = useFieldUI()
   const [open, setOpen] = useState(false)
@@ -34,13 +36,34 @@ export function SnFieldReference({
   const listRef = useRef<HTMLDivElement>(null)
   const wasOpen = useRef(false)
 
-  const ed = field.ed!
-  const isMultiple = field.type === 'glide_list'
-  
-  const orderBy = useMemo(
-    () => ed.attributes?.ref_ac_order_by?.split(';') || [],
-    [ed.attributes?.ref_ac_order_by]
-  )
+  const { apis } = useClientScripts()
+  const type = field.type
+  const isMultiple = type === 'glide_list'
+
+  const ed = useMemo(() => {
+    const clonedEd = { ...field.ed! }
+
+    if (type === 'document_id') {
+      clonedEd.reference = dependentValue ?? field.ed!.dependent_value!
+
+      const fetchDisplays = async () => {
+        try {
+          const displayFields = await getTableDisplayFields(clonedEd.reference, apis?.refDisplay)
+          let fields = displayFields
+          if (!fields || !fields.length) fields = ['james', 'number']
+          clonedEd.attributes = { ref_ac_columns: fields.join(';') }
+        } catch (error) {
+          console.error('Error fetching table display fields:', error)
+        }
+      }
+
+      fetchDisplays()
+    }
+
+    return clonedEd
+  }, [type, dependentValue, field.ed, apis?.refDisplay])
+
+  const orderBy = useMemo(() => ed.attributes?.ref_ac_order_by?.split(';') || [], [ed.attributes?.ref_ac_order_by])
   const displayCols = useMemo(
     () => ed.attributes?.ref_ac_columns?.split(';') || [ed.searchField || 'name'],
     [ed.attributes?.ref_ac_columns, ed.searchField]
@@ -49,19 +72,18 @@ export function SnFieldReference({
   const { value: rawValue, display: rawDisplay } = useReferenceSelected(field)
 
   const selected = useMemo(() => {
-    return rawValue.map((v, i): RefRecord => ({
-      value: v,
-      display_value: rawDisplay[i] || v,
-      raw: {},
-    }))
+    return rawValue.map(
+      (v, i): RefRecord => ({
+        value: v,
+        display_value: rawDisplay[i] || v,
+        raw: {},
+      })
+    )
   }, [rawValue, rawDisplay])
 
   const [selectedRecords, setSelectedRecords] = useState<RefRecord[]>(selected)
 
-  const excludeValues = useMemo(
-    () => (isMultiple ? selected.map(r => r.value) : []),
-    [isMultiple, selected]
-  )
+  const excludeValues = useMemo(() => (isMultiple ? selected.map(r => r.value) : []), [isMultiple, selected])
 
   const query = useMemo(() => {
     return buildReferenceQuery({
@@ -80,20 +102,20 @@ export function SnFieldReference({
     recordSysId,
     displayCols,
     formValues,
+    fetchable: open,
   })
 
+  const fetchPageRef = useRef(fetchPage)
   useEffect(() => {
-    if (open && !wasOpen.current) {
-      fetchPage(query, 0, true)
-    }
-    wasOpen.current = open
-  }, [open])
+    fetchPageRef.current = fetchPage
+  }, [fetchPage])
 
   useEffect(() => {
-    if (open) {
-      fetchPage(query, 0, true)
+    if (query || (open && !wasOpen.current)) {
+      fetchPageRef.current(query, 0, true)
     }
-  }, [query])
+    wasOpen.current = open
+  }, [open, query])
 
   const handleScroll = (e: UIEvent<HTMLDivElement>) => {
     const el = e.currentTarget
@@ -109,11 +131,9 @@ export function SnFieldReference({
     if (!record) return
 
     if (isMultiple) {
-      const updated = isSelected(val)
-        ? selectedRecords.filter(r => r.value !== val)
-        : [...selectedRecords, record]
+      const updated = isSelected(val) ? selectedRecords.filter(r => r.value !== val) : [...selectedRecords, record]
       setSelectedRecords(updated)
-      onChange(updated.map(r => r.value))
+      onChange(updated.map(r => r.value).toString())
     } else {
       setSelectedRecords([record])
       onChange(record.value)
@@ -122,16 +142,27 @@ export function SnFieldReference({
     }
   }
 
-  const handleClear = (e: MouseEvent) => {
-    e.stopPropagation()
-    setSelectedRecords([])
-    onChange(isMultiple ? [] : '')
-  }
+  const handleClear = useCallback(
+    (e?: MouseEvent) => {
+      if (e) e.stopPropagation()
+      setSelectedRecords([])
+      onChange(isMultiple ? [] : '')
+    },
+    [onChange, isMultiple]
+  )
+
+  const previousDependentValue = useRef<string | undefined>(dependentValue)
+  useEffect(() => {
+    if (previousDependentValue.current !== undefined && previousDependentValue.current !== dependentValue) {
+      handleClear()
+    }
+    previousDependentValue.current = dependentValue
+  }, [dependentValue, handleClear])
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <div className="relative w-full">
-        <PopoverTrigger asChild>
+      <div className="relative w-full overflow-hidden">
+        <PopoverTrigger asChild className="overflow-hidden">
           {isMultiple ? (
             <div
               role="combobox"
@@ -143,9 +174,7 @@ export function SnFieldReference({
                 'bg-background text-foreground cursor-pointer hover:bg-accent hover:text-accent-foreground focus:outline-none focus:ring-2 focus:ring-ring'
               )}
             >
-              {selectedRecords.length === 0 && (
-                <span className="text-muted-foreground">{field.label}</span>
-              )}
+              {selectedRecords.length === 0 && <span className="text-muted-foreground">{field.label}</span>}
               {selectedRecords.map(record => (
                 <div
                   key={record.value}
@@ -170,12 +199,10 @@ export function SnFieldReference({
               variant="outline"
               role="combobox"
               aria-expanded={open}
-              className="w-full justify-between pr-8 min-h-[40px]"
+              className="w-full justify-between pr-8 min-h-[40px] overflow-hidden"
             >
               <span className="truncate text-left">
-                {selectedRecords[0]?.display_value || (
-                  <span className="text-muted-foreground">{field.label}</span>
-                )}
+                {selectedRecords[0]?.display_value || <span className="text-muted-foreground">{field.label}</span>}
               </span>
               <ChevronsUpDown className="h-4 w-4 opacity-50 ml-2" />
             </Button>
@@ -196,12 +223,7 @@ export function SnFieldReference({
       <PopoverContent className="w-full max-w-[500px] p-0">
         <Command shouldFilter={false}>
           <div className="relative">
-            <CommandInput
-              placeholder="Search..."
-              value={search}
-              onValueChange={setSearch}
-              className="pr-10"
-            />
+            <CommandInput placeholder="Search..." value={search} onValueChange={setSearch} className="pr-10" />
             {loading && (
               <Loader2 className="absolute right-2 top-1/2 h-4 w-4 animate-spin text-muted-foreground transform -translate-y-1/2" />
             )}
@@ -214,9 +236,7 @@ export function SnFieldReference({
                   <div className="flex flex-col gap-1">
                     {r.display_value}
                     {r.primary && <span className="text-muted-foreground text-sm">{r.primary}</span>}
-                    {r.secondary && (
-                      <span className="text-muted-foreground text-sm">{r.secondary}</span>
-                    )}
+                    {r.secondary && <span className="text-muted-foreground text-sm">{r.secondary}</span>}
                   </div>
                   <Check
                     className={cn('ml-auto', {

@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useState } from 'react'
 import { getRefData } from '../../../../utils/form-api'
 import { SnRefFieldEd } from '@kit/types/form-schema'
 
@@ -19,6 +19,7 @@ export function useReferenceRecords({
   recordSysId,
   displayCols,
   formValues,
+  fetchable = false,
 }: {
   ed: SnRefFieldEd
   table: string
@@ -26,31 +27,20 @@ export function useReferenceRecords({
   recordSysId: string
   displayCols: string[]
   formValues: Record<string, string>
+  fetchable: boolean
 }) {
   const [records, setRecords] = useState<RefRecord[]>([])
   const [page, setPage] = useState(0)
   const [hasMore, setHasMore] = useState(true)
   const [loading, setLoading] = useState(false)
-  
-
-  // ✅ Serialize only the relevant dependent field(s)
-  const recordValuesKey = useMemo(() => {
-    const values = ed.dependent_field
-      ? { [ed.dependent_field]: formValues[ed.dependent_field] }
-      : {}
-    return JSON.stringify(values)
-  }, [formValues, ed.dependent_field])
-
-  
 
   const fetchPage = useCallback(
     async (q: string, pageNumber: number, reset = false) => {
-      if (loading || (pageNumber > 0 && !hasMore)) return
+      if (!fetchable) setRecords([])
+      if (loading || !fetchable || (pageNumber > 0 && !hasMore)) return
 
       setLoading(true)
       try {
-        const recordValues = JSON.parse(recordValuesKey)
-
         const results = await getRefData({
           table: ed.reference,
           targetTable: table,
@@ -59,15 +49,14 @@ export function useReferenceRecords({
           q,
           qualifier: ed.qualifier || '',
           requiredFields: displayCols,
-          recordValues,
+          recordValues: formValues,
           start: pageNumber * 20,
           count: 20,
         })
 
         const mapped = results.map((item: RefRecordRaw) => ({
           value: item.sys_id,
-          display_value:
-            item[displayCols[0]] || item.name || item.title || item.sys_id,
+          display_value: item[displayCols[0]] || item.name || item.title || item.sys_id,
           primary: item[displayCols[1]] || '',
           secondary: item[displayCols[2]] || '',
           raw: item,
@@ -82,17 +71,7 @@ export function useReferenceRecords({
         setLoading(false)
       }
     },
-    [
-      loading,
-      hasMore,
-      ed.reference,
-      ed.qualifier,
-      table,
-      fieldName,
-      recordSysId,
-      displayCols,
-      recordValuesKey, // ✅ stable dependency
-    ]
+    [fetchable, loading, hasMore, ed.reference, ed.qualifier, table, fieldName, recordSysId, displayCols, formValues]
   )
 
   return {

@@ -2,17 +2,21 @@ import { FieldErrors } from 'react-hook-form'
 import { Button } from '../../ui/button'
 import { useFormContext } from 'react-hook-form'
 import { toast } from 'sonner'
-import { SnUiAction, SnFieldsSchema } from '../../../types/form-schema'
+import { SnUiAction, SnFieldsSchema, SnAttachment } from '../../../types/form-schema'
 import { buildSubmissionPayload, triggerNativeUIAction } from '../../../utils/form-client'
 import { useState } from 'react'
+import { SnAttachments } from '../../sn-ui/sn-attachments/sn-form-attachments'
 
 interface SnFormActionsProps {
   table: string
   recordID: string
   uiActions: SnUiAction[]
   formFields: SnFieldsSchema
+  attachments: SnAttachment[]
+  setAttachments: (attachments: SnAttachment[]) => void
   handleSubmit: ReturnType<typeof useFormContext>['handleSubmit']
   onValidationError: (errors: FieldErrors) => void
+  runUiActionCallbacks: (type: 'pre' | 'post') => Promise<void>
 }
 
 export function SnFormActions({
@@ -20,8 +24,11 @@ export function SnFormActions({
   recordID,
   uiActions,
   formFields,
+  attachments,
   handleSubmit,
+  setAttachments,
   onValidationError,
+  runUiActionCallbacks,
 }: SnFormActionsProps) {
   const { getValues } = useFormContext()
   const [isLoading, setIsLoading] = useState<string | null>(null)
@@ -30,9 +37,9 @@ export function SnFormActions({
     try {
       setIsLoading(action.sys_id)
 
+      await runUiActionCallbacks('pre')
       const values = getValues()
       const payload = buildSubmissionPayload(formFields, values)
-      // console.log("UI ACTION PAYLOAD", payload)
 
       await triggerNativeUIAction({
         table,
@@ -40,6 +47,8 @@ export function SnFormActions({
         actionSysId: action.sys_id,
         data: payload,
       })
+
+      await runUiActionCallbacks('post')
 
       toast.success(`${action.name} executed successfully`)
     } catch (e) {
@@ -52,6 +61,7 @@ export function SnFormActions({
 
   return (
     <div className="mt-6 flex justify-center flex-wrap gap-2">
+      <SnAttachments table={table} guid={recordID} attachments={attachments} setAttachments={setAttachments} />
       {uiActions
         .filter(a => a.is_button)
         .map(action => (

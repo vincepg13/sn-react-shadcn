@@ -1,10 +1,16 @@
-import { z } from 'zod'
+import { boolean, z } from 'zod'
 import { SnRow } from './table-schema'
 import { ControllerRenderProps } from 'react-hook-form'
 import { getAllPredicates } from '@kit/types/predicate-definitions'
 
 const _formConfig = z.object({
   date_format: z.string(),
+  base_url: z.string(),
+  security: z.object({
+    canWrite: z.boolean(),
+    canRead: z.boolean(),
+    canDelete: z.boolean().optional(),
+  })
 })
 
 const _recordPickerItem = z.object({
@@ -38,7 +44,7 @@ const _clientScript = z.object({
 const _ed = z.object({
   reference: z.string(),
   qualifier: z.string(),
-  dependent_field: z.string().optional(),
+  dependent_value: z.string().optional(),
   defaultOperator: z.string().optional(),
   searchField: z.string().optional(),
   attributes: z.object({
@@ -49,6 +55,19 @@ const _ed = z.object({
   }),
 })
 
+const _currencyCode = z.object({
+  code: z.string(),
+  symbol: z.string(),
+})
+
+const _fieldChoiceItem = z.object({
+  name: z.string(),
+  label: z.string(),
+  type: z.string(),
+  display: boolean(),
+  value: z.string(),
+})
+
 const _formField = z.object({
   name: z.string(),
   label: z.string(),
@@ -57,20 +76,18 @@ const _formField = z.object({
   mandatory: z.boolean(),
   visible: z.boolean(),
   readonly: z.boolean(),
+  staged_data: z.record(z.any()).optional(),
   sys_readonly: z.boolean().optional(),
   sys_mandatory: z.boolean().optional(),
   type: z.string(), //z.enum(['string', 'choice', 'glide_date', 'glide_date_time', 'reference', 'boolean']),
   max_length: z.number().optional(),
   choice: z.number().optional(),
   ed: _ed.optional(),
-  choices: z
-    .array(
-      z.object({
-        label: z.string(),
-        value: z.string(),
-      })
-    )
-    .optional(),
+  currencyCode: z.string().optional(),
+  currencyValue: z.string().optional(),
+  currencyCodes: _currencyCode.array().optional(),
+  dependentField: z.string().optional(),
+  choices: z.array(_fieldChoiceItem).optional(),
 })
 
 const actionEnum = ['true', 'false', 'ignore'] as const
@@ -111,7 +128,7 @@ export type SnFieldsSchema = Record<string, SnFieldSchema>
 export type SnRecordPickerItem = z.infer<typeof _recordPickerItem>
 export type SnRecordPickerList = SnRecordPickerItem[]
 export type SnRefFieldEd = z.infer<typeof _ed>
-
+export type SnFieldChoiceItem = z.infer<typeof _fieldChoiceItem>
 export type SnFormConfig = z.infer<typeof _formConfig>
 export type FormData = Record<string, string | boolean | number | null>
 export type RHFField = ControllerRenderProps<FormData, string>
@@ -137,4 +154,16 @@ export type SnSection = {
   _parent?: string
   _bootstrap_cells: number
   columns: SnSectionColumn[]
+}
+
+export type SnAttachment = {
+  sys_id: string
+  file_name: string
+  content_type: string
+  url: string
+}
+
+export type SnFormApis = {
+  formData: string
+  refDisplay?: string
 }

@@ -5,7 +5,7 @@ import { Button } from '../../ui/button'
 import { Input } from '../../ui/input'
 import { useFieldUI } from '../contexts/FieldUIContext'
 
-export interface NumberInputProps extends Omit<NumericFormatProps, 'value' | 'onValueChange'> {
+interface NumberInputProps extends Omit<NumericFormatProps, 'value' | 'onValueChange'> {
   stepper?: number
   thousandSeparator?: string
   placeholder?: string
@@ -45,11 +45,11 @@ export const SnFieldNumeric = forwardRef<HTMLInputElement, NumberInputProps>(
     const [value, setValue] = useState<number | undefined>(controlledValue ?? defaultValue)
 
     const handleIncrement = useCallback(() => {
-      setValue(prev => (prev === undefined ? stepper ?? 1 : Math.min(prev + (stepper ?? 1), max)))
+      setValue(prev => (prev === undefined ? stepper ?? 1 : Math.min(+prev + (stepper ?? 1), max)))
     }, [stepper, max])
 
     const handleDecrement = useCallback(() => {
-      setValue(prev => (prev === undefined ? -(stepper ?? 1) : Math.max(prev - (stepper ?? 1), min)))
+      setValue(prev => (prev === undefined ? -(stepper ?? 1) : Math.max(+prev - (stepper ?? 1), min)))
     }, [stepper, min])
 
     useEffect(() => {
@@ -106,6 +106,7 @@ export const SnFieldNumeric = forwardRef<HTMLInputElement, NumberInputProps>(
           allowNegative={min < 0}
           valueIsNumericString
           onBlur={handleBlur}
+          required={true}
           disabled={readonly}
           max={max}
           min={min}

@@ -6,16 +6,6 @@ export function mapFieldToZod(field: SnFieldSchema): ZodTypeAny {
   const allowEmpty = !field.mandatory
 
   switch (field.type) {
-    case 'string':
-      base = z.string()
-      if (field.max_length && base instanceof z.ZodString) {
-        base = base.max(field.max_length)
-      }
-      if (!allowEmpty) {
-        base = (base as z.ZodString).min(1, '')
-      }
-      break
-
     case 'glide_list':
     case 'reference':
       base = z.string()
@@ -63,8 +53,36 @@ export function mapFieldToZod(field: SnFieldSchema): ZodTypeAny {
       base = mapNumericField({ required: !allowEmpty })
       break
 
+    case 'currency':
+      base = z.string().refine(
+        val => {
+          // if (allowEmpty && val === '') return true
+          if (val.includes('undefined')) return false
+
+          const parts = val.split(';')
+          if (parts.length !== 2) return false
+          
+          const [code, value] = parts
+          return /^[A-Z]{3}$/.test(code) && !isNaN(Number(value))
+        },
+        {
+          message: 'Must be in format CODE;amount (e.g. GBP;500)',
+        }
+      )
+      break
+
+    //No match assume string
     default:
-      base = z.any()
+      base = z.string()
+      if (field.max_length && base instanceof z.ZodString) {
+        base = base.max(field.max_length)
+      }
+      if (!allowEmpty) {
+        base = (base as z.ZodString).min(1, '')
+      }
+      break
+    // default:
+    // base = z.any()
   }
 
   return allowEmpty ? base.optional() : base
