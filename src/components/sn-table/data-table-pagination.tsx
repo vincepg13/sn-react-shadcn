@@ -26,11 +26,11 @@ export function DataTablePagination<TData>({
       className='flex items-center justify-between overflow-clip px-2'
       style={{ overflowClipMargin: 1 }}
     >
-      <div className='text-muted-foreground hidden flex-1 text-sm sm:block'>
+      {/* <div className='text-muted-foreground hidden flex-1 text-sm sm:block'>
         {table.getFilteredSelectedRowModel().rows.length} of{' '}
         {table.getFilteredRowModel().rows.length} row(s) selected.
-      </div>
-      <div className='flex items-center sm:space-x-6 lg:space-x-8'>
+      </div> */}
+      <div className='flex items-center sm:space-x-6 lg:space-x-8 mx-auto'>
         <div className='flex items-center space-x-2'>
           <p className='hidden text-sm font-medium sm:block'>Rows per page</p>
           <Select

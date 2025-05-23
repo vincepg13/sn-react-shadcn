@@ -5,7 +5,12 @@ import { getAllPredicates } from '@kit/types/predicate-definitions'
 
 const _formConfig = z.object({
   date_format: z.string(),
-  base_url: z.string()
+  base_url: z.string(),
+  security: z.object({
+    canWrite: z.boolean(),
+    canRead: z.boolean(),
+    canDelete: z.boolean().optional(),
+  })
 })
 
 const _recordPickerItem = z.object({
@@ -71,7 +76,7 @@ const _formField = z.object({
   mandatory: z.boolean(),
   visible: z.boolean(),
   readonly: z.boolean(),
-  temp_value: z.string().optional(),
+  staged_data: z.record(z.any()).optional(),
   sys_readonly: z.boolean().optional(),
   sys_mandatory: z.boolean().optional(),
   type: z.string(), //z.enum(['string', 'choice', 'glide_date', 'glide_date_time', 'reference', 'boolean']),
@@ -152,9 +157,9 @@ export type SnSection = {
 }
 
 export type SnAttachment = {
-  id: string,
-  file_name: string,
-  content_type: string,
+  sys_id: string
+  file_name: string
+  content_type: string
   url: string
 }
 

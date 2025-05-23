@@ -33,16 +33,14 @@ To ensure Tailwind includes styles used in the component, add this to your globa
 
 Any components which fetch data from a ServiceNow instance (such as tables) use a **shared Axios instance**. You must configure Axios **in your app** to provide authentication.
 
-_If you installed this package prior to Version 1.0.5 please update and make sure you include this step in the application that consumes it._ Otherwise you may notice an issue where ServiceNow asks for authentication details when using your app on the instance.
-
 Depending on your environment:
 
 - **Development mode:** you can set basic auth credentials (`username` and `password`) directly.
 - **Production mode:** you should set the `X-userToken` header after retrieving a session token.
 
-You must then call `setAxiosInstance` (provided by the package) to inject your configured Axios instance.
+You must then call `setAxiosInstance` (provided by this package) to inject your configured Axios instance.
 
-✅ **Example Setup:**
+✅ **Example Setup in Hosting Application:**
 
 ```tsx
 import axios from 'axios'
@@ -116,9 +114,9 @@ This has more or less the same properties as SnDataTable with the exception that
 
 ## ServiceNow Forms
 
-If your'e familiar with the ServicePortal you know ServiceNow provide a method in the GlideScriptable API ($sp.getForm) that can return you the entire metadata for any given form. The below component set is a very pre alpha version of how you can consume that metadata and recreate a ServiceNow form with the same layout as well as UI policies, Client Scripts and UI actions.
+If your'e familiar with the ServicePortal you know ServiceNow provide a method in the GlideScriptable API ($sp.getForm) that can return you the entire metadata for any given form. The below component set is a **alpha version** of how you can consume that metadata and recreate a ServiceNow form with the same layout as well as UI policies, Client Scripts and UI actions.
 
-Since we have no access to any gForm object, it does mean remapping everything into logic that react can understand which will be very time consuming. However, it does work, with the limitation being it will only display field types that have been re-mapped or make use of ServiceNow client logic that has been re-mapped into Reacts world. This is why I refer to these components as pre alpha since I have only re-mapped a common set of fields and client logic and will be building this out over time. I will likely never get to the point where its an exact replica of all ServiceNow fields and client logic, but I believe covering the most common use cases will make this form component very useable in most cases.
+Since we have no access to any gForm object, it does mean remapping everything into logic that react can understand which will be very time consuming. However, it does work, with the limitation being it will only display field types that have been re-mapped or make use of ServiceNow client logic that has been re-mapped into Reacts world. This is why these components as in their alpha stage since I have only re-mapped a common set of fields and client logic and will be building this out over time. I will likely never get to the point where its an exact replica of all ServiceNow fields and client logic, but I believe covering the most common use cases will make this form component very useable in most cases.
 
 This is where I currently stand with what works:
 
@@ -138,30 +136,19 @@ To use the form you must provide it with all necessary metadata, I do this by a 
     return sendError('400', 'Table and id must be provided')
   }
 
-  const formData = new global.GlideSPScriptable().getForm(table, guid)
-  const fields = formData._fields
-
-  for (f in fields) {
-    var field = fields[f]
-
-    if (field.type === 'glide_date') {
-      if (field.value) {
-        var gd = new GlideDate()
-        gd.setDisplayValue(field.value)
-        field.value = gd.getValue()
-      }
-    }
-
-    if (field.type === 'glide_date_time') {
-      if (field.value) {
-        var gdt = new GlideDateTime()
-        gdt.setDisplayValue(field.value)
-        field.value = gdt.getValue()
-      }
-    }
+  var grTarget = new GlideRecordSecure(table)
+  if (guid != -1 && !grTarget.get(guid)) {
+    return sendError('400', 'Record was either not found or you are not authorised to view it.')
   }
 
+  const instanceURI = gs.getProperty('glide.servlet.uri')
+  const formData = new global.GlideSPScriptable().getForm(table, guid)
+  formData.attachments = getAttachments(table, guid, instanceURI)
+  modifyFields(formData._fields)
+
   formData.react_config = {
+    security: getSecurity(grTarget),
+    base_url: instanceURI,
     date_format: gs.getSession().getUser().getDateFormat(),
   }
 
@@ -173,6 +160,66 @@ To use the form you must provide it with all necessary metadata, I do this by a 
     error.setStatus(code)
     error.setMessage(msg)
     return error
+  }
+
+  function getSecurity(gr, guid) {
+    var access = {}
+
+    if (guid == -1) {
+      gr.initialize()
+      var canCreate = gr.canCreate()
+      access.canRead = canCreate
+      access.canWrite = canCreate
+    } else {
+      access.canRead = gr.canRead()
+      access.canWrite = gr.canWrite()
+      access.canDelete = gr.canDelete()
+    }
+
+    return access
+  }
+
+  function modifyFields(fields) {
+    for (f in fields) {
+      var field = fields[f]
+
+      if (field.type === 'glide_date') {
+        if (field.value) {
+          var gd = new GlideDate()
+          gd.setDisplayValue(field.value)
+          field.value = gd.getValue()
+        }
+      }
+
+      if (field.type === 'glide_date_time') {
+        if (field.value) {
+          var gdt = new GlideDateTime()
+          gdt.setDisplayValue(field.value)
+          field.value = gdt.getValue()
+        }
+      }
+    }
+  }
+
+  function getAttachments(table, guid, instance) {
+    grAttach = new GlideRecordSecure('sys_attachment')
+    grAttach.addQuery('table_name', table)
+    grAttach.addQuery('table_sys_id', 'IN', guid)
+    grAttach.orderBy('sys_created_on')
+    grAttach.query()
+
+    var attachments = []
+    while (grAttach.next()) {
+      var id = grAttach.getUniqueValue()
+      attachments.push({
+        sys_id: id,
+        url: instance + 'sys_attachment.do?sys_id=' + id,
+        file_name: grAttach.getValue('file_name'),
+        content_type: grAttach.getValue('content_type'),
+      })
+    }
+
+    return attachments
   }
 })(request, response)
 ```
@@ -190,13 +237,21 @@ SnFormWrapper props:
 | `table` | `string` | Table name the record belongs to |
 | `api` | `string` | Resource path to metadata api |
 
-This component will then consume the metadata from the api response and pass it to _<SnForm />_ to build the form
+This component will then consume the metadata from the api response and pass it to **`<SnForm/>`** to build the form
 
 ![SnFormDemo](/demo/SNDemoForm.png)
 ![SnFormRefs](/demo/SNDemoFormRefs.png)
 ![SnFormDates](/demo/SNDemoFormDates.png)
+![SnFormMedia](/demo/SNDemoFormMedia.png)
 
----
+### `<SnTabs />` && `<SnAttachments/>`
+
+Within the form component I make use of these two handy components which are also available to be used standalone.
+
+- **SnTabs** - A wrapper around the shadcn tab components which allow you to pass in an array of tabs to be rendered. Each tab just needs to set a label and the ReactNode element to be rendered.
+- **SnAttachments(coming soon!!)** - Your own personal clippy to be used in ServiceNow. Just give it a table and record then click the paperclip icon to view all the attachments in a shadcn sheet. From here you can delete attachments or add new onces using the drop zone in the footer of the sheet.
+
+## ![SnFormAttachments](/demo/SNDemoFormAttachments.png)
 
 ## 👥 Interacting With User Data
 

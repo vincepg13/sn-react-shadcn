@@ -1,9 +1,9 @@
-import { Button } from '@kit/components/ui/button'
-import { TooltipProvider } from '@kit/components/ui/tooltip'
-import { Tooltip, TooltipTrigger, TooltipContent } from '@kit/components/ui/tooltip'
-import { Trash2, Upload } from 'lucide-react'
 import { useState } from 'react'
 import Dropzone from 'shadcn-dropzone'
+import { Button } from '@kit/components/ui/button'
+import { TooltipProvider } from '@kit/components/ui/tooltip'
+import { LoaderCircle, Trash2, Upload } from 'lucide-react'
+import { Tooltip, TooltipTrigger, TooltipContent } from '@kit/components/ui/tooltip'
 
 type DropzoneProps = {
   onFileSave: (acceptedFiles: File[]) => Promise<void>
@@ -57,21 +57,29 @@ export function SnDropzone({ onFileSave }: DropzoneProps) {
       </Dropzone>
       {!!files.length && (
         <div className="flex gap-2 align-center">
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button type="button" onClick={() => setFiles([])} variant="outline" className="text-red-500">
-                  <Trash2 />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Cancel Upload</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-
+          {!isSaving && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button type="button" onClick={() => setFiles([])} variant="outline" className="text-red-500">
+                    <Trash2 />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Cancel Upload</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
           <Button type="button" onClick={handleSave} disabled={isSaving} className="flex-1">
-            {isSaving ? 'Uploading...' : 'Upload Files'}
+            {isSaving ? (
+              <span className="flex gap-2 items-center">
+                <span><LoaderCircle className="animate-spin" /></span> 
+                <span>Uploading...</span>
+              </span>
+            ) : (
+              <span>Upload Files</span>
+            )}
           </Button>
         </div>
       )}

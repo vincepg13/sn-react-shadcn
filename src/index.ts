@@ -1,5 +1,6 @@
 // General UI Components
 export { SnTabs } from './components/sn-ui/sn-tabs'
+// export { SnAttachments } from './components/sn-ui/sn-attachments/sn-form-attachments'
 
 // Table Components
 export { default as SnDataTable } from './components/sn-table/sn-data-table'

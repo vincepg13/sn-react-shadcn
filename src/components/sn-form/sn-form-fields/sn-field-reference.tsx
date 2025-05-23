@@ -133,7 +133,7 @@ export function SnFieldReference({
     if (isMultiple) {
       const updated = isSelected(val) ? selectedRecords.filter(r => r.value !== val) : [...selectedRecords, record]
       setSelectedRecords(updated)
-      onChange(updated.map(r => r.value))
+      onChange(updated.map(r => r.value).toString())
     } else {
       setSelectedRecords([record])
       onChange(record.value)

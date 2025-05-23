@@ -5,7 +5,7 @@ import { toast } from 'sonner'
 import { SnUiAction, SnFieldsSchema, SnAttachment } from '../../../types/form-schema'
 import { buildSubmissionPayload, triggerNativeUIAction } from '../../../utils/form-client'
 import { useState } from 'react'
-import { SnFormAttacher } from './sn-attachments/sn-form-attachments'
+import { SnAttachments } from '../../sn-ui/sn-attachments/sn-form-attachments'
 
 interface SnFormActionsProps {
   table: string
@@ -16,7 +16,7 @@ interface SnFormActionsProps {
   setAttachments: (attachments: SnAttachment[]) => void
   handleSubmit: ReturnType<typeof useFormContext>['handleSubmit']
   onValidationError: (errors: FieldErrors) => void
-  runUiActionCallbacks: (type:'pre'|'post') => Promise<void>
+  runUiActionCallbacks: (type: 'pre' | 'post') => Promise<void>
 }
 
 export function SnFormActions({
@@ -61,7 +61,7 @@ export function SnFormActions({
 
   return (
     <div className="mt-6 flex justify-center flex-wrap gap-2">
-      <SnFormAttacher attachments={attachments} setAttachments={setAttachments}/>
+      <SnAttachments table={table} guid={recordID} attachments={attachments} setAttachments={setAttachments} />
       {uiActions
         .filter(a => a.is_button)
         .map(action => (

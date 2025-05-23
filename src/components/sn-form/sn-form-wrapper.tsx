@@ -1,6 +1,6 @@
 import axios from 'axios'
 import { SnForm } from './sn-form'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { AlertCircle } from 'lucide-react'
 import { getFormData } from '@kit/utils/form-api'
 import { SnAttachment, SnFormApis, SnSection } from '@kit/types/form-schema'
@@ -21,6 +21,7 @@ function unionClientScripts(scripts: Record<string, SnClientScript[]>) {
 }
 
 export function SnFormWrapper({ apis, table, guid }: SnFormProps) {
+  const fetchIdRef = useRef(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [uiActions, setUiActions] = useState<SnUiAction[]>([])
@@ -33,12 +34,14 @@ export function SnFormWrapper({ apis, table, guid }: SnFormProps) {
   const [attachmentGuid, setAttachmentGuid] = useState<string>(guid)
 
   useEffect(() => {
+    setLoading(true)
+    const controller = new AbortController()
+    const fetchId = ++fetchIdRef.current
+
     setError(null)
     const getForm = async () => {
-      const controller = new AbortController()
       try {
         console.log('Fetching form data...', apis.formData)
-        setLoading(true)
         const response = await getFormData(apis.formData, controller)
         if (response.status === 200) {
           console.log('Form data:', response.data)
@@ -53,19 +56,34 @@ export function SnFormWrapper({ apis, table, guid }: SnFormProps) {
           setAttachmentGuid(form._attachment_guid || guid)
         }
       } catch (error: unknown) {
-        if (axios.isAxiosError(error) && error.response?.data?.error?.message) {
-          setError(error.response.data.error.message)
+        if (axios.isAxiosError(error)) {
+          if (error.code === 'ERR_CANCELED') return
+
+          if (error.response?.data?.error?.message) {
+            setError(error.response.data.error.message)
+          } else {
+            setError(
+              'Error fetching form data, please make sure you have the form metadata api included in your instance'
+            )
+          }
         } else {
-          setError(
-            'Error fetching form data, please make sure you have the form metadata api included in your instance'
-          )
+          setError('Unexpected error fetching form data')
         }
-        console.error('Error fetching form data:', error)
+
+        if (!axios.isAxiosError(error) || error.code !== 'ERR_CANCELED') {
+          console.error('Error fetching form data:', error)
+        }
       } finally {
-        setLoading(false)
+        if (fetchId === fetchIdRef.current) {
+          setLoading(false)
+        }
       }
     }
     getForm()
+
+    return () => {
+      controller.abort()
+    }
   }, [apis.formData, table, guid])
 
   if (loading) return <div>Loading form...</div>

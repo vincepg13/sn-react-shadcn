@@ -7,7 +7,7 @@ import { LockKeyhole, LockKeyholeOpen } from 'lucide-react'
 
 export function SnFieldUrl({ rhfField, onChange }: SnFieldBaseProps<string>) {
   const { readonly } = useFieldUI()
-  const [locked, setLocked] = useState(!rhfField.value)
+  const [locked, setLocked] = useState(!!rhfField.value)
 
   return (
     <div className="flex w-full justify-between items-center space-x-2">

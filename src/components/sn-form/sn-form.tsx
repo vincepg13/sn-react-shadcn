@@ -54,7 +54,6 @@ export function SnForm({
   attachments,
   setAttachments
 }: SnFormProps) {
-  console.log("FORM RENDER")
   const [fieldUIState, setFieldUIState] = useState<Record<string, FieldUIState>>({})
   const fieldTabMapRef = useRef<Record<string, string>>({})
   const [overrideTab, setOverrideTab] = useState<string | undefined>()
@@ -164,7 +163,7 @@ export function SnForm({
   }
   const postUiActionCallbacksRef = useRef<Map<string, () => void | Promise<void>>>(new Map())
   const registerPostUiActionCallback = (fieldKey: string, cb: () => void | Promise<void>) => {
-    preUiActionCallbacksRef.current.set(fieldKey, cb)
+    postUiActionCallbacksRef.current.set(fieldKey, cb)
   }
   const runUiActionCallbacks = async (type: 'pre' | 'post') => {
     const isPost = type == 'post'
