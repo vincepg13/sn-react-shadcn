@@ -3,7 +3,8 @@ import { SnForm } from './sn-form'
 import { useEffect, useRef, useState } from 'react'
 import { AlertCircle } from 'lucide-react'
 import { getFormData } from '@kit/utils/form-api'
-import { SnAttachment, SnFormApis, SnSection } from '@kit/types/form-schema'
+import { SnAttachment } from '@kit/types/attachment-schema'
+import { SnFormApis, SnSection } from '@kit/types/form-schema'
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert'
 import { SnUiAction, SnFieldsSchema, SnFormConfig, SnClientScript, SnPolicy } from '@kit/types/form-schema'
 
@@ -11,6 +12,7 @@ interface SnFormProps {
   table: string
   guid: string
   apis: SnFormApis
+  snSubmit?(guid: string): void
 }
 
 function unionClientScripts(scripts: Record<string, SnClientScript[]>) {
@@ -20,7 +22,7 @@ function unionClientScripts(scripts: Record<string, SnClientScript[]>) {
   }, [] as SnClientScript[])
 }
 
-export function SnFormWrapper({ apis, table, guid }: SnFormProps) {
+export function SnFormWrapper({ apis, table, guid, snSubmit }: SnFormProps) {
   const fetchIdRef = useRef(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -53,7 +55,7 @@ export function SnFormWrapper({ apis, table, guid }: SnFormProps) {
           setUiPolicies(form.policy || [])
           setSections(form._sections || [])
           setAttachments(form.attachments || [])
-          setAttachmentGuid(form._attachment_guid || guid)
+          setAttachmentGuid(form._attachmentGUID || guid)
         }
       } catch (error: unknown) {
         if (axios.isAxiosError(error)) {
@@ -109,16 +111,18 @@ export function SnFormWrapper({ apis, table, guid }: SnFormProps) {
       {!error && (
         <SnForm
           table={table}
-          guid={attachmentGuid}
+          guid={guid}
+          apis={apis}
+          attachmentGuid={attachmentGuid}
           formFields={formFields!}
           uiActions={uiActions}
           formConfig={formConfig!}
           clientScripts={clientScripts}
           uiPolicies={uiPolicies}
           sections={sections}
-          apis={apis}
           attachments={attachments}
           setAttachments={setAttachments}
+          snSubmit={snSubmit}
         ></SnForm>
       )}
     </>

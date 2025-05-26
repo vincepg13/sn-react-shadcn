@@ -3,9 +3,8 @@ import { useEffect, useRef } from 'react'
 import { Paperclip } from 'lucide-react'
 import { SnDropzone } from './sn-dropzone'
 import { Button } from '@kit/components/ui/button'
-import { SnAttachment } from '@kit/types/form-schema'
 import { SnAttachmentCard } from './sn-attachment-card'
-import { useFormLifecycle } from '../../sn-form/contexts/SnFormLifecycleContext'
+import { SnAttachment } from '@kit/types/attachment-schema'
 import { deleteAttachment, uploadAttachment } from '@kit/utils/attachment-api'
 import {
   Sheet,
@@ -22,13 +21,21 @@ type AttacherProps = {
   table: string
   guid: string
   attachments: SnAttachment[]
+  baseUrl: string
+  canWrite?: boolean
+  canDelete?: boolean
   setAttachments: (attachments: SnAttachment[]) => void
 }
 
-export function SnAttachments({ table, guid, attachments, setAttachments }: AttacherProps) {
-  const { formConfig } = useFormLifecycle()
-  const canWrite = formConfig.security.canWrite ?? false
-  const canDelete = formConfig.security.canDelete ?? false
+export function SnAttachments({
+  table,
+  guid,
+  canWrite,
+  canDelete,
+  baseUrl,
+  attachments,
+  setAttachments,
+}: AttacherProps) {
   const abortRef = useRef<AbortController | null>(null)
 
   const handleDeleteAttachment = async (attachmentId: string) => {
@@ -48,10 +55,9 @@ export function SnAttachments({ table, guid, attachments, setAttachments }: Atta
 
       try {
         const result = await uploadAttachment(file, table, guid, '', controller)
-        uploaded.push({ ...result, url: `${formConfig.base_url}/sys_attachment.do?sys_id=${result.url}` })
+        uploaded.push({ ...result, url: `${baseUrl}/sys_attachment.do?sys_id=${result.url}` })
       } catch (err) {
         if (isAxiosError(err) && err.name === 'AbortError') {
-          console.log('Upload aborted')
           break
         } else {
           console.error('Upload error:', err)
@@ -87,9 +93,9 @@ export function SnAttachments({ table, guid, attachments, setAttachments }: Atta
             {attachments.map(attachment => (
               <SnAttachmentCard
                 attachment={attachment}
-                canDelete={canDelete}
-                onDelete={handleDeleteAttachment}
                 key={attachment.sys_id}
+                onDelete={handleDeleteAttachment}
+                canDelete={canDelete || attachment.canDelete || false}
               />
             ))}
           </div>

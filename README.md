@@ -18,7 +18,7 @@ npm install sn-shadcn-kit react react-dom @tanstack/react-table tailwindcss axio
 
 ---
 
-## 🎨 Tailwind Setup (v4+)
+## 🎨 CSS/Tailwind Setup (v4+)
 
 To ensure Tailwind includes styles used in the component, add this to your global CSS file (e.g. `index.css`):
 
@@ -27,6 +27,11 @@ To ensure Tailwind includes styles used in the component, add this to your globa
 @source "./node_modules/sn-shadcn-kit/dist";
 ```
 
+The HTML editor used in the form component needs to have its own stylesheets imported. The easiest way to do this is to grab the entire styles folder from the demo repo then import it into your global css file.
+
+```css
+@import "./styles/tiptap/index.css";
+```
 ---
 
 ## 🔑 Axios Setup (IMPORTANT)
@@ -244,12 +249,12 @@ This component will then consume the metadata from the api response and pass it 
 ![SnFormDates](/demo/SNDemoFormDates.png)
 ![SnFormMedia](/demo/SNDemoFormMedia.png)
 
-### `<SnTabs />` && `<SnAttachments/>`
+### `<SnTabs />` && `<SnClippy/>`
 
 Within the form component I make use of these two handy components which are also available to be used standalone.
 
 - **SnTabs** - A wrapper around the shadcn tab components which allow you to pass in an array of tabs to be rendered. Each tab just needs to set a label and the ReactNode element to be rendered.
-- **SnAttachments(coming soon!!)** - Your own personal clippy to be used in ServiceNow. Just give it a table and record then click the paperclip icon to view all the attachments in a shadcn sheet. From here you can delete attachments or add new onces using the drop zone in the footer of the sheet.
+- **SnClippy** - Your own personal clippy to be used in ServiceNow. Just give it a table and record then click the paperclip icon to view all the attachments in a shadcn sheet. From here you can delete attachments or add new onces using the drop zone in the footer of the sheet.
 
 ## ![SnFormAttachments](/demo/SNDemoFormAttachments.png)
 

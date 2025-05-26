@@ -71,15 +71,17 @@ export function buildSubmissionPayload(formFields: SnFieldsSchema, values: Recor
 export async function triggerNativeUIAction({
   table,
   recordID,
+  attachmentGuid,
   actionSysId,
   data,
 }: {
   table: string
   recordID: string
   actionSysId: string
+  attachmentGuid: string
   data: SnFieldsSchema
 }) {
-  const res = await postFormAction(table, recordID, actionSysId, data)
+  const res = await postFormAction(table, recordID, attachmentGuid, actionSysId, data)
   const result = res.data
   if (res.status !== 201) {
     throw new Error(result?.error?.message || 'UI Action failed')

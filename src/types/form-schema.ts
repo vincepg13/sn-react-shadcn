@@ -3,24 +3,7 @@ import { SnRow } from './table-schema'
 import { ControllerRenderProps } from 'react-hook-form'
 import { getAllPredicates } from '@kit/types/predicate-definitions'
 
-const _formConfig = z.object({
-  date_format: z.string(),
-  base_url: z.string(),
-  security: z.object({
-    canWrite: z.boolean(),
-    canRead: z.boolean(),
-    canDelete: z.boolean().optional(),
-  })
-})
-
-const _recordPickerItem = z.object({
-  display_value: z.string(),
-  value: z.string(),
-  primary: z.string().optional(),
-  secondary: z.string().optional(),
-  meta: z.custom<SnRow>().optional(),
-})
-
+//UI Actions
 const _action = z.object({
   action_name: z.string(),
   form_style: z.string(),
@@ -32,6 +15,19 @@ const _action = z.object({
   sys_id: z.string(),
 })
 
+const _uiResponse = z.object({
+  isInsert: z.boolean(),
+  isActionAborted: z.boolean(),
+  sys_id: z.string(),
+  $$uiNotification: z.array(z.object({
+    type: z.string(),
+    message: z.string(),
+  })).optional(),
+})
+export type SnUiAction = z.infer<typeof _action>
+export type SnUiResponse = z.infer<typeof _uiResponse>
+
+//Client Scripts
 const _clientScript = z.object({
   name: z.string(),
   type: z.enum(['onLoad', 'onChange', 'onSubmit']),
@@ -40,56 +36,9 @@ const _clientScript = z.object({
   tableName: z.string(),
   sys_id: z.string(),
 })
+export type SnClientScript = z.infer<typeof _clientScript>
 
-const _ed = z.object({
-  reference: z.string(),
-  qualifier: z.string(),
-  dependent_value: z.string().optional(),
-  defaultOperator: z.string().optional(),
-  searchField: z.string().optional(),
-  attributes: z.object({
-    ref_ac_columns: z.string().optional(),
-    ref_ac_order_by: z.string().optional(),
-    ref_ac_table: z.string().optional(),
-    ref_ac_display_value: z.string().optional(),
-  }),
-})
-
-const _currencyCode = z.object({
-  code: z.string(),
-  symbol: z.string(),
-})
-
-const _fieldChoiceItem = z.object({
-  name: z.string(),
-  label: z.string(),
-  type: z.string(),
-  display: boolean(),
-  value: z.string(),
-})
-
-const _formField = z.object({
-  name: z.string(),
-  label: z.string(),
-  value: z.string(),
-  displayValue: z.string(),
-  mandatory: z.boolean(),
-  visible: z.boolean(),
-  readonly: z.boolean(),
-  staged_data: z.record(z.any()).optional(),
-  sys_readonly: z.boolean().optional(),
-  sys_mandatory: z.boolean().optional(),
-  type: z.string(), //z.enum(['string', 'choice', 'glide_date', 'glide_date_time', 'reference', 'boolean']),
-  max_length: z.number().optional(),
-  choice: z.number().optional(),
-  ed: _ed.optional(),
-  currencyCode: z.string().optional(),
-  currencyValue: z.string().optional(),
-  currencyCodes: _currencyCode.array().optional(),
-  dependentField: z.string().optional(),
-  choices: z.array(_fieldChoiceItem).optional(),
-})
-
+//UI Policies
 const actionEnum = ['true', 'false', 'ignore'] as const
 
 const _policyAction = z.object({
@@ -117,28 +66,103 @@ const _policy = z.object({
   actions: z.array(_policyAction),
 })
 
-export const pickerList = z.record(_recordPickerItem)
-export type SnUiAction = z.infer<typeof _action>
-export type SnFieldSchema = z.infer<typeof _formField>
-export type SnClientScript = z.infer<typeof _clientScript>
 export type SnPolicyAction = z.infer<typeof _policyAction>
 export type SnPolicyCondition = z.infer<typeof _policyCondition>
 export type SnPolicy = z.infer<typeof _policy>
-export type SnFieldsSchema = Record<string, SnFieldSchema>
+
+// Reference Fields
+const _recordPickerItem = z.object({
+  display_value: z.string(),
+  value: z.string(),
+  primary: z.string().optional(),
+  secondary: z.string().optional(),
+  meta: z.custom<SnRow>().optional(),
+})
+
+const _ed = z.object({
+  reference: z.string(),
+  qualifier: z.string(),
+  dependent_value: z.string().optional(),
+  defaultOperator: z.string().optional(),
+  searchField: z.string().optional(),
+  attributes: z.object({
+    ref_ac_columns: z.string().optional(),
+    ref_ac_order_by: z.string().optional(),
+    ref_ac_table: z.string().optional(),
+    ref_ac_display_value: z.string().optional(),
+  }),
+})
+
+export const pickerList = z.record(_recordPickerItem)
 export type SnRecordPickerItem = z.infer<typeof _recordPickerItem>
 export type SnRecordPickerList = SnRecordPickerItem[]
 export type SnRefFieldEd = z.infer<typeof _ed>
+
+//General Form and Fields
+const _currencyCode = z.object({
+  code: z.string(),
+  symbol: z.string(),
+})
+
+const _fieldChoiceItem = z.object({
+  name: z.string(),
+  label: z.string(),
+  type: z.string(),
+  display: boolean(),
+  value: z.string(),
+})
+
+const _formConfig = z.object({
+  date_format: z.string(),
+  base_url: z.string(),
+  security: z.object({
+    canWrite: z.boolean(),
+    canRead: z.boolean(),
+    canDelete: z.boolean().optional(),
+  })
+})
+
+const _formField = z.object({
+  name: z.string(),
+  label: z.string(),
+  value: z.string(),
+  displayValue: z.string(),
+  mandatory: z.boolean(),
+  visible: z.boolean(),
+  readonly: z.boolean(),
+  staged_data: z.record(z.any()).optional(),
+  sys_readonly: z.boolean().optional(),
+  sys_mandatory: z.boolean().optional(),
+  type: z.string(), //z.enum(['string', 'choice', 'glide_date', 'glide_date_time', 'reference', 'boolean']),
+  max_length: z.number().optional(),
+  choice: z.number().optional(),
+  ed: _ed.optional(),
+  currencyCode: z.string().optional(),
+  currencyValue: z.string().optional(),
+  currencyCodes: _currencyCode.array().optional(),
+  dependentField: z.string().optional(),
+  choices: z.array(_fieldChoiceItem).optional(),
+})
+
+
+export type SnFieldPrimitive = string | string[] | boolean | number
+export type SnFieldSchema = z.infer<typeof _formField>
+export type SnFieldsSchema = Record<string, SnFieldSchema>
 export type SnFieldChoiceItem = z.infer<typeof _fieldChoiceItem>
 export type SnFormConfig = z.infer<typeof _formConfig>
 export type FormData = Record<string, string | boolean | number | null>
 export type RHFField = ControllerRenderProps<FormData, string>
+
+export type SnFormApis = {
+  formData: string
+  refDisplay?: string
+}
+
 export type FieldUIState = {
   mandatory: boolean
   visible: boolean
   readonly: boolean
 }
-
-export type SnFieldPrimitive = string | string[] | boolean | number
 
 export interface SnFieldBaseProps<T> {
   rhfField: RHFField
@@ -154,16 +178,4 @@ export type SnSection = {
   _parent?: string
   _bootstrap_cells: number
   columns: SnSectionColumn[]
-}
-
-export type SnAttachment = {
-  sys_id: string
-  file_name: string
-  content_type: string
-  url: string
-}
-
-export type SnFormApis = {
-  formData: string
-  refDisplay?: string
 }

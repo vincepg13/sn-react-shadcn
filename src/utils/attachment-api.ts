@@ -1,3 +1,4 @@
+import { SnAttachment } from '@kit/types/attachment-schema'
 import { getAxiosInstance } from './axios-client'
 
 declare global {
@@ -6,10 +7,23 @@ declare global {
   }
 }
 
+export async function getAttachments(table: string, guid: string): Promise<SnAttachment[]> {
+  const axios = getAxiosInstance()
+  try {
+    const response = await axios.get(
+      `/angular.do?sysparm_type=ngk_attachments&action=list&sys_id=${guid}&table=${table}`
+    )
+    return response.data.files || []
+  } catch (error) {
+    console.error('Error fetching attachments:', error)
+    return []
+  }
+}
+
 export async function deleteAttachment(guid: string): Promise<boolean> {
   const axios = getAxiosInstance()
   try {
-    await axios.get(`angular.do?sysparm_type=ngk_attachments&action=delete&sys_id=${guid}`)
+    await axios.get(`/angular.do?sysparm_type=ngk_attachments&action=delete&sys_id=${guid}`)
   } catch (error) {
     console.error('Error deleting attachment:', error)
     return false
