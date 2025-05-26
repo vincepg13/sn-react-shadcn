@@ -11,7 +11,7 @@ export async function getAttachments(table: string, guid: string): Promise<SnAtt
   const axios = getAxiosInstance()
   try {
     const response = await axios.get(
-      `angular.do?sysparm_type=ngk_attachments&action=list&sys_id=${guid}&table=${table}`
+      `/angular.do?sysparm_type=ngk_attachments&action=list&sys_id=${guid}&table=${table}`
     )
     return response.data.files || []
   } catch (error) {
@@ -23,7 +23,7 @@ export async function getAttachments(table: string, guid: string): Promise<SnAtt
 export async function deleteAttachment(guid: string): Promise<boolean> {
   const axios = getAxiosInstance()
   try {
-    await axios.get(`angular.do?sysparm_type=ngk_attachments&action=delete&sys_id=${guid}`)
+    await axios.get(`/angular.do?sysparm_type=ngk_attachments&action=delete&sys_id=${guid}`)
   } catch (error) {
     console.error('Error deleting attachment:', error)
     return false
