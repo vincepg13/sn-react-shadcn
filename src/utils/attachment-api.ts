@@ -1,8 +1,22 @@
+import { SnAttachment } from '@kit/types/attachment-schema'
 import { getAxiosInstance } from './axios-client'
 
 declare global {
   interface Window {
     g_ck?: string
+  }
+}
+
+export async function getAttachments(table: string, guid: string): Promise<SnAttachment[]> {
+  const axios = getAxiosInstance()
+  try {
+    const response = await axios.get(
+      `angular.do?sysparm_type=ngk_attachments&action=list&sys_id=${guid}&table=${table}`
+    )
+    return response.data.files || []
+  } catch (error) {
+    console.error('Error fetching attachments:', error)
+    return []
   }
 }
 

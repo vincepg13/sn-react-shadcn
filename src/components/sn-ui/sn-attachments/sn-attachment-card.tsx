@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Button } from '@kit/components/ui/button'
-import { SnAttachment } from '@kit/types/form-schema'
+import { SnAttachment } from '@kit/types/attachment-schema'
 import { Card, CardContent } from '@kit/components/ui/card'
 import { Trash, Download, LoaderCircle } from 'lucide-react'
 

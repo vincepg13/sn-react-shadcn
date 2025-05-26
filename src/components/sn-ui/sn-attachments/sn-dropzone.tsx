@@ -18,7 +18,6 @@ export function SnDropzone({ onFileSave }: DropzoneProps) {
     try {
       setIsSaving(true)
       await onFileSave(files)
-      console.log('Files saved successfully')
       setFiles([])
     } finally {
       setIsSaving(false)

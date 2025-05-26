@@ -13,10 +13,10 @@ import { SnUiPolicyContext } from './contexts/SnUiPolicyContext'
 import { useForm, FormProvider, FieldErrors } from 'react-hook-form'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { SnClientScriptContext } from './contexts/SnClientScriptContext'
+import { SnAttachment } from '@kit/types/attachment-schema'
 
 import {
   FieldUIState,
-  SnAttachment,
   SnClientScript,
   SnFieldsSchema,
   SnFormApis,
@@ -30,6 +30,7 @@ import { SnFormLifecycleContext } from './contexts/SnFormLifecycleContext'
 interface SnFormProps {
   table: string
   guid: string
+  attachmentGuid: string
   uiActions: SnUiAction[]
   formFields: SnFieldsSchema
   formConfig: SnFormConfig
@@ -39,11 +40,13 @@ interface SnFormProps {
   apis: SnFormApis
   attachments: SnAttachment[]
   setAttachments: (attachments: SnAttachment[]) => void
+  snSubmit?(guid: string): void
 }
 
 export function SnForm({
   table,
   guid,
+  attachmentGuid,
   uiActions,
   formFields,
   formConfig,
@@ -52,7 +55,8 @@ export function SnForm({
   sections,
   apis,
   attachments,
-  setAttachments
+  setAttachments,
+  snSubmit,
 }: SnFormProps) {
   const [fieldUIState, setFieldUIState] = useState<Record<string, FieldUIState>>({})
   const fieldTabMapRef = useRef<Record<string, string>>({})
@@ -145,7 +149,7 @@ export function SnForm({
       keepDirty: true,
       keepTouched: true,
     })
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const handleValidationError = (errors: FieldErrors) => {
@@ -222,6 +226,8 @@ export function SnForm({
                   uiActions={uiActions}
                   formFields={formFields}
                   attachments={attachments}
+                  attachmentGuid={attachmentGuid}
+                  snSubmit={snSubmit}
                   setAttachments={setAttachments}
                   handleSubmit={form.handleSubmit}
                   onValidationError={handleValidationError}
