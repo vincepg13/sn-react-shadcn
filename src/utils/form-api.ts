@@ -10,12 +10,20 @@ export function getFormData(metadataApi: string, controller: AbortController): P
   })
 }
 
-export function postFormAction(table: string, recordID: string, action: string, data: SnFieldsSchema) {
+export function postFormAction(
+  table: string,
+  recordID: string,
+  attachmentGuid: string,
+  action: string,
+  data: SnFieldsSchema
+) {
   const axios = getAxiosInstance()
+  const postData = { ...data, _attachmentGUID: attachmentGuid }
+
   return axios.post(`/api/now/sp/uiaction/${action}`, {
     table,
     recordID,
-    data,
+    data: postData,
   })
 }
 
