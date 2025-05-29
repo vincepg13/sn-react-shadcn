@@ -98,6 +98,48 @@ export type SnRecordPickerItem = z.infer<typeof _recordPickerItem>
 export type SnRecordPickerList = SnRecordPickerItem[]
 export type SnRefFieldEd = z.infer<typeof _ed>
 
+//Activity Formatter
+
+const _entrySchema = z.object({
+  sys_created_on_adjusted: z.string(),
+  sys_id: z.string(),
+  login_name: z.string(),
+  user_sys_id: z.string(),
+  initials: z.string(),
+  sys_created_on: z.string(),
+  contains_code: z.union([z.string(), z.boolean()]), // handle "false" or false
+  field_label: z.string(),
+  is_truncated: z.boolean(),
+  name: z.string(),
+  value: z.string(),
+  element: z.string(),
+});
+
+const _journalFieldSchema = z.object({
+  can_read: z.boolean(),
+  color: z.string(),
+  can_write: z.boolean(),
+  name: z.string(),
+  label: z.string(),
+});
+
+const _activitySchema = z.object({
+  display_value: z.string(),
+  sys_id: z.string(),
+  entries: z.array(_entrySchema),
+  user_sys_id: z.string(),
+  user_full_name: z.string(),
+  user_login: z.string(),
+  label: z.string(),
+  table: z.string(),
+  journal_fields: z.array(_journalFieldSchema),
+  readable: z.array(z.string()),
+  writeable: z.array(z.string()),
+  formatter: z.string(),
+});
+
+export type SnActivity = z.infer<typeof _activitySchema>
+
 //General Form and Fields
 const _currencyCode = z.object({
   code: z.string(),

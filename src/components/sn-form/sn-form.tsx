@@ -17,6 +17,7 @@ import { SnAttachment } from '@kit/types/attachment-schema'
 
 import {
   FieldUIState,
+  SnActivity,
   SnClientScript,
   SnFieldsSchema,
   SnFormApis,
@@ -26,6 +27,7 @@ import {
   SnUiAction,
 } from '@kit/types/form-schema'
 import { SnFormLifecycleContext } from './contexts/SnFormLifecycleContext'
+import { SnFormActivity } from '../sn-ui/sn-activity/sn-form-activity'
 
 interface SnFormProps {
   table: string
@@ -39,8 +41,10 @@ interface SnFormProps {
   sections: SnSection[]
   apis: SnFormApis
   attachments: SnAttachment[]
+  activity?: SnActivity
   setAttachments: (attachments: SnAttachment[]) => void
   snSubmit?(guid: string): void
+
 }
 
 export function SnForm({
@@ -55,6 +59,7 @@ export function SnForm({
   sections,
   apis,
   attachments,
+  activity,
   setAttachments,
   snSubmit,
 }: SnFormProps) {
@@ -205,6 +210,11 @@ export function SnForm({
                   }}
                   renderField={name => {
                     const field = formFields[name]
+
+                    if (activity && name.includes(activity.formatter)) {
+                      return <SnFormActivity activity={activity}/>
+                    }
+
                     if (!field) return null
 
                     return (
