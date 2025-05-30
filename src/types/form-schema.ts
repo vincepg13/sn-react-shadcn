@@ -107,12 +107,13 @@ const _entrySchema = z.object({
   user_sys_id: z.string(),
   initials: z.string(),
   sys_created_on: z.string(),
-  contains_code: z.union([z.string(), z.boolean()]), // handle "false" or false
+  contains_code: z.union([z.string(), z.boolean()]),
   field_label: z.string(),
   is_truncated: z.boolean(),
   name: z.string(),
   value: z.string(),
   element: z.string(),
+  user_img: z.string().optional(),
 });
 
 const _journalFieldSchema = z.object({
@@ -138,6 +139,7 @@ const _activitySchema = z.object({
   formatter: z.string(),
 });
 
+export type SnActivityEntry = z.infer<typeof _entrySchema>
 export type SnActivity = z.infer<typeof _activitySchema>
 
 //General Form and Fields
@@ -155,6 +157,7 @@ const _fieldChoiceItem = z.object({
 })
 
 const _formConfig = z.object({
+  user: z.string(),
   date_format: z.string(),
   base_url: z.string(),
   security: z.object({
@@ -184,6 +187,7 @@ const _formField = z.object({
   currencyCodes: _currencyCode.array().optional(),
   dependentField: z.string().optional(),
   choices: z.array(_fieldChoiceItem).optional(),
+  journalInputChanged: z.boolean().optional(),
 })
 
 

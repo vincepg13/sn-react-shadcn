@@ -43,6 +43,10 @@ function SnFieldComponent({ field, fieldUIState, guid, table }: SnFieldProps) {
     fieldVal: String(getValues(field.name) ?? ''),
   })
 
+    if (field.type == "journal_input") {
+    console.log("JOURNAL INPUT FIELD", field, fieldUI)
+  }
+
   const handleChange = useCallback(
     (newValue: SnFieldPrimitive) => {
       // console.log("SNFC", field.name, newValue)
@@ -131,9 +135,10 @@ function renderFieldComponent(
     case 'compressed':
     case 'password':
     case 'password2':
+    case 'journal_input':
       if (field.type.startsWith('password'))
         return <SnFieldInput rhfField={rhfField} onChange={handleChange} onFocus={handleFocus} type="password" />
-      if (field.max_length && field.max_length >= 200) {
+      if (field.type == "journal_input" || (field.max_length && field.max_length >= 200)) {
         return <SnFieldTextarea field={field} rhfField={rhfField} onChange={handleChange} onFocus={handleFocus} />
       }
       return <SnFieldInput rhfField={rhfField} onChange={handleChange} onFocus={handleFocus} />

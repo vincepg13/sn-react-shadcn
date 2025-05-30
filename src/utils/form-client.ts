@@ -23,7 +23,7 @@ export function createGFormBridge(
   updateFieldUI: (field: string, updates: Partial<FieldUIState>) => void,
   fieldChangeHandlers: RefObject<Record<string, (value: any) => void>>,
   table?: string,
-  guid?: string,
+  guid?: string
 ) {
   return {
     getValue: (field: string) => getValues()[field],
@@ -44,11 +44,11 @@ export function createGFormBridge(
     },
 
     setValue(fieldName: string, value: any) {
-      setValue(fieldName, value);
-      const handlers = fieldChangeHandlers.current;
+      setValue(fieldName, value)
+      const handlers = fieldChangeHandlers.current
 
       if (handlers?.[fieldName]) {
-        handlers[fieldName](value);
+        handlers[fieldName](value)
       }
     },
   }
@@ -56,13 +56,18 @@ export function createGFormBridge(
 
 export function buildSubmissionPayload(formFields: SnFieldsSchema, values: Record<string, any>): Record<string, any> {
   const payload = Object.fromEntries(
-    Object.entries(formFields).map(([name, field]) => [
-      name,
-      {
+    Object.entries(formFields).map(([name, field]) => {
+      const payloadField = {
         ...field,
         value: String(values[name] || ''),
-      },
-    ])
+      }
+
+      if (payloadField.type === "journal_input" && payloadField.value) {
+        payloadField.journalInputChanged = true
+      }
+
+      return [name, payloadField]
+    })
   )
 
   return payload
