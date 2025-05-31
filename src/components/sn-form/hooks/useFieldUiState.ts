@@ -2,32 +2,57 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { SnFieldSchema, SnFieldsSchema } from '@kit/types/form-schema'
 import { FieldUIState } from '../../../types/form-schema'
 
-interface Props {
+interface SingleFieldProps {
   field: SnFieldSchema
   fieldVal: string
   uiState: Record<string, FieldUIState>
 }
 
-export function useEffectiveFieldState({ field, fieldVal, uiState }: Props): FieldUIState {
+interface MultiFieldProps {
+  fields: { field: SnFieldSchema; fieldVal: string }[]
+  uiState: Record<string, FieldUIState>
+}
+
+function computeEffectiveFieldState(
+  field: SnFieldSchema,
+  fieldVal: string,
+  uiState: Record<string, FieldUIState>
+): FieldUIState {
+  function isReadonly(sysRo: boolean, ro: boolean, man: boolean): boolean {
+    return sysRo ? true : ro && !!(fieldVal || !man)
+  }
+
+  function isMandatory(sysRo: boolean, man: boolean): boolean {
+    return sysRo ? false : man
+  }
+
+  const overrides = uiState[field.name] || {}
+  const ro = overrides.readonly ?? field.readonly ?? false
+  const man = overrides.mandatory ?? field.mandatory ?? false
+
+  return {
+    readonly: isReadonly(!!field.sys_readonly, ro, man),
+    visible: overrides.visible ?? field.visible ?? true,
+    mandatory: isMandatory(!!field.sys_readonly, man),
+  }
+}
+
+export function useEffectiveFieldState({ field, fieldVal, uiState }: SingleFieldProps): FieldUIState {
+  return useMemo(() => computeEffectiveFieldState(field, fieldVal, uiState), [
+    field,
+    fieldVal,
+    uiState,
+  ])
+}
+
+export function useEffectiveFieldStates({ fields, uiState }: MultiFieldProps): Record<string, FieldUIState> {
   return useMemo(() => {
-    function isReadonly(sysRo: boolean, ro: boolean, man: boolean): boolean {
-      return sysRo ? true : ro && !!(fieldVal || !man)
+    const result: Record<string, FieldUIState> = {}
+    for (const { field, fieldVal } of fields) {
+      result[field.name] = computeEffectiveFieldState(field, fieldVal, uiState)
     }
-
-    function isMandatory(sysRo: boolean, man: boolean): boolean {
-      return sysRo ? false : man
-    }
-
-    const overrides = uiState[field.name] || {}
-    const ro = overrides.readonly ?? field.readonly ?? false
-    const man = overrides.mandatory ?? field.mandatory ?? false
-
-    return {
-      readonly: isReadonly(!!field.sys_readonly, ro, man),
-      visible: overrides.visible ?? field.visible ?? true,
-      mandatory: isMandatory(!!field.sys_readonly, man),
-    }
-  }, [field, uiState, fieldVal])
+    return result
+  }, [fields, uiState])
 }
 
 export function useFieldUIStateManager(formFields: SnFieldsSchema) {

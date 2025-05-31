@@ -43,10 +43,6 @@ function SnFieldComponent({ field, fieldUIState, guid, table }: SnFieldProps) {
     fieldVal: String(getValues(field.name) ?? ''),
   })
 
-    if (field.type == "journal_input") {
-    console.log("JOURNAL INPUT FIELD", field, fieldUI)
-  }
-
   const handleChange = useCallback(
     (newValue: SnFieldPrimitive) => {
       // console.log("SNFC", field.name, newValue)

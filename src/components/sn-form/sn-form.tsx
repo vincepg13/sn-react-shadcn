@@ -147,7 +147,20 @@ export function SnForm({
                     const field = formFields[name]
 
                     if (activity && name.includes(activity.formatter)) {
-                      return <SnFormActivity activity={activity} />
+                      const journals = Object.values(formFields).filter(f => f.type === 'journal_input')
+                      return (
+                        <SnFormActivity
+                          journalEntries={activity.entries}
+                          journalFields={activity.journal_fields}
+                          user={formConfig.user}
+                          table={table}
+                          guid={guid}
+                          fieldUIState={fieldUIState}
+                          journalInputs={journals}
+                          getValues={form.getValues}
+                          setValue={form.setValue}
+                        />
+                      )
                     }
 
                     if (!field) return null
