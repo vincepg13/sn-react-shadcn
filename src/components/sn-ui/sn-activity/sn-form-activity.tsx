@@ -17,6 +17,7 @@ type SnActivityProps = {
   user: string
   table: string
   guid: string
+  fullWidth?: boolean
   fieldUIState?: Record<string, FieldUIState>
   journalInputs?: SnFieldSchema[]
   getValues?: (fieldName: string) => SnFieldPrimitive
@@ -29,6 +30,7 @@ export function SnFormActivity({
   user,
   table,
   guid,
+  fullWidth = false,
   fieldUIState,
   journalInputs,
   setValue,
@@ -50,6 +52,7 @@ export function SnFormActivity({
     }))
   }, [journalInputs, getValues])
 
+  
   const fieldUiMap = useEffectiveFieldStates({
     fields: effectiveFields,
     uiState: fieldUIState || {},
@@ -85,7 +88,8 @@ export function SnFormActivity({
         return { name: journal!.name, label: journal!.label || journal!.name }
       })
     setEntryFields(useable)
-  }, [journalFields, fieldUiMap, journalInputs])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [journalFields, journalInputs])
 
   return (
     <div className="flex flex-col gap-4">
@@ -99,10 +103,10 @@ export function SnFormActivity({
         />
       )}
 
-      <div className="flex flex-col gap-4 max-h-[50vh] overflow-y-auto px-2">
+      <div className="flex flex-col gap-4 max-h-[50vh] overflow-y-auto pr-1">
         {entries.map(entry => (
           <div key={entry.sys_id} className="last:mb-4">
-            <SnActivityRow user={user} entry={entry} journalFields={journalFields} />
+            <SnActivityRow user={user} entry={entry} journalFields={journalFields} fullWidth={fullWidth} />
           </div>
         ))}
       </div>

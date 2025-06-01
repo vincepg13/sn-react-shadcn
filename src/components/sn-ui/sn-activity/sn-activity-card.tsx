@@ -6,9 +6,10 @@ import { SnActivityEntry } from '@kit/types/form-schema'
 // import SnAvatar from '@kit/components/sn-user/sn-avatar'
 
 export function SnActivityCard({entry, colour}: {entry: SnActivityEntry, colour?: string}) {
+  const badgeColour = colour?.replace("background-color: ", "")
   const badgeStyle = {
-    color: colour && colour != "transparent" ? 'white' : 'inherit',
-    backgroundColor: colour
+    color: badgeColour && badgeColour != "transparent" ? 'white' : 'inherit',
+    backgroundColor: badgeColour
   }
 
   return (

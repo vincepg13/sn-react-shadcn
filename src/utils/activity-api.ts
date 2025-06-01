@@ -1,6 +1,30 @@
 import { format, toZonedTime } from 'date-fns-tz'
 import { getAxiosInstance } from './axios-client'
-import { SnBaseEntry, SnActivityEntry } from '@kit/types/form-schema'
+import { SnBaseEntry, SnActivityEntry, SnBaseActivity } from '@kit/types/form-schema'
+
+export async function getJournalEntries(
+  table: string,
+  guid: string,
+  controller: AbortController
+): Promise<SnBaseActivity | false> {
+  const axios = getAxiosInstance()
+  try {
+    const response = await axios.get(
+      `/angular.do?sysparm_type=list_history&action=get_new_entries&table=${table}&sys_id=${guid}&sysparm_source=from_form`,
+      { signal: controller.signal }
+    )
+
+    if (response.status === 200) {
+      if (!response.data) return false
+      return response.data as SnBaseActivity
+    }
+
+    return false
+  } catch (error) {
+    console.error('Error fetching journal entries:', error)
+    return false
+  }
+}
 
 export async function postJournalEntry(
   table: string,
@@ -8,7 +32,7 @@ export async function postJournalEntry(
   field: string,
   entry: string,
   controller: AbortController
-): Promise<boolean|SnActivityEntry> {
+): Promise<boolean | SnActivityEntry> {
   const axios = getAxiosInstance()
   try {
     const post = await axios.post(
@@ -17,7 +41,6 @@ export async function postJournalEntry(
       { signal: controller.signal }
     )
 
-    console.log('Journal entry posted:', post)
     if (post.status === 200) {
       const lastEntry = post.data.entries[0] as SnBaseEntry
       if (lastEntry) {
@@ -34,7 +57,6 @@ export async function postJournalEntry(
 
 export function transformBaseToActivityEntry(entry: SnBaseEntry): SnActivityEntry {
   const journal = entry.entries.journal[0]
-
   const utcDate = new Date(entry.sys_created_on) // ServiceNow format is parseable by Date
   const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
   const localDate = toZonedTime(utcDate, timeZone)
@@ -42,7 +64,7 @@ export function transformBaseToActivityEntry(entry: SnBaseEntry): SnActivityEntr
 
   return {
     sys_created_on_adjusted: formatted,
-    sys_id: journal.sys_id,
+    sys_id: journal.sys_id??"",
     login_name: entry.sys_created_by,
     user_sys_id: entry.user_id,
     initials: entry.initials,

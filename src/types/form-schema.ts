@@ -175,7 +175,16 @@ const _snBaseEntry = z.object({
   }),
 })
 
+const _snBaseActivity = z.object({
+  display_value: z.string(),
+  entries: z.array(_snBaseEntry),
+  fields: z.array(_journalFieldSchema),
+  primary_fields: z.string().array().optional(),
+  sys_timestamp: z.number()
+})
+
 export type SnBaseEntry = z.infer<typeof _snBaseEntry>
+export type SnBaseActivity = z.infer<typeof _snBaseActivity>
 export type SnJournalField = z.infer<typeof _journalFieldSchema>
 export type SnActivityEntry = z.infer<typeof _entrySchema>
 export type SnActivity = z.infer<typeof _activitySchema>
