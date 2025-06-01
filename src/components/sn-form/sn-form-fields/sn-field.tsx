@@ -113,7 +113,6 @@ function renderFieldComponent(
   const depValue = depField ? watch(depField) : undefined
 
   // TODO:
-  // - Duration
   // - File Attachment
   // - User Roles 
   // - Field List
@@ -132,9 +131,10 @@ function renderFieldComponent(
     case 'compressed':
     case 'password':
     case 'password2':
+    case 'journal_input':
       if (field.type.startsWith('password'))
         return <SnFieldInput rhfField={rhfField} onChange={handleChange} onFocus={handleFocus} type="password" />
-      if (field.max_length && field.max_length >= 200) {
+      if (field.type == "journal_input" || (field.max_length && field.max_length >= 200)) {
         return <SnFieldTextarea field={field} rhfField={rhfField} onChange={handleChange} onFocus={handleFocus} />
       }
       return <SnFieldInput rhfField={rhfField} onChange={handleChange} onFocus={handleFocus} />

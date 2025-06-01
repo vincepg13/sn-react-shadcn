@@ -4,7 +4,8 @@ import { cn } from '../../lib/utils'
 
 interface SnAvatarProps {
   name: string
-  image: string
+  image?: string
+  initials?: string
   className?: string
 }
 
@@ -18,12 +19,12 @@ function getInitials(name: string): string {
   return initials.join('')
 }
 
-export default function SnAvatar({ name, image, className }: SnAvatarProps) {
-  const [fallback, setFallback] = useState(getInitials(name))
+export default function SnAvatar({ name, initials, image, className }: SnAvatarProps) {
+  const [fallback, setFallback] = useState(initials || getInitials(name))
 
   useEffect(() => {
-    setFallback(getInitials(name))
-  }, [name])
+    setFallback(initials || getInitials(name))
+  }, [name, initials])
 
   return (
     <Avatar className={cn('size-12', className)}>

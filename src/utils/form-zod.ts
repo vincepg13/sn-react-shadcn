@@ -3,7 +3,7 @@ import { z, ZodTypeAny } from 'zod'
 
 export function mapFieldToZod(field: SnFieldSchema): ZodTypeAny {
   let base: ZodTypeAny
-  const allowEmpty = !field.mandatory
+  const allowEmpty = field.sys_readonly || !field.mandatory 
 
   switch (field.type) {
     case 'glide_list':

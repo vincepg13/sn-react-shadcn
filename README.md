@@ -133,100 +133,161 @@ This is where I currently stand with what works:
 To use the form you must provide it with all necessary metadata, I do this by a scripted API call in the global scope to the api method mentioned above. Below is the code I run in that endpoint:
 
 ```js
-;(function process(/*RESTAPIRequest*/ request, /*RESTAPIResponse*/ response) {
-  const table = request.pathParams.table
-  const guid = request.pathParams.id
+(function process( /*RESTAPIRequest*/ request, /*RESTAPIResponse*/ response) {
+    const table = request.pathParams.table;
+    const guid = request.pathParams.id;
+	const qry = request.queryParams.qry || "";
+	const view = request.queryParams.view || "";
 
-  if (!table || !guid) {
-    return sendError('400', 'Table and id must be provided')
-  }
-
-  var grTarget = new GlideRecordSecure(table)
-  if (guid != -1 && !grTarget.get(guid)) {
-    return sendError('400', 'Record was either not found or you are not authorised to view it.')
-  }
-
-  const instanceURI = gs.getProperty('glide.servlet.uri')
-  const formData = new global.GlideSPScriptable().getForm(table, guid)
-  formData.attachments = getAttachments(table, guid, instanceURI)
-  modifyFields(formData._fields)
-
-  formData.react_config = {
-    security: getSecurity(grTarget),
-    base_url: instanceURI,
-    date_format: gs.getSession().getUser().getDateFormat(),
-  }
-
-  response.setStatus(200)
-  response.setBody(formData)
-
-  function sendError(code, msg) {
-    var error = new sn_ws_err.ServiceError()
-    error.setStatus(code)
-    error.setMessage(msg)
-    return error
-  }
-
-  function getSecurity(gr, guid) {
-    var access = {}
-
-    if (guid == -1) {
-      gr.initialize()
-      var canCreate = gr.canCreate()
-      access.canRead = canCreate
-      access.canWrite = canCreate
-    } else {
-      access.canRead = gr.canRead()
-      access.canWrite = gr.canWrite()
-      access.canDelete = gr.canDelete()
+    if (!table || !guid) {
+        return sendError("400", "Table and id must be provided");
     }
 
-    return access
-  }
+    var grTarget = new GlideRecordSecure(table);
+    if (guid != -1 && !grTarget.get(guid)) {
+        return sendError("400", "Record was either not found or you are not authorised to view it.");
+    }
 
-  function modifyFields(fields) {
-    for (f in fields) {
-      var field = fields[f]
+    const instanceURI = gs.getProperty("glide.servlet.uri");
+    const formData = new GlideSPScriptable().getForm(table, guid, qry, view);
+    const hasActivityFormatter = hasActivity(formData._formatters);
 
-      if (field.type === 'glide_date') {
-        if (field.value) {
-          var gd = new GlideDate()
-          gd.setDisplayValue(field.value)
-          field.value = gd.getValue()
+    if (!!hasActivityFormatter && guid != -1) {
+        formData.activity = getActivityData(table, guid, instanceURI);
+        formData.activity.formatter = hasActivityFormatter;
+    }
+
+    formData.attachments = getAttachments(table, guid, instanceURI);
+    modifyFields(formData._fields, formData.activity);
+
+    formData.react_config = {
+        user: gs.getUserID(),
+        base_url: instanceURI,
+        security: getSecurity(grTarget),
+        date_format: gs.getSession().getUser().getDateFormat()
+    };
+
+    response.setStatus(200);
+    response.setBody(formData);
+
+    function sendError(code, msg) {
+        var error = new sn_ws_err.ServiceError();
+        error.setStatus(code);
+        error.setMessage(msg);
+        return error;
+    }
+
+    function hasActivity(formatters) {
+        for (f in formatters) {
+            let formatterName = formatters[f].formatter;
+            if (formatterName === "activity.xml") {
+                return f;
+            }
         }
-      }
 
-      if (field.type === 'glide_date_time') {
-        if (field.value) {
-          var gdt = new GlideDateTime()
-          gdt.setDisplayValue(field.value)
-          field.value = gdt.getValue()
+        return false;
+    }
+
+    function getActivityData(table, guid, instance) {
+        const meta = new GlideSPScriptable().getStream(table, guid);
+        const jFields = meta.journal_fields;
+        const readable = jFields.filter(f => f.can_read).map(f => f.name);
+        const writeable = jFields.filter(f => f.can_write).map(f => f.name);
+        let entries = meta.entries.filter(f => !!f.value);
+
+        const userImgMap = {};
+        const grUser = new GlideRecord("sys_user");
+        entries = entries.map(e => {
+            if (userImgMap[e.user_sys_id]) {
+                e.user_img = userImgMap[e.user_sys_id];
+            } else if (grUser.get(e.user_sys_id)) {
+				const userImg = grUser.getDisplayValue("avatar") || grUser.getDisplayValue("photo");
+                if (!userImg) return e;
+				
+                const photo = instance + userImg;
+                e.user_img = photo;
+                userImgMap[e.user_sys_id] = photo;
+            }
+            return e;
+        });
+
+        return {
+            ...meta,
+            entries,
+            readable,
+            writeable
+        };
+    }
+
+    function getSecurity(gr, guid) {
+        var access = {};
+
+        if (guid == -1) {
+            gr.initialize();
+            var canCreate = gr.canCreate();
+            access.canRead = canCreate;
+            access.canWrite = canCreate;
+        } else {
+            access.canRead = gr.canRead();
+            access.canWrite = gr.canWrite();
+            access.canDelete = gr.canDelete();
         }
-      }
-    }
-  }
 
-  function getAttachments(table, guid, instance) {
-    grAttach = new GlideRecordSecure('sys_attachment')
-    grAttach.addQuery('table_name', table)
-    grAttach.addQuery('table_sys_id', 'IN', guid)
-    grAttach.orderBy('sys_created_on')
-    grAttach.query()
-
-    var attachments = []
-    while (grAttach.next()) {
-      var id = grAttach.getUniqueValue()
-      attachments.push({
-        sys_id: id,
-        url: instance + 'sys_attachment.do?sys_id=' + id,
-        file_name: grAttach.getValue('file_name'),
-        content_type: grAttach.getValue('content_type'),
-      })
+        return access;
     }
 
-    return attachments
-  }
-})(request, response)
+    function modifyFields(fields, activityData) {
+        for (f in fields) {
+            var field = fields[f];
+
+            if (field.type === "glide_date" || field.type == "glide_date_time") {
+                if (field.value) {
+                    var gd = field.type == "glide_date" ? new GlideDate() : new GlideDateTime();
+                    gd.setDisplayValue(field.value);
+                    field.value = gd.getValue();
+                }
+            }
+
+            if (activityData && field.type == "journal_input") {
+                field.visible = false;
+                if (activityData.readable && !activityData.readable.includes(field.name)) {
+                    activityData.journal_fields.push({
+                        can_read: true,
+                        can_write: !field.readonly,
+                        color: "transparent",
+                        label: field.label,
+                        name: field.name
+                    });
+
+                    activityData.readable.push(field.name);
+                    if (!field.readonly) activityData.writeable.push(field.name);
+                }
+            }
+        }
+    }
+
+    function getAttachments(table, guid, instance) {
+        grAttach = new GlideRecordSecure("sys_attachment");
+        grAttach.addQuery("table_name", table);
+        grAttach.addQuery("table_sys_id", "IN", guid);
+        grAttach.orderBy("sys_created_on");
+        grAttach.query();
+
+        var attachments = [];
+        while (grAttach.next()) {
+            var id = grAttach.getUniqueValue();
+            attachments.push({
+                sys_id: id,
+                url: instance + 'sys_attachment.do?sys_id=' + id,
+                file_name: grAttach.getValue("file_name"),
+                content_type: grAttach.getValue("content_type"),
+            });
+        }
+
+        return attachments;
+    }
+
+})(request, response);
 ```
 
 With the metadata available you can now make use of the components.
@@ -248,15 +309,20 @@ This component will then consume the metadata from the api response and pass it 
 ![SnFormRefs](/demo/SNDemoFormRefs.png)
 ![SnFormDates](/demo/SNDemoFormDates.png)
 ![SnFormMedia](/demo/SNDemoFormMedia.png)
+![SnFormActivity](/demo/SNFormActivityDemo.png)
 
 ### `<SnTabs />` && `<SnClippy/>`
 
 Within the form component I make use of these two handy components which are also available to be used standalone.
 
-- **SnTabs** - A wrapper around the shadcn tab components which allow you to pass in an array of tabs to be rendered. Each tab just needs to set a label and the ReactNode element to be rendered.
-- **SnClippy** - Your own personal clippy to be used in ServiceNow. Just give it a table and record then click the paperclip icon to view all the attachments in a shadcn sheet. From here you can delete attachments or add new onces using the drop zone in the footer of the sheet.
+- **SnTabs** A wrapper around the shadcn tab components which allow you to pass in an array of tabs to be rendered. Each tab just needs to set a label and the ReactNode element to be rendered.
+- **SnClippy** ({table: string, guid: string, instance?: string})
+  - Your own personal clippy to be used in ServiceNow. Just give it a table and record then click the paperclip icon to view all the attachments in a shadcn sheet. From here you can delete attachments or add new onces using the drop zone in the footer of the sheet.
+- **SnActivity** ({table: string, guid: string, user: string, fullWidth?: boolean})
+  - Given the current users sys_id, a table and a record sys_id, this component will build the activity formatter. Currently the formatter will only display journal input field history and allow you to post directly to any of these fields. Field changes, attachment updates and html are not currently supported.
 
-## ![SnFormAttachments](/demo/SNDemoFormAttachments.png)
+![SnActivity](/demo/SNActivityDemo.png)
+![SnFormAttachments](/demo/SNDemoFormAttachments.png)
 
 ## 👥 Interacting With User Data
 

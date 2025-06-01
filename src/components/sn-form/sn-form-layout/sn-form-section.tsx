@@ -17,7 +17,7 @@ export function SnFormSection({ columns, bootstrapCells, renderField }: SnSectio
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const tailwindCols = ["grid-cols-1", "grid-cols-2"]
   const gridCols = Math.max(1, 12 / bootstrapCells)
-  const gridClass = `grid grid-cols-${gridCols} gap-4`
+  const gridClass = `grid grid-cols-1 md:grid-cols-${gridCols} gap-4`
 
   return (
     <div className={gridClass}>

@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { AlertCircle } from 'lucide-react'
 import { getFormData } from '@kit/utils/form-api'
 import { SnAttachment } from '@kit/types/attachment-schema'
-import { SnFormApis, SnSection } from '@kit/types/form-schema'
+import { SnActivity, SnFormApis, SnSection } from '@kit/types/form-schema'
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert'
 import { SnUiAction, SnFieldsSchema, SnFormConfig, SnClientScript, SnPolicy } from '@kit/types/form-schema'
 
@@ -32,6 +32,7 @@ export function SnFormWrapper({ apis, table, guid, snSubmit }: SnFormProps) {
   const [clientScripts, setClientScripts] = useState<SnClientScript[]>([])
   const [uiPolicies, setUiPolicies] = useState<SnPolicy[]>([])
   const [sections, setSections] = useState<SnSection[]>([])
+  const [activity, setActivity] = useState<SnActivity | undefined>(undefined)
   const [attachments, setAttachments] = useState<SnAttachment[]>([])
   const [attachmentGuid, setAttachmentGuid] = useState<string>(guid)
 
@@ -54,6 +55,7 @@ export function SnFormWrapper({ apis, table, guid, snSubmit }: SnFormProps) {
           setClientScripts(unionClientScripts(form.client_script))
           setUiPolicies(form.policy || [])
           setSections(form._sections || [])
+          setActivity(form.activity)
           setAttachments(form.attachments || [])
           setAttachmentGuid(form._attachmentGUID || guid)
         }
@@ -120,6 +122,7 @@ export function SnFormWrapper({ apis, table, guid, snSubmit }: SnFormProps) {
           clientScripts={clientScripts}
           uiPolicies={uiPolicies}
           sections={sections}
+          activity={activity}
           attachments={attachments}
           setAttachments={setAttachments}
           snSubmit={snSubmit}

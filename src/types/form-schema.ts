@@ -19,10 +19,14 @@ const _uiResponse = z.object({
   isInsert: z.boolean(),
   isActionAborted: z.boolean(),
   sys_id: z.string(),
-  $$uiNotification: z.array(z.object({
-    type: z.string(),
-    message: z.string(),
-  })).optional(),
+  $$uiNotification: z
+    .array(
+      z.object({
+        type: z.string(),
+        message: z.string(),
+      })
+    )
+    .optional(),
 })
 export type SnUiAction = z.infer<typeof _action>
 export type SnUiResponse = z.infer<typeof _uiResponse>
@@ -98,6 +102,96 @@ export type SnRecordPickerItem = z.infer<typeof _recordPickerItem>
 export type SnRecordPickerList = SnRecordPickerItem[]
 export type SnRefFieldEd = z.infer<typeof _ed>
 
+//Activity Formatter
+const _entrySchema = z.object({
+  sys_created_on_adjusted: z.string(),
+  sys_id: z.string(),
+  login_name: z.string(),
+  user_sys_id: z.string(),
+  initials: z.string(),
+  sys_created_on: z.string(),
+  contains_code: z.union([z.string(), z.boolean()]),
+  field_label: z.string(),
+  is_truncated: z.boolean(),
+  name: z.string(),
+  value: z.string(),
+  element: z.string(),
+  user_img: z.string().optional(),
+})
+
+const _journalFieldSchema = z.object({
+  name: z.string(),
+  label: z.string(),
+  color: z.string().optional(),
+  can_read: z.boolean().optional(),
+  can_write: z.boolean().optional(),
+  canWrite: z.boolean().optional(),
+  isActive: z.boolean().optional(),
+  isJournal: z.boolean().optional(),
+})
+
+const _activitySchema = z.object({
+  display_value: z.string(),
+  sys_id: z.string(),
+  entries: z.array(_entrySchema),
+  user_sys_id: z.string(),
+  user_full_name: z.string(),
+  user_login: z.string(),
+  label: z.string(),
+  table: z.string(),
+  journal_fields: z.array(_journalFieldSchema),
+  readable: z.array(z.string()),
+  writeable: z.array(z.string()),
+  formatter: z.string(),
+})
+
+const _snBaseEntry = z.object({
+  initials: z.string(),
+  user_id: z.string(),
+  user_image: z.string().optional(),
+  sys_created_on: z.string(),
+  sys_timestamp: z.number(),
+  sys_created_by: z.string(),
+  entries: z.object({
+    changes: z.array(z.unknown()),
+    custom: z.array(z.unknown()),
+    journal: z.array(
+      z.object({
+        allow_code_tag: z.boolean(),
+        field_label: z.string(),
+        change_type: z.string(),
+        field_name: z.string(),
+        sys_id: z.string(),
+        sanitized_old_value: z.string(),
+        contains_code: z.boolean(),
+        is_truncated: z.boolean(),
+        is_translation_enabled: z.boolean(),
+        old_value: z.string(),
+        field_type: z.string(),
+        new_value: z.string(),
+        sanitized_new_value: z.string(),
+      })
+    ),
+  }),
+})
+
+const _snBaseActivity = z.object({
+  display_value: z.string(),
+  entries: z.array(_snBaseEntry),
+  fields: z.array(_journalFieldSchema),
+  primary_fields: z.string().array().optional(),
+  sys_timestamp: z.number()
+})
+
+export type SnBaseEntry = z.infer<typeof _snBaseEntry>
+export type SnBaseActivity = z.infer<typeof _snBaseActivity>
+export type SnJournalField = z.infer<typeof _journalFieldSchema>
+export type SnActivityEntry = z.infer<typeof _entrySchema>
+export type SnActivity = z.infer<typeof _activitySchema>
+export type EntryFields = {
+  name: string
+  label: string
+}
 //General Form and Fields
 const _currencyCode = z.object({
   code: z.string(),
@@ -113,13 +207,14 @@ const _fieldChoiceItem = z.object({
 })
 
 const _formConfig = z.object({
+  user: z.string(),
   date_format: z.string(),
   base_url: z.string(),
   security: z.object({
     canWrite: z.boolean(),
     canRead: z.boolean(),
     canDelete: z.boolean().optional(),
-  })
+  }),
 })
 
 const _formField = z.object({
@@ -142,8 +237,8 @@ const _formField = z.object({
   currencyCodes: _currencyCode.array().optional(),
   dependentField: z.string().optional(),
   choices: z.array(_fieldChoiceItem).optional(),
+  journalInputChanged: z.boolean().optional(),
 })
-
 
 export type SnFieldPrimitive = string | string[] | boolean | number
 export type SnFieldSchema = z.infer<typeof _formField>
