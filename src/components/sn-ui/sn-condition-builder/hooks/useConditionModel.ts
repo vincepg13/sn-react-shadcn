@@ -35,16 +35,10 @@ function createEmptyCondition(): SnConditionRow {
 function addConditionToGroup(groupId: string, model: SnConditionModel): SnConditionModel {
   const add = (group: SnConditionGroup): SnConditionGroup => {
     if (group.id === groupId) {
-      return {
-        ...group,
-        conditions: [...group.conditions, createEmptyCondition()],
-      }
+      return { ...group, conditions: [...group.conditions, createEmptyCondition()] }
     }
 
-    return {
-      ...group,
-      conditions: group.conditions.map(cond => (cond.type === 'condition' ? cond : add(cond))),
-    }
+    return { ...group, conditions: group.conditions.map(cond => (cond.type === 'condition' ? cond : add(cond))) }
   }
 
   return model.map(add)
@@ -131,23 +125,23 @@ function splitConditionToOrGroup(groupId: string, condId: string, model: SnCondi
   return model.map(root => recurse(root)).filter(Boolean) as SnConditionModel
 }
 
-function updateGroup(
+function updateGroupPartial(
   group: SnConditionGroup,
   groupId: string,
   condId: string,
-  updated: SnConditionRow
+  partial: Partial<SnConditionRow>
 ): SnConditionGroup {
   if (group.id === groupId) {
     return {
       ...group,
-      conditions: group.conditions.map(c => (c.type === 'condition' && c.id === condId ? updated : c)),
+      conditions: group.conditions.map(c => (c.type === 'condition' && c.id === condId ? { ...c, ...partial } : c)),
     }
   }
 
   return {
     ...group,
-    conditions: group.conditions.map(
-      c => (c.type === 'condition' ? c : updateGroup(c, groupId, condId, updated)) // recurse into nested groups
+    conditions: group.conditions.map(c =>
+      c.type === 'condition' ? c : updateGroupPartial(c, groupId, condId, partial)
     ),
   }
 }
@@ -236,15 +230,15 @@ export function serializeConditionModel(model: SnConditionModel): string | null 
 
 export function useConditionModel(initialModel: SnConditionModel) {
   const [model, setModel] = useState(() => initialModel)
-
-  const updateCondition = (groupId: string, condId: string, updated: SnConditionRow) => {
-    setModel(prev => prev.map(g => updateGroup(g, groupId, condId, updated)))
+  const updateCondition = (groupId: string, condId: string, partial: Partial<SnConditionRow>) => {
+    setModel(prev => prev.map(g => updateGroupPartial(g, groupId, condId, partial)))
   }
 
   const deleteCondition = (groupId: string, condId: string) => {
-    setModel(prev =>
-      prev.map(g => deleteFromGroup(g, groupId, condId)).filter((g): g is SnConditionGroup => g !== null)
-    )
+    setModel(prev => {
+      const updated = prev.map(g => deleteFromGroup(g, groupId, condId)).filter(g => g !== null)
+      return updated.length === 0 ? createEmptyModel() : updated
+    })
   }
 
   const updateModel = (groupId: string, type: SnAddConditionType, condId?: string) => {

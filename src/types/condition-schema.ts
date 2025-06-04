@@ -32,6 +32,7 @@ export type SnConditionRow = {
   operatorLabel?: string
   displayValue?: string
   fieldType?: string
+  table?: string
 }
 
 export type SnConditionGroup = {

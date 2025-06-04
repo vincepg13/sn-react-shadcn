@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 
 type SnConditionValueProps = {
   condition: SnConditionRow
-  onChange: (updated: SnConditionRow) => void
+  onChange: (updated: Partial<SnConditionRow>) => void
 }
 
 export function SnConditionValue({ condition, onChange }: SnConditionValueProps) {
@@ -16,10 +16,7 @@ export function SnConditionValue({ condition, onChange }: SnConditionValueProps)
 
   const handleValueChange = () => {
     if (value !== condition.value) {
-      onChange({
-        ...condition,
-        value,
-      })
+      onChange({ value }) // ✅ only send the changed part
     }
   }
 

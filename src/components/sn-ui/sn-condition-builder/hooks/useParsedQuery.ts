@@ -8,27 +8,43 @@ function getEmptyQueryModel(): SnConditionModel {
     {
       id: uuid(),
       type: 'and',
-      conditions: [],
+      conditions: [
+        {
+          id: uuid(),
+          type: 'and',
+          conditions: [
+            {
+              id: uuid(),
+              type: 'condition',
+              field: '',
+              operator: '',
+              value: '',
+            },
+          ],
+        },
+      ],
     },
   ]
 }
 
-export function useParsedQuery(table: string, encodedQuery: string) {
+export function useParsedQuery(table: string, encodedQuery: string, setError: (msg: string) => void) {
   const [queryModel, setQueryModel] = useState<SnConditionModel | null>(null)
 
   useEffect(() => {
     if (!table) return
+    setQueryModel(null)
+
     if (!encodedQuery) return setQueryModel(getEmptyQueryModel())
     const controller = new AbortController()
 
     const fetch = async () => {
-      const parsed = await getParsedQuery(table, encodedQuery, controller)
+      const parsed = await getParsedQuery(table, encodedQuery, controller, setError)
       if (parsed) setQueryModel(parsed)
     }
 
     fetch()
     return () => controller.abort()
-  }, [table, encodedQuery])
+  }, [table, encodedQuery, setError])
 
   return queryModel
 }

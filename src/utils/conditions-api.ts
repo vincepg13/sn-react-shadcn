@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { v4 as uuid } from 'uuid'
+import * as baseAxios from 'axios'
 import { getAxiosInstance } from './axios-client'
 import {
   SnConditionGroup,
@@ -19,7 +20,7 @@ function normalizeFieldMetadata(columns: SnConditionsApiResult) {
     }
 
     if (!col.filterable) return
-    
+
     fields[name] = {
       name,
       label: col.label,
@@ -63,13 +64,16 @@ function parseCompound(comp: any): SnConditionGroup {
 }
 
 export function parseEncodedQuery(result: any): SnConditionModel {
-  return (result.predicates || []).flatMap((predicate: any) =>
-    predicate.subpredicates.map(parseCompound)
-  );
+  return (result.predicates || []).flatMap((predicate: any) => predicate.subpredicates.map(parseCompound))
 }
 
-export async function getTableMetadata(table: string, controller: AbortController): Promise<SnConditionMap | false> {
+export async function getTableMetadata(
+  table: string,
+  controller: AbortController,
+  setError?: (msg: string) => void
+): Promise<SnConditionMap | false> {
   const axios = getAxiosInstance()
+  const errorMsg = `Failed to fetch metadata for table: ${table}`
 
   try {
     const { data } = await axios.get(`/api/now/ui/meta/${table}`, {
@@ -79,7 +83,9 @@ export async function getTableMetadata(table: string, controller: AbortControlle
 
     return data.result?.columns ? normalizeFieldMetadata(data.result.columns as SnConditionsApiResult) : false
   } catch (error) {
+    if (baseAxios.isAxiosError(error) && error.code === 'ERR_CANCELED') return false
     console.error('Error fetching table metadata:', error)
+    setError?.(errorMsg)
     return false
   }
 }
@@ -87,9 +93,11 @@ export async function getTableMetadata(table: string, controller: AbortControlle
 export async function getParsedQuery(
   table: string,
   query: string,
-  controller: AbortController
+  controller: AbortController,
+  setError?: (msg: string) => void
 ): Promise<SnConditionModel | false> {
   const axios = getAxiosInstance()
+  const errorMsg = `Failed to parse query for table: ${table}`
 
   try {
     const { data } = await axios.get(`/api/now/ui/query_parse/${table}/map`, {
@@ -98,8 +106,10 @@ export async function getParsedQuery(
     })
 
     return data?.result ? parseEncodedQuery(data.result) : false
-  } catch (err) {
-    console.error('Error parsing encoded query:', err)
+  } catch (error) {
+    if (baseAxios.isAxiosError(error) && error.code === 'ERR_CANCELED') return false
+    if (setError) setError(errorMsg)
+    console.error('Error parsing encoded query:', error)
     return false
   }
 }

@@ -10,7 +10,7 @@ type GroupProps = {
   columns: SnConditionMap
   root?: boolean
   onModelChange: (groupId: string, type: SnAddConditionType, condId?: string) => void
-  onConditionChange: (groupId: string, condId: string, updated: SnConditionRow) => void
+  onConditionChange: (groupId: string, condId: string, updated: Partial<SnConditionRow>) => void
   onDelete: (groupId: string, condId: string) => void
 }
 
@@ -36,7 +36,7 @@ export function ConditionGroup({
   )
 
   const handleConditionChange = useCallback(
-    (condId: string, updated: SnConditionRow) => {
+    (condId: string, updated: Partial<SnConditionRow>) => {
       onConditionChange(group.id, condId, updated)
     },
     [group.id, onConditionChange]
