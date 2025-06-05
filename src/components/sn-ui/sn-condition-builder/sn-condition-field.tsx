@@ -1,9 +1,11 @@
+import { CommandGroup } from 'cmdk'
 import { Button } from '@kit/components/ui/button'
 import { useCondMeta } from './contexts/SnConditionsContext'
 import { getTableMetadata } from '@kit/utils/conditions-api'
-import { ChevronRight, ChevronLeft, RotateCcw } from 'lucide-react'
+import { ChevronRight, ChevronLeft, RotateCcw, LoaderCircle } from 'lucide-react'
 import { Dispatch, SetStateAction, useEffect, useState } from 'react'
 import { SnConditionMap, SnConditionRow } from '@kit/types/condition-schema'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@kit/components/ui/tooltip'
 import { Popover, PopoverContent, PopoverTrigger } from '@kit/components/ui/popover'
 import { Command, CommandInput, CommandItem, CommandList } from '@kit/components/ui/command'
 
@@ -16,22 +18,26 @@ interface SnConditionFieldProps {
 
 export function SnConditionField({ condition, fieldsByTable, setFieldsByTable, onChange }: SnConditionFieldProps) {
   const baseTable = useCondMeta().table
+
   const [open, setOpen] = useState(false)
-  const [path, setPath] = useState<{name: string, label: string}[]>([])
+  const [search, setSearch] = useState('')
+  const [fetchingMeta, setFetchingMeta] = useState(false)
+  const [path, setPath] = useState<{ name: string; label: string }[]>([])
 
   const currentTable = path.reduce((table, field) => {
     const ref = fieldsByTable[table]?.[field.name]?.reference
     return ref || table
   }, baseTable)
-
   const currentFields = fieldsByTable[currentTable] || {}
 
   useEffect(() => {
     if (!fieldsByTable[currentTable]) {
+      setFetchingMeta(true)
       getTableMetadata(currentTable, new AbortController()).then(meta => {
         if (meta) {
           setFieldsByTable(prev => ({ ...prev, [currentTable]: meta }))
         }
+        setFetchingMeta(false)
       })
     }
   }, [currentTable, fieldsByTable, setFieldsByTable])
@@ -55,17 +61,26 @@ export function SnConditionField({ condition, fieldsByTable, setFieldsByTable, o
     setOpen(false)
   }
 
-  const handleDrillIn = (name: string, label: string) => {
-    setPath(prev => [...prev, {name, label}])
+  const dotWalk = (name: string, label: string) => {
+    setSearch('')
+    setPath(prev => [...prev, { name, label }])
   }
 
-  const handleBack = () => setPath(prev => prev.slice(0, -1))
-  const handleReset = () => setPath([])
+  const handleBack = () => {
+    setSearch('')
+     setPath(prev => prev.slice(0, -1))
+  }
+
+  const handleReset = () => {
+    setSearch('')
+    setPath([])
+  }
 
   const trailLabels = path.map(
     (key, i) =>
-      fieldsByTable[path.slice(0, i).reduce((t, f) => fieldsByTable[t]?.[f.name]?.reference || t, baseTable)]?.[key.name]
-        ?.label || key
+      fieldsByTable[path.slice(0, i).reduce((t, f) => fieldsByTable[t]?.[f.name]?.reference || t, baseTable)]?.[
+        key.name
+      ]?.label || key
   )
 
   return (
@@ -78,23 +93,34 @@ export function SnConditionField({ condition, fieldsByTable, setFieldsByTable, o
       <PopoverContent className="p-0 w-[320px]">
         <Command>
           {path.length > 0 && (
-            <div className="flex items-center justify-between px-2 py-1 border-b">
-              <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                {path.length > 0 && (
-                  <Button onClick={handleBack} size="sm" variant="ghost" className="px-1 h-6">
-                    <ChevronLeft className="h-3 w-3" /> Back
-                  </Button>
-                )}
-                <span className="truncate">/ {trailLabels.join(' / ')}</span>
-              </div>
-              <Button onClick={handleReset} size="sm" variant="ghost" className="px-1 h-6">
+            <div className="flex items-center px-2 py-1 border-b gap-1 text-muted-foreground text-xs">
+              <Button onClick={handleBack} size="sm" variant="ghost" className="px-1 h-6">
+                <ChevronLeft className="h-3 w-3" /> Back
+              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="truncate">/ {trailLabels.join(' / ')}</span>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{trailLabels.join(' / ')}</p>
+                </TooltipContent>
+              </Tooltip>
+              <Button onClick={handleReset} size="sm" variant="ghost" className="px-1 h-6 ml-auto">
                 <RotateCcw className="h-3 w-3" />
               </Button>
             </div>
           )}
 
-          <CommandInput placeholder="Search fields..." />
+          <CommandInput placeholder="Search fields..." value={search} onValueChange={setSearch} />
           <CommandList>
+            {fetchingMeta && (
+              <CommandGroup className="flex justify-center p-2 text-sm text-muted-foreground">
+                <div className="flex justify-center items-center gap-2">
+                  <LoaderCircle className="animate-spin" />
+                  <span>Fetching Columns...</span>
+                </div>
+              </CommandGroup>
+            )}
             {Object.values(currentFields)
               .sort((a, b) => a.label.localeCompare(b.label))
               .map(field => (
@@ -111,7 +137,7 @@ export function SnConditionField({ condition, fieldsByTable, setFieldsByTable, o
                       className="h-6 px-1"
                       onClick={e => {
                         e.stopPropagation()
-                        handleDrillIn(field.name, field.label)
+                        dotWalk(field.name, field.label)
                       }}
                     >
                       <ChevronRight className="h-3 w-3" />

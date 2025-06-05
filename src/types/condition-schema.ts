@@ -1,3 +1,8 @@
+export type SnValueChoiceItem = {
+  label: string
+  value: string
+}
+
 export type SnFieldOperator = {
   operator: string
   label: string
@@ -51,4 +56,28 @@ export type SnConditionMap = Record<string, SnConditionField>
 export type SnTableMetadata = {
   table: string
   fields: SnConditionMap
+}
+
+export interface SnDateTimeMeta {
+  timeAgoDates: Record<
+    string,
+    {
+      label: string
+      after: string
+      before: string
+      between: string
+    }
+  >
+  relativeOperators: [string, string][]
+  relativeDurations: [string, string][]
+  relativeTypes: [string, string][]
+  comparativeDurations: [string, string][]
+  comparativeTypes: [string, string][]
+  equivalentDurations: [string, string][]
+  dateChoiceModel: {label: string; value: string}[]
+  dateChoiceBetweenDisplayValues: {
+    label: string
+    values: { label: string; value: string }[]
+    type: string
+  }[]
 }

@@ -5,8 +5,10 @@ import { CirclePlus, CircleX, Play } from 'lucide-react'
 import { useConditionModel } from './hooks/useConditionModel'
 import { ConditionGroup } from './sn-condition-group'
 import { SnConditionsContext } from './contexts/SnConditionsContext'
-import { SnConditionMap, SnConditionModel } from '@kit/types/condition-schema'
+import { SnConditionMap, SnConditionModel, SnDateTimeMeta } from '@kit/types/condition-schema'
 import { useFieldCache } from './hooks/useFieldCache'
+import { TooltipProvider } from '@kit/components/ui/tooltip'
+import { useState } from 'react'
 
 type ConditionProps = {
   table: string
@@ -20,6 +22,7 @@ export function SnConditions({ table, columns, queryModel, onQueryBuilt }: Condi
   const { model, updateCondition, deleteCondition, updateModel, executeQuery, clearQuery, addGroup } =
     useConditionModel(queryModel)
 
+  const [dateMeta, setDateMeta] = useState<SnDateTimeMeta | null>(null)
   const { fieldsByTable, setFieldsByTable } = useFieldCache(table, columns, model)
 
   const runQuery = () => {
@@ -31,44 +34,46 @@ export function SnConditions({ table, columns, queryModel, onQueryBuilt }: Condi
   }
 
   return (
-    <SnConditionsContext.Provider value={{ table, fieldsByTable, setFieldsByTable }}>
-      <div className="sn-conditions">
-        <Toaster position="top-center" expand={true} richColors />
+    <SnConditionsContext.Provider value={{ table, fieldsByTable, dateMeta, setFieldsByTable, setDateMeta }}>
+      <TooltipProvider>
+        <div className="sn-conditions">
+          <Toaster position="top-center" expand={true} richColors />
 
-        {model.map((group, i) => (
-          <div key={group.id}>
-            {model.length > 1 && (
-              <div className="mb-2">
-                <span>Condition Group {i + 1}</span>
-                <Separator className="w-full" />
-              </div>
-            )}
-            <ConditionGroup
-              key={group.id}
-              group={group}
-              columns={columns}
-              root={true}
-              onModelChange={updateModel}
-              onConditionChange={updateCondition}
-              onDelete={deleteCondition}
-            />
+          {model.map((group, i) => (
+            <div key={group.id}>
+              {model.length > 1 && (
+                <div className="mb-2">
+                  <span>Condition Group {i + 1}</span>
+                  <Separator className="w-full" />
+                </div>
+              )}
+              <ConditionGroup
+                key={group.id}
+                group={group}
+                columns={columns}
+                root={true}
+                onModelChange={updateModel}
+                onConditionChange={updateCondition}
+                onDelete={deleteCondition}
+              />
+            </div>
+          ))}
+
+          <div className="flex items-center justify-center gap-2">
+            <Button variant="outline" onClick={addGroup}>
+              <CirclePlus />
+              New Group
+            </Button>
+            <Button variant="outline" onClick={clearQuery}>
+              <CircleX />
+              Clear All
+            </Button>
+            <Button onClick={runQuery}>
+              <Play /> Run
+            </Button>
           </div>
-        ))}
-
-        <div className="flex items-center justify-center gap-2">
-          <Button variant="outline" onClick={addGroup}>
-            <CirclePlus />
-            New Group
-          </Button>
-          <Button variant="outline" onClick={clearQuery}>
-            <CircleX />
-            Clear All
-          </Button>
-          <Button onClick={runQuery}>
-            <Play /> Run
-          </Button>
         </div>
-      </div>
+      </TooltipProvider>
     </SnConditionsContext.Provider>
   )
 }

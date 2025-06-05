@@ -41,7 +41,7 @@ export function useFieldCache(table: string, columns: SnConditionMap, queryModel
         for (const node of nodes) {
           if (node.type === 'condition') {
             const resolvedTable = await resolvePath(node.field)
-            ;(node as SnConditionRow).table = resolvedTable // ✅ assign table to condition
+            ;(node as SnConditionRow).table = resolvedTable
           } else {
             await walkModel(node.conditions)
           }

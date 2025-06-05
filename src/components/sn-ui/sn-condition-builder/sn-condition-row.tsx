@@ -1,11 +1,12 @@
 import { Trash2 } from 'lucide-react'
-import { memo, useCallback } from 'react'
+import { memo, useCallback, useEffect } from 'react'
 import { Button } from '@kit/components/ui/button'
 import { SnConditionField } from './sn-condition-field'
 import { SnConditionValue } from './sn-condition-value'
 import { useCondMeta } from './contexts/SnConditionsContext'
 import { SnConditionRow, SnConditionMap } from '@kit/types/condition-schema'
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@kit/components/ui/select'
+import { getDateMetadata } from '@kit/utils/conditions-api'
 
 type Props = {
   condition: SnConditionRow
@@ -15,8 +16,8 @@ type Props = {
   onChange: (updated: Partial<SnConditionRow>) => void
 }
 
-export const ConditionRow = memo(function ConditionRow({ condition, onDelete, onOr, onChange }: Props) {
-  const { table, fieldsByTable, setFieldsByTable } = useCondMeta()
+function ConditionRowComponent({ condition, onDelete, onOr, onChange }: Props) {
+  const { table, fieldsByTable, dateMeta, setDateMeta, setFieldsByTable } = useCondMeta()
   const tableName = condition.table ?? table
   const conditionField = condition.field?.split('.').pop() || ''
 
@@ -52,6 +53,19 @@ export const ConditionRow = memo(function ConditionRow({ condition, onDelete, on
     [onChange]
   )
 
+  useEffect(() => {
+    if (dateMeta || !condition.fieldType?.startsWith('glide_date')) return
+
+    const controller = new AbortController()
+    const fetchDateMeta = async () => {
+      const dateMeta = await getDateMetadata(table, controller)
+      if (dateMeta) setDateMeta(dateMeta)
+    }
+
+    fetchDateMeta()
+    return () => controller.abort()
+  }, [condition.fieldType, dateMeta, setDateMeta, table])
+
   if (!fieldsByTable[tableName]) return null
   const currentField = fieldsByTable[tableName][conditionField]
   const operatorOptions = currentField?.operators ?? []
@@ -69,7 +83,7 @@ export const ConditionRow = memo(function ConditionRow({ condition, onDelete, on
       </div>
 
       <div className="min-w-0">
-        <Select value={condition.operator} onValueChange={handleOperatorChange}>
+        <Select value={condition.operator} onValueChange={handleOperatorChange} disabled={!currentField}>
           <SelectTrigger className="w-full truncate">
             <SelectValue placeholder="Operator" className="truncate" />
           </SelectTrigger>
@@ -84,7 +98,14 @@ export const ConditionRow = memo(function ConditionRow({ condition, onDelete, on
       </div>
 
       <div className="min-w-0">
-        {currentOperator?.editor !== 'none' && <SnConditionValue condition={condition} onChange={handleValueChange} />}
+        {currentOperator?.editor !== 'none' && (
+          <SnConditionValue
+            condition={condition}
+            field={currentField}
+            operator={currentOperator}
+            onChange={handleValueChange}
+          />
+        )}
       </div>
 
       <div className="flex items-center justify-end gap-1">
@@ -103,8 +124,20 @@ export const ConditionRow = memo(function ConditionRow({ condition, onDelete, on
       </div>
     </div>
   )
-}, noRender)
+}
+
+export const ConditionRow = memo(ConditionRowComponent, noRender)
 
 function noRender(prev: Props, next: Props): boolean {
-  return prev.condition === next.condition
+  const same = prev.condition === next.condition
+
+  // if (!same) {
+  //   console.log('ROW CHANGED', {
+  //     id: prev.condition.id,
+  //     prev: prev.condition,
+  //     next: next.condition,
+  //   })
+  // }
+
+  return same
 }
