@@ -4,6 +4,7 @@ import { SnConditionField, SnConditionRow, SnFieldOperator } from '@kit/types/co
 import { SnValueDate } from './value-editors/sn-value-date'
 import { useCallback } from 'react'
 import { SnValueReference } from './value-editors/sn-value-reference'
+import { SnValueBetween } from './value-editors/sn-value-between'
 
 type SnConditionValueProps = {
   condition: SnConditionRow
@@ -43,9 +44,29 @@ export function SnConditionValue({ condition, field, operator, onChange }: SnCon
           onChange={processValue}
         />
       )
-    case 'glide_date_choice':
+    case 'glide_date_choice': {
+      const op = operator.operator || ''
+      const showTime = field.type === 'glide_date_time' && (op.startsWith('<') || op.startsWith('>'))
       return (
-        <SnValueDate key={field.name} value={condition.value} operator={operator.operator} onChange={processValue} />
+        <SnValueDate
+          key={field.name}
+          value={condition.value}
+          operator={operator.operator}
+          onChange={processValue}
+          showTime={showTime}
+        />
+      )
+    }
+    case 'between_field':
+      return (
+        <SnValueBetween
+          key={field.name}
+          field={field}
+          disabled={!operator}
+          type={operator.betweenType!}
+          value={condition.value}
+          onChange={processValue}
+        />
       )
     default:
       return <SnValueInput value={condition.value} disabled={!operator} onChange={processValue} />

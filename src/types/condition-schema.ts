@@ -8,6 +8,7 @@ export type SnFieldOperator = {
   label: string
   advancedEditor: string
   editor: string
+  betweenType?: string
 }
 
 export type SnFieldChoice = {
