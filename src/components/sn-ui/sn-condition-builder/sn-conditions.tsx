@@ -9,6 +9,7 @@ import { SnConditionMap, SnConditionModel, SnDateTimeMeta } from '@kit/types/con
 import { useFieldCache } from './hooks/useFieldCache'
 import { TooltipProvider } from '@kit/components/ui/tooltip'
 import { useState } from 'react'
+import { SnConditionSkeleton } from './sn-condition-skeleton'
 
 type ConditionProps = {
   table: string
@@ -23,7 +24,7 @@ export function SnConditions({ table, columns, queryModel, onQueryBuilt }: Condi
     useConditionModel(queryModel)
 
   const [dateMeta, setDateMeta] = useState<SnDateTimeMeta | null>(null)
-  const { fieldsByTable, setFieldsByTable } = useFieldCache(table, columns, model)
+  const { cacheLoaded, fieldsByTable, setFieldsByTable } = useFieldCache(table, columns, model)
 
   const runQuery = () => {
     const encoded = executeQuery()
@@ -31,6 +32,10 @@ export function SnConditions({ table, columns, queryModel, onQueryBuilt }: Condi
       return toast.warning('Please complete all conditions before running the query.')
     }
     return onQueryBuilt(encoded)
+  }
+
+  if (!cacheLoaded) {
+    return <SnConditionSkeleton />
   }
 
   return (

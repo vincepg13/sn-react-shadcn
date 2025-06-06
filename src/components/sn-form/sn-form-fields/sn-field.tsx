@@ -45,7 +45,6 @@ function SnFieldComponent({ field, fieldUIState, guid, table }: SnFieldProps) {
 
   const handleChange = useCallback(
     (newValue: SnFieldPrimitive) => {
-      // console.log("SNFC", field.name, newValue)
       setValue(field.name, newValue, { shouldDirty: true, shouldTouch: true })
       runClientScriptsForFieldChange(field.name, oldValueRef.current, newValue, false)
       runUiPoliciesForField(field.name)

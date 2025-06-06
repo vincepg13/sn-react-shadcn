@@ -1,5 +1,5 @@
 import { Trash2 } from 'lucide-react'
-import { memo, useCallback, useEffect } from 'react'
+import { useCallback, useEffect } from 'react'
 import { Button } from '@kit/components/ui/button'
 import { SnConditionField } from './sn-condition-field'
 import { SnConditionValue } from './sn-condition-value'
@@ -16,7 +16,7 @@ type Props = {
   onChange: (updated: Partial<SnConditionRow>) => void
 }
 
-function ConditionRowComponent({ condition, onDelete, onOr, onChange }: Props) {
+export function ConditionRow({ condition, onDelete, onOr, onChange }: Props) {
   const { table, fieldsByTable, dateMeta, setDateMeta, setFieldsByTable } = useCondMeta()
   const tableName = condition.table ?? table
   const conditionField = condition.field?.split('.').pop() || ''
@@ -124,20 +124,4 @@ function ConditionRowComponent({ condition, onDelete, onOr, onChange }: Props) {
       </div>
     </div>
   )
-}
-
-export const ConditionRow = memo(ConditionRowComponent, noRender)
-
-function noRender(prev: Props, next: Props): boolean {
-  const same = prev.condition === next.condition
-
-  // if (!same) {
-  //   console.log('ROW CHANGED', {
-  //     id: prev.condition.id,
-  //     prev: prev.condition,
-  //     next: next.condition,
-  //   })
-  // }
-
-  return same
 }

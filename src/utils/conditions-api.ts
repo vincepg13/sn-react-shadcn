@@ -49,6 +49,7 @@ function parseComparison(c: any): SnConditionRow {
     operatorLabel: c.operator_label,
     displayValue: c.display_value,
     fieldType: c.field_type,
+    references: c.reference_fields || [],
   }
 }
 

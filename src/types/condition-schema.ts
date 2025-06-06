@@ -27,6 +27,13 @@ export type SnConditionField = {
   qualifier?: string
 }
 
+export type SnConditionRefField = {
+  field: string,
+  field_label: string,
+  internal_type: string,
+  reference_table: string,
+}
+
 export type SnConditionRow = {
   id: string
   type: 'condition'
@@ -38,6 +45,8 @@ export type SnConditionRow = {
   displayValue?: string
   fieldType?: string
   table?: string
+  references?: SnConditionRefField[]
+
 }
 
 export type SnConditionGroup = {

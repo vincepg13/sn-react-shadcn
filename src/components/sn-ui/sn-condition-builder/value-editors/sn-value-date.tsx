@@ -6,50 +6,13 @@ import { CalendarIcon, X } from 'lucide-react'
 import { format } from 'date-fns'
 import { Calendar } from '@kit/components/ui/calendar'
 import { Button } from '@kit/components/ui/button'
+import { encodeAbsoluteDateQueryValue, extractDateFromGlideScript, operatorUsageMap } from '@kit/utils/date-helper'
 
 type SnValueDateProps = {
   value: string
   operator: string // 'ON' | 'NOTON' | '<' | '<=' | '>' | '>='
   onChange: (val: string) => void
   isDateTime?: boolean
-}
-
-const operatorUsageMap: Record<SnValueDateProps['operator'], 'before' | 'after' | 'both'> = {
-  ON: 'both',
-  NOTON: 'both',
-  '<': 'before',
-  '<=': 'before',
-  '>': 'after',
-  '>=': 'after',
-}
-
-function extractDateFromGlideScript(val: string): string | null {
-  const match = val.match(/dateGenerate\('(\d{4}-\d{2}-\d{2})','\d{2}:\d{2}:\d{2}'\)/)
-  return match?.[1] ?? null
-}
-
-function encodeAbsoluteDateQueryValue(operator: string, date: string): string {
-  const [yyyy, mm, dd] = date.split(' ')[0].split('-')
-  const hasTime = date.includes(' ')
-  const timePart = hasTime ? date.split(' ')[1] : null
-
-  const dateOnly = `${yyyy}-${mm}-${dd}`
-  const startOfDay = `javascript:gs.dateGenerate('${dateOnly}','00:00:00')`
-  const endOfDay = `javascript:gs.dateGenerate('${dateOnly}','23:59:59')`
-
-  switch (operator) {
-    case '<':
-    case '<=':
-      return `${startOfDay}`
-    case '>':
-    case '>=':
-      return `${endOfDay}`
-    case 'ON':
-    case 'NOTON':
-      return `${date}@${startOfDay}@${endOfDay}`
-    default:
-      return hasTime ? `javascript:gs.dateGenerate('${dateOnly}','${timePart}')` : startOfDay
-  }
 }
 
 export function SnValueDate({ value, operator, onChange, isDateTime }: SnValueDateProps) {
@@ -59,6 +22,15 @@ export function SnValueDate({ value, operator, onChange, isDateTime }: SnValueDa
   const [showCalendar, setShowCalendar] = useState(false)
 
   const usage = operatorUsageMap[operator]
+
+  useEffect(() => {
+  if (value === '') {
+    setLocalValue('')
+    setCustomDates([])
+    setShowCalendar(false)
+  }
+}, [value, operator])
+
 
   const options = useMemo(() => {
     return Object.entries(dateMeta?.dateChoiceModel ?? {}).map(([key, meta]) => ({
@@ -81,18 +53,13 @@ export function SnValueDate({ value, operator, onChange, isDateTime }: SnValueDa
       return false
     })?.[0]
 
-    if (!matchKey) {
-      const rawDate = extractDateFromGlideScript(value)
-      if (rawDate) {
-        const formatted = isDateTime ? `${rawDate} 00:00:00` : rawDate
+    if (matchKey) return setLocalValue(matchKey)
 
-        setCustomDates(prev => Array.from(new Set([...prev, formatted])))
-        setLocalValue(`custom:${formatted}`)
-      }
-    }
-
-    if (matchKey) {
-      setLocalValue(matchKey)
+    const rawDate = extractDateFromGlideScript(value)
+    if (rawDate) {
+      const formatted = isDateTime ? `${rawDate} 00:00:00` : rawDate
+      setCustomDates(prev => Array.from(new Set([...prev, formatted])))
+      setLocalValue(`custom:${formatted}`)
     }
   }, [value, dateMeta, usage, isDateTime])
 
@@ -105,11 +72,12 @@ export function SnValueDate({ value, operator, onChange, isDateTime }: SnValueDa
       if (formattedVal !== value) onChange(formattedVal)
       return
     }
+
     const entry = dateMeta.timeAgoDates[localValue]
     if (!entry) return
     const label = entry.label ?? localValue
 
-    let nextVal: string
+    let nextVal = ''
     switch (usage) {
       case 'before':
         nextVal = entry.before
@@ -122,9 +90,7 @@ export function SnValueDate({ value, operator, onChange, isDateTime }: SnValueDa
         break
     }
 
-    if (nextVal !== value) {
-      onChange(nextVal)
-    }
+    if (nextVal !== value) onChange(nextVal)
   }, [operator, localValue, value, dateMeta, usage, onChange])
 
   const handleChange = (key: string) => {
@@ -146,13 +112,11 @@ export function SnValueDate({ value, operator, onChange, isDateTime }: SnValueDa
     setCustomDates([])
   }
 
-  if (!dateMeta) return <span className="text-muted">Loading...</span>
-
   return (
     <div className="w-full">
       <div className="flex items-center gap-2">
         <div className="w-full relative">
-          <Select value={localValue} onValueChange={handleChange}>
+          <Select value={localValue} onValueChange={handleChange} disabled={!dateMeta}>
             <SelectTrigger className="w-full">
               <SelectValue placeholder="Choose relative date" />
             </SelectTrigger>
