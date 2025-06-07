@@ -69,6 +69,6 @@ export function SnConditionValue({ condition, field, operator, onChange }: SnCon
         />
       )
     default:
-      return <SnValueInput value={condition.value} disabled={!operator} onChange={processValue} />
+      return <SnValueInput value={condition.value} disabled={!operator} type={operator.advancedEditor || field.type} onChange={processValue} />
   }
 }

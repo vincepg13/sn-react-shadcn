@@ -70,6 +70,7 @@ function SnFieldComponent({ field, fieldUIState, guid, table }: SnFieldProps) {
             guid,
             field,
             rhfField,
+            fieldUI.readonly,
             handleChange,
             handleFocus,
             getValues(),
@@ -103,6 +104,7 @@ function renderFieldComponent(
   guid: string,
   field: SnFieldSchema,
   rhfField: RHFField,
+  readonly: boolean,
   handleChange: (value: SnFieldPrimitive) => void,
   handleFocus: () => void,
   formValues: Record<string, string>,
@@ -174,6 +176,7 @@ function renderFieldComponent(
     case 'decimal':
       return (
         <SnFieldNumeric
+          readOnly={readonly}
           value={rhfField.value as number}
           onValueChange={value => handleChange(value ?? '')}
           onFocus={handleFocus}

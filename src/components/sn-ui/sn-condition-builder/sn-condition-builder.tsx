@@ -6,7 +6,13 @@ import { useFieldMetadata } from './hooks/useTableMetadata'
 import { SnConditionSkeleton } from './sn-condition-skeleton'
 import { Alert, AlertTitle, AlertDescription } from '@kit/components/ui/alert'
 
-export function SnConditionBuilder({ table, encodedQuery }: { table: string; encodedQuery?: string }) {
+type BuilderProps = {
+  table: string
+  encodedQuery?: string
+  onQueryBuilt: (encoded: string) => void
+}
+
+export function SnConditionBuilder({ table, encodedQuery, onQueryBuilt }: BuilderProps) {
   const [error, setError] = useState<string>('')
   const [loaded, setLoaded] = useState(false)
   useEffect(() => setLoaded(false), [table, encodedQuery])
@@ -22,7 +28,7 @@ export function SnConditionBuilder({ table, encodedQuery }: { table: string; enc
         table={table}
         columns={columns}
         queryModel={model}
-        onQueryBuilt={console.log}
+        onQueryBuilt={onQueryBuilt}
       />
     )
   } else {

@@ -45,8 +45,8 @@ export function SnValueBetween({ field, type, value, disabled, onChange }: Betwe
 
   return (
     <div className="flex flex-col xl:flex-row gap-1">
-      <SnValueInput value={startVal} disabled={disabled} onChange={val => handleChange('start', val)} />
-      <SnValueInput value={endVal} disabled={disabled} onChange={val => handleChange('end', val)} />
+      <SnValueInput value={startVal} disabled={disabled} type={type} onChange={val => handleChange('start', val)} />
+      <SnValueInput value={endVal} disabled={disabled} type={type} onChange={val => handleChange('end', val)} />
     </div>
   )
 }
