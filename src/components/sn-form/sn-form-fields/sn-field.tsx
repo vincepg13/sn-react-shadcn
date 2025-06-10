@@ -19,7 +19,7 @@ import { useEffectiveFieldState } from '../hooks/useFieldUiState'
 import { useClientScripts } from '../contexts/SnClientScriptContext'
 import { useUiPoliciesContext } from '../contexts/SnUiPolicyContext'
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '../../ui/form'
-import { SnFieldSchema, RHFField, FieldUIState, SnFieldPrimitive } from '../../../types/form-schema'
+import { SnFieldSchema, RHFField, FieldUIState, SnFieldPrimitive, SnCurrencyField } from '../../../types/form-schema'
 import { SnFieldDuration } from './sn-field-duration'
 
 interface SnFieldProps {
@@ -170,7 +170,7 @@ function renderFieldComponent(
       return <SnFieldUrl rhfField={rhfField} onChange={handleChange} />
     case 'price':
     case 'currency':
-      return <SnFieldCurrency field={field} rhfField={rhfField} onChange={handleChange} />
+      return <SnFieldCurrency field={field as SnCurrencyField} readonly={readonly} rhfField={rhfField} onChange={handleChange} />
     case 'integer':
     case 'float':
     case 'decimal':

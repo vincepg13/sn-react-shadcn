@@ -1,10 +1,13 @@
+import { useMemo } from 'react'
+import { debounce } from '@tanstack/react-pacer'
+import { SnValueDate } from './value-editors/sn-value-date'
 import { SnValueInput } from './value-editors/sn-value-input'
 import { SnValueChoice } from './value-editors/sn-value-choice'
-import { SnConditionField, SnConditionRow, SnFieldOperator } from '@kit/types/condition-schema'
-import { SnValueDate } from './value-editors/sn-value-date'
-import { useCallback } from 'react'
-import { SnValueReference } from './value-editors/sn-value-reference'
 import { SnValueBetween } from './value-editors/sn-value-between'
+import { SnValueCurrency } from './value-editors/sn-value-currency'
+import { SnValueReference } from './value-editors/sn-value-reference'
+import { SnConditionField, SnConditionRow, SnFieldOperator } from '@kit/types/condition-schema'
+import { SnValueFieldName } from './value-editors/sn-value-field-name'
 
 type SnConditionValueProps = {
   condition: SnConditionRow
@@ -19,12 +22,17 @@ const booleanChoices = [
 ]
 
 export function SnConditionValue({ condition, field, operator, onChange }: SnConditionValueProps) {
-  const processValue = useCallback(
-    (val: string) => {
-      onChange({ value: val })
-    },
-    [onChange]
-  )
+    const processValue = useMemo(
+      () =>
+        debounce(
+          (val: string) => {
+            onChange({ value: val })
+          },
+          { wait: 300 }
+        ),
+      [onChange]
+    )
+  
 
   if (!operator) return <SnValueInput value={condition.value} disabled={!operator} onChange={processValue} />
 
@@ -34,6 +42,11 @@ export function SnConditionValue({ condition, field, operator, onChange }: SnCon
       const choices = field.choices || booleanChoices
       return <SnValueChoice value={condition.value} choices={choices!} onChange={processValue} />
     }
+    case 'currency':
+      return <SnValueCurrency key={field.name} field={field.name} value={condition.value} onChange={processValue}/>
+    case 'currency_fields':
+    case 'choice_field_names':
+      return <SnValueFieldName field={field} table={condition.table}/>
     case 'reference':
       return (
         <SnValueReference

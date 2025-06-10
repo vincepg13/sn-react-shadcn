@@ -5,7 +5,7 @@ import { CirclePlus, CircleX, Play } from 'lucide-react'
 import { useConditionModel } from './hooks/useConditionModel'
 import { ConditionGroup } from './sn-condition-group'
 import { SnConditionsContext } from './contexts/SnConditionsContext'
-import { SnConditionMap, SnConditionModel, SnDateTimeMeta } from '@kit/types/condition-schema'
+import { SnConditionMap, SnConditionModel, SnDateTimeMeta, SnFieldCurrencyChoice } from '@kit/types/condition-schema'
 import { useFieldCache } from './hooks/useFieldCache'
 import { TooltipProvider } from '@kit/components/ui/tooltip'
 import { useState } from 'react'
@@ -24,6 +24,7 @@ export function SnConditions({ table, columns, queryModel, onQueryBuilt }: Condi
     useConditionModel(queryModel)
 
   const [dateMeta, setDateMeta] = useState<SnDateTimeMeta | null>(null)
+  const [currencyMeta, setCurrencyMeta] = useState<SnFieldCurrencyChoice[]>([])
   const { cacheLoaded, fieldsByTable, setFieldsByTable } = useFieldCache(table, columns, model)
 
   const runQuery = () => {
@@ -39,9 +40,11 @@ export function SnConditions({ table, columns, queryModel, onQueryBuilt }: Condi
   }
 
   return (
-    <SnConditionsContext.Provider value={{ table, fieldsByTable, dateMeta, setFieldsByTable, setDateMeta }}>
+    <SnConditionsContext.Provider
+      value={{ table, fieldsByTable, dateMeta, currencyMeta, setFieldsByTable, setDateMeta, setCurrencyMeta }}
+    >
       <TooltipProvider>
-        <div className="sn-conditions">
+        <div className="sn-conditions flex flex-col gap-4">
           <Toaster position="top-center" expand={true} richColors />
 
           {model.map((group, i) => (
@@ -52,6 +55,7 @@ export function SnConditions({ table, columns, queryModel, onQueryBuilt }: Condi
                   <Separator className="w-full" />
                 </div>
               )}
+              <div className="overflow-x-auto">
               <ConditionGroup
                 key={group.id}
                 group={group}
@@ -61,6 +65,7 @@ export function SnConditions({ table, columns, queryModel, onQueryBuilt }: Condi
                 onConditionChange={updateCondition}
                 onDelete={deleteCondition}
               />
+              </div>
             </div>
           ))}
 

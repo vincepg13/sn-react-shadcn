@@ -42,6 +42,13 @@ export function ConditionGroup({
     [group.id, onConditionChange]
   )
 
+  const handleRowChange = useCallback(
+    (condId: string) => (updated: Partial<SnConditionRow>) => {
+      handleConditionChange(condId, updated)
+    },
+    [handleConditionChange]
+  )
+
   const handleDelete = useCallback(
     (condId: string) => {
       onDelete(group.id, condId)
@@ -50,7 +57,7 @@ export function ConditionGroup({
   )
 
   return (
-    <div className="mb-4">
+    <div>
       {!root && (
         <div className="flex items-center justify-between">
           <div className="text-xs text-muted-foreground uppercase">
@@ -69,7 +76,7 @@ export function ConditionGroup({
             condition={cond}
             columns={columns}
             onOr={handleModelOr}
-            onChange={updated => handleConditionChange(cond.id, updated)}
+            onChange={handleRowChange(cond.id)}
             onDelete={() => handleDelete(cond.id)}
           />
         ) : (

@@ -21,6 +21,8 @@ export function SnConditionBuilder({ table, encodedQuery, onQueryBuilt }: Builde
   const model = useParsedQuery(table, encodedQuery || '', setError)
   useEffect(() => setLoaded(!!columns && !!model), [columns, model])
 
+  // return <SnConditionSkeleton />
+
   if (columns && model) {
     return (
       <SnConditions

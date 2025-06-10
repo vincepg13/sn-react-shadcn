@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import { v4 as uuid } from 'uuid'
 import { SnConditionGroup, SnConditionRow, SnConditionModel, SnConditionNode } from '@kit/types/condition-schema'
 
@@ -230,9 +230,10 @@ export function serializeConditionModel(model: SnConditionModel): string | null 
 
 export function useConditionModel(initialModel: SnConditionModel) {
   const [model, setModel] = useState(() => initialModel)
-  const updateCondition = (groupId: string, condId: string, partial: Partial<SnConditionRow>) => {
+
+  const updateCondition = useCallback((groupId: string, condId: string, partial: Partial<SnConditionRow>) => {
     setModel(prev => prev.map(g => updateGroupPartial(g, groupId, condId, partial)))
-  }
+  }, [setModel])
 
   const deleteCondition = (groupId: string, condId: string) => {
     setModel(prev => {

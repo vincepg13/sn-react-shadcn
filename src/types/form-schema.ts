@@ -180,7 +180,7 @@ const _snBaseActivity = z.object({
   entries: z.array(_snBaseEntry),
   fields: z.array(_journalFieldSchema),
   primary_fields: z.string().array().optional(),
-  sys_timestamp: z.number()
+  sys_timestamp: z.number(),
 })
 
 export type SnBaseEntry = z.infer<typeof _snBaseEntry>
@@ -240,6 +240,13 @@ const _formField = z.object({
   journalInputChanged: z.boolean().optional(),
 })
 
+const _currencyField = z.object({
+  label: z.string(),
+  currencyCode: z.string(),
+  currencyValue: z.string().optional(),
+  currencyCodes: _currencyCode.array(),
+})
+
 export type SnFieldPrimitive = string | string[] | boolean | number
 export type SnFieldSchema = z.infer<typeof _formField>
 export type SnFieldsSchema = Record<string, SnFieldSchema>
@@ -247,6 +254,7 @@ export type SnFieldChoiceItem = z.infer<typeof _fieldChoiceItem>
 export type SnFormConfig = z.infer<typeof _formConfig>
 export type FormData = Record<string, string | boolean | number | null>
 export type RHFField = ControllerRenderProps<FormData, string>
+export type SnCurrencyField = z.infer<typeof _currencyField>
 
 export type SnFormApis = {
   formData: string

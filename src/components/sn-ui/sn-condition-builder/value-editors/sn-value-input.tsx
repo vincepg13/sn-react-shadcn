@@ -1,6 +1,5 @@
-import { debounce } from '@tanstack/pacer'
 import { Input } from '@kit/components/ui/input'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { SnFieldNumeric } from '@kit/components/sn-form/sn-form-fields/SnFieldNumeric'
 
 type SnValueInputProps = {
@@ -23,17 +22,6 @@ export function SnValueInput({ value, disabled, type, onChange }: SnValueInputPr
     }
   }
 
-  const debouncedOnChange = useMemo(
-    () =>
-      debounce(
-        (val: string) => {
-          onChange(val)
-        },
-        { wait: 300 }
-      ),
-    [onChange]
-  )
-
   const isNumeric = type === 'decimal' || type === 'integer'
   if (isNumeric) {
     const scale = type === 'decimal' ? 2 : 0
@@ -41,10 +29,12 @@ export function SnValueInput({ value, disabled, type, onChange }: SnValueInputPr
     return (
       <SnFieldNumeric
         value={inputVal}
-        placeholder='Value'
+        placeholder="Value"
         decimalScale={scale}
+        thousandSeparator=","
+        decimalSeparator="."
         onValueChange={e => {
-          debouncedOnChange(e?.toString() ?? '')
+          onChange(e?.toString() ?? '')
         }}
       />
     )

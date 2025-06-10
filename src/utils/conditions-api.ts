@@ -9,6 +9,7 @@ import {
   SnConditionRow,
   SnConditionsApiResult,
   SnDateTimeMeta,
+  SnFieldCurrencyChoice,
 } from './../types/condition-schema'
 
 function normalizeFieldMetadata(columns: SnConditionsApiResult) {
@@ -122,11 +123,25 @@ export async function getDateMetadata(table: string, controller: AbortController
   try {
     const { data } = await axios.get(`/api/now/ui/date_time?table_name=${table}`, {
       signal: controller.signal,
-    }) 
+    })
     return data?.result || false
   } catch (error) {
     if (baseAxios.isAxiosError(error) && error.code === 'ERR_CANCELED') return false
     console.error('Error fetching date metadata:', error)
+    return false
+  }
+}
+
+//api/now/ui/currency/active
+export async function getActiveCurrencies(controller: AbortController): Promise<SnFieldCurrencyChoice[] | false> {
+  const axios = getAxiosInstance()
+
+  try {
+    const { data } = await axios.get('/api/now/ui/currency/active', { signal: controller.signal })
+    return data?.result || false
+  } catch (error) {
+    if (baseAxios.isAxiosError(error) && error.code === 'ERR_CANCELED') return false
+    console.error('Error fetching active currencies:', error)
     return false
   }
 }

@@ -3,6 +3,14 @@ export type SnValueChoiceItem = {
   value: string
 }
 
+export type SnFieldCurrencyChoice = {
+  symbol: string
+  code: string
+  name?: string
+  description?: string
+  default?: boolean
+}
+
 export type SnFieldOperator = {
   operator: string
   label: string

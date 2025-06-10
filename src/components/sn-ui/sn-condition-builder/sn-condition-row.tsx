@@ -1,12 +1,11 @@
 import { Trash2 } from 'lucide-react'
-import { useCallback, useEffect } from 'react'
+import { useCallback } from 'react'
 import { Button } from '@kit/components/ui/button'
 import { SnConditionField } from './sn-condition-field'
 import { SnConditionValue } from './sn-condition-value'
 import { useCondMeta } from './contexts/SnConditionsContext'
 import { SnConditionRow, SnConditionMap } from '@kit/types/condition-schema'
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@kit/components/ui/select'
-import { getDateMetadata } from '@kit/utils/conditions-api'
 
 type Props = {
   condition: SnConditionRow
@@ -17,7 +16,7 @@ type Props = {
 }
 
 export function ConditionRow({ condition, onDelete, onOr, onChange }: Props) {
-  const { table, fieldsByTable, dateMeta, setDateMeta, setFieldsByTable } = useCondMeta()
+  const { table, fieldsByTable, setFieldsByTable } = useCondMeta()
   const tableName = condition.table ?? table
   const conditionField = condition.field?.split('.').pop() || ''
 
@@ -52,19 +51,6 @@ export function ConditionRow({ condition, onDelete, onOr, onChange }: Props) {
     },
     [onChange]
   )
-
-  useEffect(() => {
-    if (dateMeta || !condition.fieldType?.startsWith('glide_date')) return
-
-    const controller = new AbortController()
-    const fetchDateMeta = async () => {
-      const dateMeta = await getDateMetadata(table, controller)
-      if (dateMeta) setDateMeta(dateMeta)
-    }
-
-    fetchDateMeta()
-    return () => controller.abort()
-  }, [condition.fieldType, dateMeta, setDateMeta, table])
 
   if (!fieldsByTable[tableName]) return null
   const currentField = fieldsByTable[tableName][conditionField]

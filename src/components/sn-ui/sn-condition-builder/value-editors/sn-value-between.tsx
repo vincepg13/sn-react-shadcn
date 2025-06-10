@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react'
 import { SnValueDate } from './sn-value-date'
 import { SnConditionField } from '@kit/types/condition-schema'
 import { SnValueInput } from './sn-value-input'
+import { SnValueCurrency } from './sn-value-currency'
 
 type BetweenProps = {
   type: string
@@ -15,6 +16,7 @@ export function SnValueBetween({ field, type, value, disabled, onChange }: Betwe
   const inputVal = value ? value.split('@') : ['', '']
   const [startVal, setStartVal] = useState(inputVal[0])
   const [endVal, setEndVal] = useState(inputVal[1])
+
   const handleChange = useCallback(
     (which: 'start' | 'end', val: string) => {
       if (which === 'start') setStartVal(val)
@@ -39,6 +41,30 @@ export function SnValueBetween({ field, type, value, disabled, onChange }: Betwe
           onChange={val => handleChange('start', val)}
         />
         <SnValueDate key={field.name + 'B2'} value={endVal} operator=">" onChange={val => handleChange('end', val)} />
+      </div>
+    )
+  }
+
+  //total_costBETWEENjavascript:global.getCurrencyFilter('x_bskyb_fn_clb','total_cost', 'GBP;100')@javascript:global.getCurrencyFilter('x_bskyb_fn_clb','total_cost', 'GBP;500')
+  if (type === 'currency') {
+    return (
+      <div className="flex flex-row gap-1">
+        <div className="min-w-[250px]">
+          <SnValueCurrency
+            key={field.name + 'C1'}
+            field={field.name}
+            value={startVal}
+            onChange={val => handleChange('start', val)}
+          />
+        </div>
+        <div className="min-w-[250px]">
+          <SnValueCurrency
+            key={field.name + 'C2'}
+            field={field.name}
+            value={endVal}
+            onChange={val => handleChange('end', val)}
+          />
+        </div>
       </div>
     )
   }
