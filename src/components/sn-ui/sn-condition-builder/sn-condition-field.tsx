@@ -58,6 +58,7 @@ export function SnConditionField({ condition, fieldsByTable, setFieldsByTable, o
       table: currentTable,
     }
     onChange(fVal, currentTable)
+    setSearch('')
     setOpen(false)
   }
 

@@ -9,11 +9,12 @@ type ChoiceProps = {
 }
 
 export function SnValueChoice({ value, choices, onChange }: ChoiceProps) {
+  const placeholder = choices.length ? '-- Empty --' : '-- No Matching Fields --'
   return (
-    <div className="relative w-full">
-      <Select value={value} onValueChange={onChange}>
+    <div className="relative w-full [&_.lucide-chevron-down]:ml-[20px]">
+      <Select value={value} onValueChange={onChange} disabled={!choices.length}>
         <SelectTrigger className="w-full">
-          <SelectValue placeholder="-- Empty --" />
+          <SelectValue placeholder={placeholder} />
         </SelectTrigger>
         <SelectContent>
           {choices

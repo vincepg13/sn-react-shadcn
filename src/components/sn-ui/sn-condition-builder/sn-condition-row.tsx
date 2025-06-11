@@ -24,7 +24,7 @@ export function ConditionRow({ condition, onDelete, onOr, onChange }: Props) {
     (operator: string) => {
       const currentField = fieldsByTable[tableName]?.[conditionField]
       const label = currentField?.operators.find(o => o.operator === operator)?.label
-      onChange({ operator, operatorLabel: label })
+      onChange({ operator, operatorLabel: label, value: '' })
     },
     [onChange, fieldsByTable, tableName, conditionField]
   )
