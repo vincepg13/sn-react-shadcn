@@ -76,6 +76,7 @@ export type SnTableMetadata = {
   fields: SnConditionMap
 }
 
+export type DateMetaArray = [string, string][]
 export interface SnDateTimeMeta {
   timeAgoDates: Record<
     string,
@@ -92,6 +93,7 @@ export interface SnDateTimeMeta {
   comparativeDurations: [string, string][]
   comparativeTypes: [string, string][]
   equivalentDurations: [string, string][]
+  trendValuesWithFieldsPlural: [string, string][]
   dateChoiceModel: {label: string; value: string}[]
   dateChoiceBetweenDisplayValues: {
     label: string

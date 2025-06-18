@@ -8,6 +8,8 @@ import { SnValueCurrency } from './value-editors/sn-value-currency'
 import { SnValueReference } from './value-editors/sn-value-reference'
 import { SnConditionField, SnConditionRow, SnFieldOperator } from '@kit/types/condition-schema'
 import { SnValueFieldName } from './value-editors/sn-value-field-name'
+import { SnValueDateEquivalent } from './value-editors/sn-value-date-equivalent'
+import { SnValueDateComparative } from './value-editors/sn-value-date-comparative'
 
 type SnConditionValueProps = {
   condition: SnConditionRow
@@ -49,7 +51,9 @@ export function SnConditionValue({ condition, field, operator, onChange }: SnCon
       return <SnValueChoice value={condition.value} choices={choices!} onChange={processValue} />
     }
     case 'currency':
-      return <SnValueCurrency key={field.name} field={field.name} value={condition.value} onChange={processBouncedValue} />
+      return (
+        <SnValueCurrency key={field.name} field={field.name} value={condition.value} onChange={processBouncedValue} />
+      )
     case 'currency_fields':
     case 'choice_field_names':
       return <SnValueFieldName field={field} table={condition.table} value={condition.value} onChange={processValue} />
@@ -63,6 +67,10 @@ export function SnConditionValue({ condition, field, operator, onChange }: SnCon
           onChange={processValue}
         />
       )
+    case 'glide_date_equivalent':
+      return <SnValueDateEquivalent field={field} condition={condition} onChange={processValue} />
+    case 'glide_date_comparative':
+      return <SnValueDateComparative field={field} condition={condition} onChange={processValue} />
     case 'glide_date_choice': {
       const op = operator.operator || ''
       const showTime = field.type === 'glide_date_time' && (op.startsWith('<') || op.startsWith('>'))

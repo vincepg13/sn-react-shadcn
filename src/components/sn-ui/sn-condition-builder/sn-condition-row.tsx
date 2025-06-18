@@ -3,6 +3,7 @@ import { useCallback } from 'react'
 import { Button } from '@kit/components/ui/button'
 import { SnConditionField } from './sn-condition-field'
 import { SnConditionValue } from './sn-condition-value'
+import { useDateMetadata } from './hooks/useDateMetadata'
 import { useCondMeta } from './contexts/SnConditionsContext'
 import { SnConditionRow, SnConditionMap } from '@kit/types/condition-schema'
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@kit/components/ui/select'
@@ -16,9 +17,10 @@ type Props = {
 }
 
 export function ConditionRow({ condition, onDelete, onOr, onChange }: Props) {
-  const { table, fieldsByTable, setFieldsByTable } = useCondMeta()
+  const { table, dateMeta, setDateMeta, fieldsByTable, setFieldsByTable } = useCondMeta()
   const tableName = condition.table ?? table
   const conditionField = condition.field?.split('.').pop() || ''
+  useDateMetadata(table, condition.fieldType || '', dateMeta, setDateMeta)
 
   const handleOperatorChange = useCallback(
     (operator: string) => {

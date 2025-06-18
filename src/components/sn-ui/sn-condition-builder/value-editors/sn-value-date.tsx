@@ -2,7 +2,6 @@ import { format } from 'date-fns'
 import { CalendarIcon, X } from 'lucide-react'
 import { Button } from '@kit/components/ui/button'
 import { Calendar } from '@kit/components/ui/calendar'
-import { getDateMetadata } from '@kit/utils/conditions-api'
 import { useCondMeta } from '../contexts/SnConditionsContext'
 import { ChangeEvent, useEffect, useMemo, useState } from 'react'
 import { Popover, PopoverTrigger, PopoverContent } from '@kit/components/ui/popover'
@@ -22,7 +21,7 @@ type SnValueDateProps = {
 }
 
 export function SnValueDate({ value, operator, onChange, showTime }: SnValueDateProps) {
-  const { table, dateMeta, setDateMeta } = useCondMeta()
+  const { dateMeta } = useCondMeta()
   const usage = operatorUsageMap[operator]
 
   const [relativeKey, setRelativeKey] = useState<string | null>(null)
@@ -37,20 +36,6 @@ export function SnValueDate({ value, operator, onChange, showTime }: SnValueDate
       label: meta.label,
     }))
   }, [dateMeta])
-
-  // Ensure we have a valid dateMeta
-    useEffect(() => {
-    if (dateMeta) return
-
-    const controller = new AbortController()
-    const fetchDateMeta = async () => {
-      const dateMeta = await getDateMetadata(table, controller)
-      if (dateMeta) setDateMeta(dateMeta)
-    }
-
-    fetchDateMeta()
-    return () => controller.abort()
-  }, [dateMeta, setDateMeta, table])
 
   // Parse incoming value
   useEffect(() => {

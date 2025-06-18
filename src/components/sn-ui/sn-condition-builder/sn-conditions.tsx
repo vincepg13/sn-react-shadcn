@@ -40,50 +40,52 @@ export function SnConditions({ table, columns, queryModel, onQueryBuilt }: Condi
   }
 
   return (
-    <SnConditionsContext.Provider
-      value={{ table, fieldsByTable, dateMeta, currencyMeta, setFieldsByTable, setDateMeta, setCurrencyMeta }}
-    >
-      <TooltipProvider>
-        <div className="sn-conditions flex flex-col gap-4">
+    <div>
+      <SnConditionsContext.Provider
+        value={{ table, fieldsByTable, dateMeta, currencyMeta, setFieldsByTable, setDateMeta, setCurrencyMeta }}
+      >
+        <TooltipProvider>
           <Toaster position="top-center" expand={true} richColors />
 
-          {model.map((group, i) => (
-            <div key={group.id}>
-              {model.length > 1 && (
-                <div className="mb-2">
-                  <span>Condition Group {i + 1}</span>
-                  <Separator className="w-full" />
+          <div className="sn-conditions flex flex-col gap-4">
+            {model.map((group, i) => (
+              <div key={group.id}>
+                {model.length > 1 && (
+                  <div className="mb-2">
+                    <span className="leading-none font-medium">Condition Group {i + 1}</span>
+                    <Separator className="w-full" />
+                  </div>
+                )}
+                <div className="overflow-x-auto">
+                  <ConditionGroup
+                    key={group.id}
+                    group={group}
+                    columns={columns}
+                    root={true}
+                    onModelChange={updateModel}
+                    onConditionChange={updateCondition}
+                    onDelete={deleteCondition}
+                  />
                 </div>
-              )}
-              <div className="overflow-x-auto">
-              <ConditionGroup
-                key={group.id}
-                group={group}
-                columns={columns}
-                root={true}
-                onModelChange={updateModel}
-                onConditionChange={updateCondition}
-                onDelete={deleteCondition}
-              />
               </div>
-            </div>
-          ))}
+            ))}
 
-          <div className="flex items-center justify-center gap-2">
-            <Button variant="outline" onClick={addGroup}>
-              <CirclePlus />
-              New Group
-            </Button>
-            <Button variant="outline" onClick={clearQuery}>
-              <CircleX />
-              Clear All
-            </Button>
-            <Button onClick={runQuery}>
-              <Play /> Run
-            </Button>
+            <div className="flex items-center justify-center gap-2">
+              <Button variant="outline" onClick={addGroup}>
+                <CirclePlus />
+                New Group
+              </Button>
+              <Button variant="outline" onClick={clearQuery}>
+                <CircleX />
+                Clear All
+              </Button>
+              <Button onClick={runQuery}>
+                <Play /> Run
+              </Button>
+            </div>
           </div>
-        </div>
-      </TooltipProvider>
-    </SnConditionsContext.Provider>
+        </TooltipProvider>
+      </SnConditionsContext.Provider>
+    </div>
   )
 }
