@@ -16,7 +16,7 @@ import {
 type SnValueDateProps = {
   value: string
   operator: string
-  onChange: (val: string) => void
+  onChange: (val: string, display: string) => void
   showTime?: boolean
 }
 
@@ -91,19 +91,19 @@ export function SnValueDate({ value, operator, onChange, showTime }: SnValueDate
           val = `${label}@${entry.before}@${entry.after}`
           break
       }
-      if (val !== value) onChange(val)
+      if (val !== value) onChange(val, label)
     }
 
     if (customDate && !relativeKey) {
       const val = encodeAbsoluteDateQueryValue(operator, customDate, customTime)
-      if (val !== value) onChange(val)
+      if (val !== value) onChange(val, customDate + (showTime ? ` ${customTime}` : ''))
     }
-  }, [relativeKey, customDate, customTime, dateMeta, usage, operator, onChange, value])
+  }, [relativeKey, customDate, customTime, dateMeta, usage, operator, onChange, value, showTime])
 
   const handleClear = () => {
     setRelativeKey(null)
     setCustomDate(null)
-    onChange('')
+    onChange('', '')
   }
 
   const handleCustomDateSelect = (date: Date | undefined) => {

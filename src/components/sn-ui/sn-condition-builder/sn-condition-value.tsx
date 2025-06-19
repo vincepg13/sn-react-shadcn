@@ -25,8 +25,8 @@ const booleanChoices = [
 
 export function SnConditionValue({ condition, field, operator, onChange }: SnConditionValueProps) {
   const processValue = useMemo(
-    () => (val: string) => {
-      onChange({ value: val })
+    () => (val: string, display?: string) => {
+      onChange({ value: val, displayValue: display || val || ''})
     },
     [onChange]
   )
@@ -34,8 +34,8 @@ export function SnConditionValue({ condition, field, operator, onChange }: SnCon
   const processBouncedValue = useMemo(
     () =>
       debounce(
-        (val: string) => {
-          onChange({ value: val })
+        (val: string, display?: string) => {
+          onChange({ value: val, displayValue: display || val || ''})
         },
         { wait: 300 }
       ),

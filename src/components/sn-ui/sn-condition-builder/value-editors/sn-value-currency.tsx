@@ -8,7 +8,7 @@ type SnValueCurrencyProps = {
   field: string
   value: string
   operator?: string
-  onChange: (val: string) => void
+  onChange: (val: string, display: string) => void
 }
 
 function extractCurrencyValue(value: string): string {
@@ -43,10 +43,13 @@ export function SnValueCurrency({ field, value, onChange }: SnValueCurrencyProps
     (val: string) => {
       const computed = `javascript:global.getCurrencyFilter('${table}','${field}', '${val}')`
       if (value !== computed) {
-        onChange(computed)
+        const parts = val.split(';')
+        const symbol = currencyMeta.find(c => c.code === parts[0])?.symbol || ''
+        const displayValue = `${symbol}${parts[1] || ''}`
+        onChange(computed, displayValue)
       }
     },
-    [field, onChange, table, value]
+    [currencyMeta, field, onChange, table, value]
   )
 
   if (currencyMeta.length) {

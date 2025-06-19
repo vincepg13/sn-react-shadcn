@@ -7,7 +7,7 @@ type RefProps = {
   display_value: string
   table: string
   displayField: string
-  onChange: (value: string) => void
+  onChange: (value: string, display: string) => void
 }
 
 export function SnValueReference({ value, display_value, table, displayField, onChange }: RefProps) {
@@ -19,7 +19,7 @@ export function SnValueReference({ value, display_value, table, displayField, on
 
   const handleChange = (record: SnRecordPickerItem) => {
     setRefData(record)
-    onChange(record?.value || '')
+    onChange(record?.value || '', record?.display_value || '')
   }
 
   return (

@@ -216,6 +216,7 @@ export function serializeConditionModel(model: SnConditionModel): string | null 
 
   function serializeGroup(group: SnConditionNode): string {
     if (group.type === 'condition') {
+      console.log('Serializing condition:', group)
       return `${group.field}${group.operator}${group.value}`
     }
 

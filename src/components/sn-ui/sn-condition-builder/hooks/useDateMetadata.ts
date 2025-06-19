@@ -9,7 +9,6 @@ export function useDateMetadata(
   setDateMeta: Dispatch<SetStateAction<SnDateTimeMeta | null>>
 ) {
   useEffect(() => {
-    console.log('useDateMetadata', table, fieldType, dateMeta)
     if (dateMeta || !fieldType.startsWith('glide_date')) return
 
     const controller = new AbortController()
