@@ -1,47 +1,74 @@
 import { AlertCircle } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react'
 import { SnConditions } from './sn-conditions'
 import { useParsedQuery } from './hooks/useParsedQuery'
 import { useFieldMetadata } from './hooks/useTableMetadata'
 import { SnConditionSkeleton } from './sn-condition-skeleton'
 import { Alert, AlertTitle, AlertDescription } from '@kit/components/ui/alert'
+import { SnConditionDisplayArray } from '@kit/types/condition-schema'
 
 type BuilderProps = {
   table: string
   encodedQuery?: string
   onQueryBuilt: (encoded: string) => void
+  emitQueryDisplay?: (display: SnConditionDisplayArray | null) => void
 }
 
-export function SnConditionBuilder({ table, encodedQuery, onQueryBuilt }: BuilderProps) {
-  const [error, setError] = useState<string>('')
-  const [loaded, setLoaded] = useState(false)
-  useEffect(() => setLoaded(false), [table, encodedQuery])
+export type SnConditionHandle = {
+  adjustModel: (gIndex: number, cIndex: number) => void
+}
 
-  const columns = useFieldMetadata(table, setError)
-  const model = useParsedQuery(table, encodedQuery || '', setError)
-  useEffect(() => setLoaded(!!columns && !!model), [columns, model])
+export const SnConditionBuilder = forwardRef<SnConditionHandle, BuilderProps>(
+  ({ table, encodedQuery, emitQueryDisplay, onQueryBuilt }: BuilderProps, ref) => {
+    const [error, setError] = useState<string>('')
+    const [loaded, setLoaded] = useState(false)
+    useEffect(() => setLoaded(false), [table, encodedQuery])
 
-  // return <SnConditionSkeleton />
+    const emitDisplay = !!emitQueryDisplay
+    const columns = useFieldMetadata(table, setError)
+    const { queryModel, queryDisplay, queryParser } = useParsedQuery(table, encodedQuery || '', emitDisplay, setError)
+    useEffect(() => setLoaded(!!columns && !!queryModel), [columns, queryModel])
 
-  if (columns && model) {
-    return (
-      <SnConditions
-        key={`${table}:${encodedQuery}`}
-        table={table}
-        columns={columns}
-        queryModel={model}
-        onQueryBuilt={onQueryBuilt}
-      />
+    const conditionRef = useRef<SnConditionHandle>(null)
+    useImperativeHandle(ref, () => ({
+      adjustModel: (gIndex: number, cIndex: number) => {
+        conditionRef.current?.adjustModel(gIndex, cIndex)
+      },
+    }))
+
+    useEffect(() => {
+      const display = queryDisplay
+      if (emitDisplay) emitQueryDisplay?.(display)
+    }, [emitDisplay, emitQueryDisplay, queryDisplay])
+
+    const handleQueryBuilt = useCallback(
+      async (encoded: string) => {
+        onQueryBuilt(encoded)
+        if (emitDisplay) await queryParser(new AbortController(), encoded, false, true)
+      },
+      [emitDisplay, onQueryBuilt, queryParser]
     )
-  } else {
-    if (error)
+
+    if (columns && queryModel) {
       return (
-        <Alert variant="destructive" className="max-w-4xl mx-auto">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Error</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
+        <SnConditions
+          ref={conditionRef}
+          table={table}
+          columns={columns}
+          queryModel={queryModel}
+          onQueryBuilt={handleQueryBuilt}
+        />
       )
-    if (!loaded) return <SnConditionSkeleton />
+    } else {
+      if (error)
+        return (
+          <Alert variant="destructive" className="max-w-4xl mx-auto">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )
+      if (!loaded) return <SnConditionSkeleton />
+    }
   }
-}
+)

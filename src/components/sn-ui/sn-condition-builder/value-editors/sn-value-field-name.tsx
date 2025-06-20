@@ -7,7 +7,7 @@ type SnValueFieldNameProps = {
   value?: string
   table?: string
   clearable?: boolean
-  onChange: (value: string, display?: string) => void
+  onChange: (value: string) => void
 }
 
 export function SnValueFieldName({ table, field, value, clearable=true, onChange }: SnValueFieldNameProps) {

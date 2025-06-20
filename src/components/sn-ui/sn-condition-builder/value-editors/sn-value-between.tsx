@@ -45,7 +45,6 @@ export function SnValueBetween({ field, type, value, disabled, onChange }: Betwe
     )
   }
 
-  //total_costBETWEENjavascript:global.getCurrencyFilter('x_bskyb_fn_clb','total_cost', 'GBP;100')@javascript:global.getCurrencyFilter('x_bskyb_fn_clb','total_cost', 'GBP;500')
   if (type === 'currency') {
     return (
       <div className="flex flex-row gap-1">

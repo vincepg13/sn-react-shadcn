@@ -16,6 +16,7 @@ export function useFetchRows({
   pageIndex,
   pageSize,
   defaultPageSize,
+  setRowsLoaded,
   setRows,
   setPageCount,
   setError,
@@ -28,6 +29,8 @@ export function useFetchRows({
   pageIndex: number;
   pageSize: number;
   defaultPageSize: number;
+  rowsLoaded?: boolean;
+  setRowsLoaded: (loaded: boolean) => void;
   setRows: (rows: SnRow[]) => void;
   setPageCount: (count: number) => void;
   setError: (msg: string) => void;
@@ -39,6 +42,7 @@ export function useFetchRows({
     const controller = new AbortController();
 
     const loadRows = async () => {
+      setRowsLoaded(false);
       try { 
         const offset = pageIndex * pageSize;
         const effectiveQuery = sorting.length > 0 ? getSortedQuery(sorting, query) : query;
@@ -48,6 +52,7 @@ export function useFetchRows({
 
         setRows(res.data.result);
         setPageCount(Math.ceil(total / pageSize));
+        setRowsLoaded(true);
       } catch (error) {
         if (axios.isCancel(error)) {
           return;
@@ -64,5 +69,5 @@ export function useFetchRows({
     return () => {
       controller.abort();
     };
-  }, [query, table, fields, fieldsTable, sorting, pageIndex, pageSize, defaultPageSize, setRows, setPageCount, setError]);
+  }, [query, table, fields, fieldsTable, sorting, pageIndex, pageSize, defaultPageSize, setRows, setPageCount, setError, setRowsLoaded]);
 }

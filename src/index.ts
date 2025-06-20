@@ -2,6 +2,7 @@
 export { SnTabs } from './components/sn-ui/sn-tabs'
 export { SnClippy } from './components/sn-ui/sn-attachments/sn-clippy'
 export { SnActivity } from './components/sn-ui/sn-activity/sn-activity'
+export { SnFilter } from './components/sn-ui/sn-condition-builder/sn-filter'
 export { SnConditionBuilder } from './components/sn-ui/sn-condition-builder/sn-condition-builder'
 
 // Table Components

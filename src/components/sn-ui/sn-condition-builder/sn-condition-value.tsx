@@ -26,7 +26,7 @@ const booleanChoices = [
 export function SnConditionValue({ condition, field, operator, onChange }: SnConditionValueProps) {
   const processValue = useMemo(
     () => (val: string, display?: string) => {
-      onChange({ value: val, displayValue: display || val || ''})
+      onChange({ value: val, displayValue: display })
     },
     [onChange]
   )
@@ -34,15 +34,15 @@ export function SnConditionValue({ condition, field, operator, onChange }: SnCon
   const processBouncedValue = useMemo(
     () =>
       debounce(
-        (val: string, display?: string) => {
-          onChange({ value: val, displayValue: display || val || ''})
+        (val: string) => {
+          onChange({ value: val })
         },
         { wait: 300 }
       ),
     [onChange]
   )
 
-  if (!operator) return <SnValueInput value={condition.value} disabled={!operator} onChange={processValue} />
+  if (!operator) return <SnValueInput value={condition.value} disabled={!operator} onChange={processValue} onDelayedChange={processBouncedValue} />
 
   switch (operator?.advancedEditor) {
     case 'boolean':
@@ -101,7 +101,8 @@ export function SnConditionValue({ condition, field, operator, onChange }: SnCon
           value={condition.value}
           disabled={!operator}
           type={operator.advancedEditor || field.type}
-          onChange={processBouncedValue}
+          onChange={processValue}
+          onDelayedChange={processBouncedValue}
         />
       )
   }

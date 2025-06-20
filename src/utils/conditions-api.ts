@@ -3,6 +3,8 @@ import { v4 as uuid } from 'uuid'
 import * as baseAxios from 'axios'
 import { getAxiosInstance } from './axios-client'
 import {
+  SnConditionDisplayArray,
+  SnConditionDisplayItem,
   SnConditionGroup,
   SnConditionMap,
   SnConditionModel,
@@ -51,6 +53,8 @@ function parseComparison(c: any): SnConditionRow {
     displayValue: c.display_value,
     fieldType: c.field_type,
     references: c.reference_fields || [],
+    term: c.term,
+    termLabel: c.term_label,
   }
 }
 
@@ -65,6 +69,47 @@ function parseCompound(comp: any): SnConditionGroup {
     conditions: children,
   }
 }
+
+function buildQueryDisplay(parsed: any): SnConditionDisplayArray | null {
+  if (!parsed || !Array.isArray(parsed.predicates)) return null;
+
+  const topLevelOr = parsed.predicates.find((p: any) => p.compound_type === "or");
+  if (!topLevelOr || !Array.isArray(topLevelOr.subpredicates)) return null;
+
+  const groups: SnConditionDisplayArray = [];
+
+  for (let i = 0; i < topLevelOr.subpredicates.length; i++) {
+    const segment: SnConditionDisplayItem[] = [];
+    const index = { j: 0 };
+    collectDisplayTerms(topLevelOr.subpredicates[i], segment, i, index);
+    groups.push(segment);
+  }
+
+  return groups;
+
+  function collectDisplayTerms(node: any, acc: SnConditionDisplayItem[], i: number, index: { j: number }) {
+    if (node.type === "compound" && Array.isArray(node.subpredicates)) {
+      if (node.compound_type === "or") {
+        for (const element of node.subpredicates) {
+          if (element.term_label) {
+            acc.push({ display: element.term_label, id: `${i}:${index.j}`, or: true });
+            index.j++;
+          } else if (element.type === "compound") {
+            collectDisplayTerms(element, acc, i, index); 
+          }
+        }
+      } else {
+        for (const child of node.subpredicates) {
+          collectDisplayTerms(child, acc, i, index);
+        }
+      }
+    } else if (node.term_label) {
+      acc.push({ display: node.term_label, id: `${i}:${index.j}` });
+      index.j++;
+    }
+  }
+}
+
 
 export function parseEncodedQuery(result: any): SnConditionModel {
   return (result.predicates || []).flatMap((predicate: any) => predicate.subpredicates.map(parseCompound))
@@ -96,9 +141,10 @@ export async function getTableMetadata(
 export async function getParsedQuery(
   table: string,
   query: string,
+  display: boolean,
   controller: AbortController,
   setError?: (msg: string) => void
-): Promise<SnConditionModel | false> {
+): Promise<{model: SnConditionModel, display?: SnConditionDisplayArray|null} | false> {
   const axios = getAxiosInstance()
   const errorMsg = `Failed to parse query for table: ${table}`
 
@@ -108,7 +154,13 @@ export async function getParsedQuery(
       signal: controller.signal,
     })
 
-    return data?.result ? parseEncodedQuery(data.result) : false
+    const res = data?.result
+    if (!res) return false
+
+    return {
+      model: parseEncodedQuery(res),
+      display: display ? buildQueryDisplay(res) : null,
+    }
   } catch (error) {
     if (baseAxios.isAxiosError(error) && error.code === 'ERR_CANCELED') return false
     if (setError) setError(errorMsg)
@@ -132,7 +184,6 @@ export async function getDateMetadata(table: string, controller: AbortController
   }
 }
 
-//api/now/ui/currency/active
 export async function getActiveCurrencies(controller: AbortController): Promise<SnFieldCurrencyChoice[] | false> {
   const axios = getAxiosInstance()
 

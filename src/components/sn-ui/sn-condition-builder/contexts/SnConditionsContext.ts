@@ -6,8 +6,6 @@ type SnCondMeta = {
   fieldsByTable: Record<string, SnConditionMap>
   dateMeta: SnDateTimeMeta | null
   currencyMeta: SnFieldCurrencyChoice[],
-  setDateMeta: Dispatch<SetStateAction<SnDateTimeMeta | null>>
-  setCurrencyMeta: Dispatch<SetStateAction<SnFieldCurrencyChoice[]>>
   setFieldsByTable: Dispatch<SetStateAction<Record<string, SnConditionMap>>>
 }
 

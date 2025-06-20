@@ -7,9 +7,10 @@ type SnValueInputProps = {
   disabled: boolean
   type?: string
   onChange: (value: string) => void
+  onDelayedChange?: (value: string) => void
 }
 
-export function SnValueInput({ value, disabled, type, onChange }: SnValueInputProps) {
+export function SnValueInput({ value, disabled, type, onChange, onDelayedChange }: SnValueInputProps) {
   const [localValue, setLocalValue] = useState(value || '')
 
   useEffect(() => {
@@ -34,7 +35,12 @@ export function SnValueInput({ value, disabled, type, onChange }: SnValueInputPr
         thousandSeparator=","
         decimalSeparator="."
         onValueChange={e => {
-          onChange(e?.toString() ?? '')
+          const stringValue = e?.toString() ?? '';
+          if (onDelayedChange) {
+            onDelayedChange(stringValue);
+          } else {
+            onChange(stringValue);
+          }
         }}
       />
     )

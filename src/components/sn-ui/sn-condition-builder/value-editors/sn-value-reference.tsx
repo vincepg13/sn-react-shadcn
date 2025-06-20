@@ -7,7 +7,7 @@ type RefProps = {
   display_value: string
   table: string
   displayField: string
-  onChange: (value: string, display: string) => void
+  onChange: (value: string, display_value: string) => void
 }
 
 export function SnValueReference({ value, display_value, table, displayField, onChange }: RefProps) {

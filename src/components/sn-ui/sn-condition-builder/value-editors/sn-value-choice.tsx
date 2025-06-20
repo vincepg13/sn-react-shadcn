@@ -7,7 +7,7 @@ type ChoiceProps = {
   choices: SnValueChoiceItem[]
   clearable?: boolean
   size?: 'sm' | 'default'
-  onChange: (value: string, display: string) => void
+  onChange: (value: string) => void
 }
 
 export function SnValueChoice({ value, choices, size, clearable = true, onChange }: ChoiceProps) {
@@ -16,7 +16,7 @@ export function SnValueChoice({ value, choices, size, clearable = true, onChange
     <div className="relative w-full [&_.lucide-chevron-down]:ml-[20px]">
       <Select
         value={value}
-        onValueChange={v => onChange(v, choices.find(c => c.value == v)?.label || v)}
+        onValueChange={v => onChange(v)}
         disabled={!choices.length}
       >
         <SelectTrigger className="w-full" size={size}>
@@ -35,7 +35,7 @@ export function SnValueChoice({ value, choices, size, clearable = true, onChange
       {clearable && value && (
         <X
           className="absolute right-8 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground cursor-pointer hover:text-destructive"
-          onClick={() => onChange('', '')}
+          onClick={() => onChange('')}
         />
       )}
     </div>

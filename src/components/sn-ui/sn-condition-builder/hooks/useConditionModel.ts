@@ -197,6 +197,60 @@ function deleteFromGroup(group: SnConditionGroup, groupId: string, condId: strin
   return { ...group, conditions: mergedConditions }
 }
 
+export function truncateConditionModelAtIndex(
+  model: SnConditionModel,
+  targetGroupIndex: number,
+  targetConditionIndex: number
+): SnConditionModel {
+  const result: SnConditionModel = []
+
+  function pruneGroup(
+    conditions: SnConditionNode[],
+    targetIndex: number,
+    state: { count: number; done: boolean }
+  ): SnConditionNode[] {
+    const pruned: SnConditionNode[] = []
+
+    for (const node of conditions) {
+      if (state.done) break
+
+      if (node.type === 'condition') {
+        if (state.count <= targetIndex) {
+          pruned.push(node)
+        }
+        if (state.count === targetIndex) {
+          state.done = true
+        }
+        state.count++
+      } else {
+        const child = pruneGroup(node.conditions, targetIndex, state)
+        if (child.length > 0) {
+          pruned.push({ ...node, conditions: child })
+        }
+      }
+    }
+
+    return pruned
+  }
+
+  for (let i = 0; i < model.length; i++) {
+    if (i < targetGroupIndex) {
+      result.push(model[i])
+    } else if (i === targetGroupIndex) {
+      const state = { count: 0, done: false }
+      const pruned = pruneGroup(model[i].conditions, targetConditionIndex, state)
+      if (pruned.length > 0) {
+        result.push({ ...model[i], conditions: pruned })
+      }
+      break
+    } else {
+      break
+    }
+  }
+
+  return result
+}
+
 export function serializeConditionModel(model: SnConditionModel): string | null {
   const invalidConditions: SnConditionNode[] = []
 
@@ -215,10 +269,7 @@ export function serializeConditionModel(model: SnConditionModel): string | null 
   if (invalidConditions.length > 0) return null
 
   function serializeGroup(group: SnConditionNode): string {
-    if (group.type === 'condition') {
-      console.log('Serializing condition:', group)
-      return `${group.field}${group.operator}${group.value}`
-    }
+    if (group.type === 'condition') return `${group.field}${group.operator}${group.value}`
 
     return group.conditions
       .map(serializeGroup)
@@ -232,9 +283,12 @@ export function serializeConditionModel(model: SnConditionModel): string | null 
 export function useConditionModel(initialModel: SnConditionModel) {
   const [model, setModel] = useState(() => initialModel)
 
-  const updateCondition = useCallback((groupId: string, condId: string, partial: Partial<SnConditionRow>) => {
-    setModel(prev => prev.map(g => updateGroupPartial(g, groupId, condId, partial)))
-  }, [setModel])
+  const updateCondition = useCallback(
+    (groupId: string, condId: string, partial: Partial<SnConditionRow>) => {
+      setModel(prev => prev.map(g => updateGroupPartial(g, groupId, condId, partial)))
+    },
+    [setModel]
+  )
 
   const deleteCondition = (groupId: string, condId: string) => {
     setModel(prev => {
@@ -249,9 +303,21 @@ export function useConditionModel(initialModel: SnConditionModel) {
     if (type === 'split' && condId) return setModel(prev => splitConditionToOrGroup(groupId, condId, prev))
   }
 
-  const executeQuery = () => serializeConditionModel(model)
-  const clearQuery = () => setModel(createEmptyModel())
+  const adjustByIndex = (gIndex: number, cIndex: number) => {
+    const newModel = truncateConditionModelAtIndex(model, gIndex, cIndex)
+    setModel(newModel)
+    return newModel
+  }
+
+  const executeQuery = (customModel?: SnConditionModel) => serializeConditionModel(customModel || model)
   const addGroup = () => setModel(prev => [...prev].concat(createEmptyModel()))
 
-  return { model, updateCondition, deleteCondition, updateModel, executeQuery, clearQuery, addGroup }
+  const clearQuery = () => {
+    const newModel = createEmptyModel()
+    setModel(newModel)
+    return newModel
+  }
+
+
+  return { model, updateCondition, deleteCondition, updateModel, executeQuery, clearQuery, addGroup, adjustByIndex }
 }

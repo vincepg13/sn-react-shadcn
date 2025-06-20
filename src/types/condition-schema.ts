@@ -55,7 +55,8 @@ export type SnConditionRow = {
   fieldType?: string
   table?: string
   references?: SnConditionRefField[]
-
+  term?: string
+  termLabel?: string
 }
 
 export type SnConditionGroup = {
@@ -70,6 +71,8 @@ export type SnConditionModel = SnConditionGroup[];
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type SnConditionsApiResult = Record<string, any>;
 export type SnConditionMap = Record<string, SnConditionField>
+export type SnConditionDisplayItem = {display: string, id: string, or?: boolean }
+export type SnConditionDisplayArray = SnConditionDisplayItem[][]
 
 export type SnTableMetadata = {
   table: string
