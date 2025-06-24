@@ -40,18 +40,26 @@ export function SnFieldReference({
   const type = field.type
   const isMultiple = type === 'glide_list'
 
+  //Clone the ed object to add reference values for doc IDs
   const ed = useMemo(() => {
     const clonedEd = { ...field.ed! }
 
-    if (type === 'document_id') {
+    if (type === 'document_id')
       clonedEd.reference = dependentValue ?? field.ed!.dependent_value!
 
+    return clonedEd
+  }, [type, dependentValue, field.ed])
+
+  //Clone the attributes and fetch display fields if needed
+  const attributes = useMemo(() => {
+    const clonedAttrs = { ...field.attributes }
+    if (type === 'document_id' && ed.reference) {
       const fetchDisplays = async () => {
         try {
-          const displayFields = await getTableDisplayFields(clonedEd.reference, apis?.refDisplay)
+          const displayFields = await getTableDisplayFields(ed.reference, apis?.refDisplay)
           let fields = displayFields
-          if (!fields || !fields.length) fields = ['james', 'number']
-          clonedEd.attributes = { ref_ac_columns: fields.join(';') }
+          if (!fields || !fields.length) fields = ['number']
+          clonedAttrs.ref_ac_columns = fields.join(';')
         } catch (error) {
           console.error('Error fetching table display fields:', error)
         }
@@ -60,14 +68,16 @@ export function SnFieldReference({
       fetchDisplays()
     }
 
-    return clonedEd
-  }, [type, dependentValue, field.ed, apis?.refDisplay])
+    return clonedAttrs
+  }, [apis?.refDisplay, ed.reference, field.attributes, type])
 
-  const orderBy = useMemo(() => ed.attributes?.ref_ac_order_by?.split(';') || [], [ed.attributes?.ref_ac_order_by])
-  const displayCols = useMemo(
-    () => ed.attributes?.ref_ac_columns?.split(';') || [ed.searchField || 'name'],
-    [ed.attributes?.ref_ac_columns, ed.searchField]
-  )
+  const orderBy = useMemo(() => attributes?.ref_ac_order_by?.split(';') || [], [attributes?.ref_ac_order_by])
+
+  const displayCols = useMemo(() => {
+    const coreDisplay = ed.searchField ? [ed.searchField] : []
+    const refFields = attributes?.ref_ac_columns?.split(';') || []
+    return [...new Set([...coreDisplay, ...refFields])]
+  }, [attributes?.ref_ac_columns, ed.searchField])
 
   const { value: rawValue, display: rawDisplay } = useReferenceSelected(field)
 

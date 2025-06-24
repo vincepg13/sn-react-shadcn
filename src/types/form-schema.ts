@@ -83,18 +83,19 @@ const _recordPickerItem = z.object({
   meta: z.custom<SnRow>().optional(),
 })
 
+const _attributes = z.object({
+  ref_ac_columns: z.string().optional(),
+  ref_ac_order_by: z.string().optional(),
+  ref_ac_table: z.string().optional(),
+  ref_ac_display_value: z.string().optional(),
+})
+
 const _ed = z.object({
   reference: z.string(),
   qualifier: z.string(),
   dependent_value: z.string().optional(),
   defaultOperator: z.string().optional(),
   searchField: z.string().optional(),
-  attributes: z.object({
-    ref_ac_columns: z.string().optional(),
-    ref_ac_order_by: z.string().optional(),
-    ref_ac_table: z.string().optional(),
-    ref_ac_display_value: z.string().optional(),
-  }),
 })
 
 export const pickerList = z.record(_recordPickerItem)
@@ -232,6 +233,7 @@ const _formField = z.object({
   max_length: z.number().optional(),
   choice: z.number().optional(),
   ed: _ed.optional(),
+  attributes: _attributes.optional(),
   currencyCode: z.string().optional(),
   currencyValue: z.string().optional(),
   currencyCodes: _currencyCode.array().optional(),

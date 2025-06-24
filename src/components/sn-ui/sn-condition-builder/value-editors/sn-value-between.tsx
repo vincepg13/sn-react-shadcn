@@ -3,6 +3,7 @@ import { SnValueDate } from './sn-value-date'
 import { SnConditionField } from '@kit/types/condition-schema'
 import { SnValueInput } from './sn-value-input'
 import { SnValueCurrency } from './sn-value-currency'
+import { SnValueDuration } from './sn-value-duration'
 
 type BetweenProps = {
   type: string
@@ -28,6 +29,15 @@ export function SnValueBetween({ field, type, value, disabled, onChange }: Betwe
     },
     [startVal, endVal, onChange]
   )
+
+  if (type === 'glide_duration') {
+    return (
+      <div className="flex flex-col xl:flex-row gap-2">
+        <SnValueDuration field={field} value={startVal} onChange={val => handleChange('start', val)} />
+        <SnValueDuration field={field} value={endVal} onChange={val => handleChange('end', val)} />
+      </div>
+    )
+  }
 
   if (type === 'glide_date_choice') {
     const showTime = field.type === 'glide_date_time'

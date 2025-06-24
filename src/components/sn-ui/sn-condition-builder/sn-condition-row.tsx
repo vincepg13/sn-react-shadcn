@@ -1,5 +1,5 @@
 import { Trash2 } from 'lucide-react'
-import { useCallback } from 'react'
+import { useCallback, useRef } from 'react'
 import { Button } from '@kit/components/ui/button'
 import { SnConditionField } from './sn-condition-field'
 import { SnConditionValue } from './sn-condition-value'
@@ -18,13 +18,19 @@ type Props = {
 export function ConditionRow({ condition, onDelete, onOr, onChange }: Props) {
   const { table, fieldsByTable, setFieldsByTable } = useCondMeta()
   const tableName = condition.table ?? table
+  const lastEditor = useRef('')
   const conditionField = condition.field?.split('.').pop() || ''
 
   const handleOperatorChange = useCallback(
     (operator: string) => {
       const currentField = fieldsByTable[tableName]?.[conditionField]
-      const label = currentField?.operators.find(o => o.operator === operator)?.label
-      onChange({ operator, operatorLabel: label, value: '' })
+      const fieldOp = currentField?.operators.find(o => o.operator === operator)
+      const label = fieldOp?.label
+
+      if (fieldOp?.advancedEditor === lastEditor.current) onChange({ operator, operatorLabel: label })
+      else onChange({ operator, operatorLabel: label, value: '' })
+
+      lastEditor.current = fieldOp?.advancedEditor || ''
     },
     [onChange, fieldsByTable, tableName, conditionField]
   )
@@ -58,7 +64,7 @@ export function ConditionRow({ condition, onDelete, onOr, onChange }: Props) {
   const [currentOperator] = operatorOptions.filter(op => op.operator === condition.operator)
 
   return (
-    <div className="flex flex-col gap-2 py-1 lg:grid lg:grid-cols-[1fr_1fr_1fr_90px] lg:items-start">
+    <div className="flex flex-col gap-2 py-1 lg:grid lg:grid-cols-[1fr_1fr_1fr_90px] lg:items-start overflow-x-auto">
       {/* Row 1 on mobile, Columns 1 & 2 on desktop */}
       <div className="grid grid-cols-[1fr_1fr] gap-2 lg:contents">
         <div className="col-start-1">

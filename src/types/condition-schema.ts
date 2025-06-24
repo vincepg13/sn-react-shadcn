@@ -31,6 +31,7 @@ export type SnConditionField = {
   reference?: string
   referenceDisplayField?: string
   referenceKey?: string
+  referenceCols?: string[]
   choices?: SnFieldChoice[]
   operators: SnFieldOperator[]
   qualifier?: string

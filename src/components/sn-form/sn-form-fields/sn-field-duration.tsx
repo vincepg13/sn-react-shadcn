@@ -1,14 +1,29 @@
 import { ComboInput } from '@kit/components/ui/combo-input'
-import { SnFieldBaseProps, SnFieldSchema } from '@kit/types/form-schema'
+import { SnFieldBaseProps } from '@kit/types/form-schema'
 import { useEffect, useState } from 'react'
 
 const EPOCH_DATE = new Date('1970-01-01T00:00:00Z')
 interface SnFieldDurProps extends Omit<SnFieldBaseProps<string>, 'field'> {
-  field: SnFieldSchema
+  field: { mandatory: boolean; readonly: boolean }
+}
+
+type SnFieldDurCoreProps = {
+  fVal: string
+  size?: 'sm' | 'default'
+  field: { mandatory: boolean; readonly: boolean }
+  onChange: (value: string, splits?: string[]) => void
 }
 
 export function SnFieldDuration({ field, rhfField, onChange }: SnFieldDurProps) {
-  const fVal = rhfField.value as string
+  const dualChange = (value: string) => {
+    onChange?.(value)
+    rhfField.onChange(value)
+  }
+
+  return <SnFieldDurationCore field={field} fVal={rhfField.value as string} onChange={dualChange} />
+}
+
+export function SnFieldDurationCore({ field, fVal, size='default', onChange }: SnFieldDurCoreProps) {
   const [splits, setSplits] = useState(['', '', '', ''])
 
   useEffect(() => {
@@ -48,8 +63,7 @@ export function SnFieldDuration({ field, rhfField, onChange }: SnFieldDurProps) 
 
   const updateValue = (updatedSplits: string[]) => {
     const value = formatValue(updatedSplits)
-    onChange?.(value)
-    rhfField?.onChange(value)
+    onChange(value, updatedSplits)
   }
 
   const handleChange = (i: number, value: string) => {
@@ -65,10 +79,15 @@ export function SnFieldDuration({ field, rhfField, onChange }: SnFieldDurProps) 
 
   const getInputClasses = (i: number) => {
     let inputClasses = 'ta-custom'
-    if (i === 0) inputClasses += ' rounded-sm mr-1 text-end'
-    if (i == 1) inputClasses += ' rounded-none rounded-l-sm'
-    if (i == 2) inputClasses += ' rounded-none border-l-0 border-r-0 focus-within:border-l focus-within:border-r'
-    if (i == 3) inputClasses += ' rounded-none rounded-r-sm'
+
+    const startCellPadder = size === 'sm' ? 'p-0 pl-2' : ''
+    const endCellPadder = size === 'sm' ? 'p-0' : ''
+
+
+    if (i === 0) inputClasses += ` rounded-sm mr-1 text-end ${startCellPadder}`
+    if (i == 1) inputClasses += ` rounded-none rounded-l-sm ${startCellPadder}`
+    if (i == 2) inputClasses += ` rounded-none border-l-0 border-r-0 focus-within:border-l focus-within:border-r ${endCellPadder}`
+    if (i == 3) inputClasses += ` rounded-none rounded-r-sm ${endCellPadder}`
     return inputClasses
   }
 

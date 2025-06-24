@@ -10,6 +10,7 @@ import { SnConditionField, SnConditionRow, SnFieldOperator } from '@kit/types/co
 import { SnValueFieldName } from './value-editors/sn-value-field-name'
 import { SnValueDateEquivalent } from './value-editors/sn-value-date-equivalent'
 import { SnValueDateComparative } from './value-editors/sn-value-date-comparative'
+import { SnValueDuration } from './value-editors/sn-value-duration'
 
 type SnConditionValueProps = {
   condition: SnConditionRow
@@ -42,14 +43,21 @@ export function SnConditionValue({ condition, field, operator, onChange }: SnCon
     [onChange]
   )
 
-  if (!operator) return <SnValueInput value={condition.value} disabled={!operator} onChange={processValue} onDelayedChange={processBouncedValue} />
+  if (!operator)
+    return (
+      <SnValueInput
+        value={condition.value}
+        disabled={!operator}
+        onChange={processValue}
+        onDelayedChange={processBouncedValue}
+      />
+    )
 
   switch (operator?.advancedEditor) {
-    case 'boolean':
-    case 'choice': {
-      const choices = field.choices || booleanChoices
-      return <SnValueChoice value={condition.value} choices={choices!} onChange={processValue} />
-    }
+    case 'glide_date_equivalent':
+      return <SnValueDateEquivalent field={field} condition={condition} onChange={processValue} />
+    case 'glide_date_comparative':
+      return <SnValueDateComparative field={field} condition={condition} onChange={processValue} />
     case 'currency':
       return (
         <SnValueCurrency key={field.name} field={field.name} value={condition.value} onChange={processBouncedValue} />
@@ -57,20 +65,27 @@ export function SnConditionValue({ condition, field, operator, onChange }: SnCon
     case 'currency_fields':
     case 'choice_field_names':
       return <SnValueFieldName field={field} table={condition.table} value={condition.value} onChange={processValue} />
+    case 'boolean':
+    case 'choice':
+    case 'ChoiceField':
+    case 'choice_multiple':
+    case 'days_of_week':
+    case 'choice_dynamic': {
+      const choices = field.choices || booleanChoices
+      return <SnValueChoice value={condition.value} choices={choices!} onChange={processValue} />
+    }
+    case 'glide_duration':
+      return <SnValueDuration field={field} value={condition.value} onChange={processBouncedValue} />
     case 'reference':
       return (
         <SnValueReference
+          field={field}
           table={field.reference!}
           value={condition.value}
           display_value={condition.displayValue || ''}
-          displayField={field.referenceDisplayField!}
           onChange={processValue}
         />
       )
-    case 'glide_date_equivalent':
-      return <SnValueDateEquivalent field={field} condition={condition} onChange={processValue} />
-    case 'glide_date_comparative':
-      return <SnValueDateComparative field={field} condition={condition} onChange={processValue} />
     case 'glide_date_choice': {
       const op = operator.operator || ''
       const showTime = field.type === 'glide_date_time' && (op.startsWith('<') || op.startsWith('>'))

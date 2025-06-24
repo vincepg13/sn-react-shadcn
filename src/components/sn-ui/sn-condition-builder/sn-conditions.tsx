@@ -75,7 +75,7 @@ export const SnConditions = forwardRef<SnConditionsHandle, ConditionProps>(
                       <Separator className="w-full" />
                     </div>
                   )}
-                  <div className="overflow-x-auto">
+                  <div className="">
                     <ConditionGroup
                       key={group.id}
                       group={group}

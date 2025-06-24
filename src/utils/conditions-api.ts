@@ -32,7 +32,8 @@ function normalizeFieldMetadata(columns: SnConditionsApiResult) {
       reference: col.reference,
       referenceDisplayField: col.reference_display_field,
       referenceKey: col.reference_attributes?.reference_key,
-      choices: col.choices || undefined,
+      referenceCols: col.reference_attributes?.ref_ac_columns,
+      choices: col.choices || col.dynamic_choices || undefined,
       qualifier: col.ed?.qualifier,
       operators: col.operators || [],
     }
