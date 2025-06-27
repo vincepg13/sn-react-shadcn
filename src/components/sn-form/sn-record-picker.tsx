@@ -109,7 +109,7 @@ export function SnRecordPicker({
               variant="outline"
               role="combobox"
               aria-expanded={open}
-              className="w-full min-w-[200px] min-h-[40.25px] justify-between pr-8"
+              className="w-full min-w-[200px] justify-between pr-8"
             >
               <div className="flex-1 truncate text-left">
                 {selectedRecords[0]?.display_value || <span className="text-muted-foreground">{placeholder}</span>}

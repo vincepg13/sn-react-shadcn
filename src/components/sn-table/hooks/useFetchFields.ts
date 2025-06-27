@@ -45,7 +45,9 @@ export function useFetchFields({
           listViewRes.data.result,
           controller
         );
-        const snFields = elementsRes.data.result.map(
+        const snFields = elementsRes.data.result.filter(
+          (f: SnListViewElement) => f.element && !f.element.startsWith(".")
+        ).map(
           (f: SnListViewElement) => f.element
         );
 

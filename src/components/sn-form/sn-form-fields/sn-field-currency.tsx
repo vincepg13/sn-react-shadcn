@@ -1,7 +1,6 @@
-import { RHFField, SnFieldSchema } from '@kit/types/form-schema'
-import { useFieldUI } from '../contexts/FieldUIContext'
-import { SnFieldNumeric } from './SnFieldNumeric'
 import { useState } from 'react'
+import { SnFieldNumeric } from './SnFieldNumeric'
+import { RHFField, SnCurrencyField } from '@kit/types/form-schema'
 import {
   Select,
   SelectContent,
@@ -13,15 +12,17 @@ import {
 } from '@kit/components/ui/select'
 
 interface SnFieldCurrencyProps {
-  field: SnFieldSchema
+  field: SnCurrencyField
+  readonly?: boolean
   rhfField?: RHFField
+  allowNull?: boolean
   onChange: (val: string) => void
 }
 
-export function SnFieldCurrency({ field, onChange }: SnFieldCurrencyProps) {
-  const { readonly } = useFieldUI()
+export function SnFieldCurrency({ field, readonly, allowNull, onChange }: SnFieldCurrencyProps) {
+  const nullValue = allowNull ? undefined : 0
   const [currency, setCurrency] = useState(field.currencyCode!)
-  const [currencyValue, setCurrencyValue] = useState<number|undefined>(field.currencyValue ? +field.currencyValue : 0)
+  const [currencyValue, setCurrencyValue] = useState<number|undefined>(field.currencyValue ? +field.currencyValue : nullValue)
 
   const handleChange = (code: string, value: number|undefined) => {
     setCurrency(code)
@@ -50,11 +51,13 @@ export function SnFieldCurrency({ field, onChange }: SnFieldCurrencyProps) {
         <SnFieldNumeric
           className="rounded-[0] border-l-0"
           value={currencyValue}
+
           onValueChange={value => handleChange(currency, value)}
           thousandSeparator=","
           decimalSeparator="."
           decimalScale={2}
-          fixedDecimalScale={field.type === 'decimal'}
+          fixedDecimalScale={true}
+          readonly={readonly}
         />
       </div>
     </div>

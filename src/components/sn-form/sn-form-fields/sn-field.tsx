@@ -19,7 +19,7 @@ import { useEffectiveFieldState } from '../hooks/useFieldUiState'
 import { useClientScripts } from '../contexts/SnClientScriptContext'
 import { useUiPoliciesContext } from '../contexts/SnUiPolicyContext'
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '../../ui/form'
-import { SnFieldSchema, RHFField, FieldUIState, SnFieldPrimitive } from '../../../types/form-schema'
+import { SnFieldSchema, RHFField, FieldUIState, SnFieldPrimitive, SnCurrencyField } from '../../../types/form-schema'
 import { SnFieldDuration } from './sn-field-duration'
 
 interface SnFieldProps {
@@ -31,7 +31,7 @@ interface SnFieldProps {
 }
 
 function SnFieldComponent({ field, fieldUIState, guid, table }: SnFieldProps) {
-  const { control, getValues, setValue, watch } = useFormContext()
+  const { control, getValues, setValue, watch, trigger } = useFormContext()
   const { runClientScriptsForFieldChange, fieldChangeHandlers } = useClientScripts()
   const { runUiPoliciesForField } = useUiPoliciesContext()
 
@@ -45,7 +45,6 @@ function SnFieldComponent({ field, fieldUIState, guid, table }: SnFieldProps) {
 
   const handleChange = useCallback(
     (newValue: SnFieldPrimitive) => {
-      // console.log("SNFC", field.name, newValue)
       setValue(field.name, newValue, { shouldDirty: true, shouldTouch: true })
       runClientScriptsForFieldChange(field.name, oldValueRef.current, newValue, false)
       runUiPoliciesForField(field.name)
@@ -66,12 +65,19 @@ function SnFieldComponent({ field, fieldUIState, guid, table }: SnFieldProps) {
         render={({ field: rhfField }) => {
           const handleFocus = () => {}
 
+          const handleSelect = (newValue: SnFieldPrimitive) => {
+            handleChange(newValue)
+            trigger(field.name)
+          }
+
           const input = renderFieldComponent(
             table,
             guid,
             field,
             rhfField,
+            fieldUI.readonly,
             handleChange,
+            handleSelect,
             handleFocus,
             getValues(),
             watch
@@ -104,7 +110,9 @@ function renderFieldComponent(
   guid: string,
   field: SnFieldSchema,
   rhfField: RHFField,
+  readonly: boolean,
   handleChange: (value: SnFieldPrimitive) => void,
+  handleSelect: (value: SnFieldPrimitive) => void,
   handleFocus: () => void,
   formValues: Record<string, string>,
   watch: ReturnType<typeof useFormContext>['watch']
@@ -114,7 +122,7 @@ function renderFieldComponent(
 
   // TODO:
   // - File Attachment
-  // - User Roles 
+  // - User Roles
   // - Field List
   // - Condition Builder
   // - Activity Formatter / Journals
@@ -134,12 +142,12 @@ function renderFieldComponent(
     case 'journal_input':
       if (field.type.startsWith('password'))
         return <SnFieldInput rhfField={rhfField} onChange={handleChange} onFocus={handleFocus} type="password" />
-      if (field.type == "journal_input" || (field.max_length && field.max_length >= 200)) {
+      if (field.type == 'journal_input' || (field.max_length && field.max_length >= 200)) {
         return <SnFieldTextarea field={field} rhfField={rhfField} onChange={handleChange} onFocus={handleFocus} />
       }
       return <SnFieldInput rhfField={rhfField} onChange={handleChange} onFocus={handleFocus} />
     case 'choice':
-      return <SnFieldChoice field={field} rhfField={rhfField} onChange={handleChange} />
+      return <SnFieldChoice field={field} rhfField={rhfField} onChange={handleSelect} />
     case 'boolean':
       return <SnFieldCheckbox field={field} rhfField={rhfField} onChange={handleChange} />
     case 'table_name':
@@ -153,28 +161,36 @@ function renderFieldComponent(
           table={table}
           recordSysId={guid}
           formValues={formValues}
-          onChange={handleChange}
+          onChange={handleSelect}
           dependentValue={depValue}
         />
       )
     }
     case 'glide_date':
     case 'glide_date_time':
-      return <SnFieldDate field={field} rhfField={rhfField} onChange={handleChange} />
+      return <SnFieldDate field={field} rhfField={rhfField} onChange={handleSelect} />
     case 'glide_time':
-      return <SnFieldTime rhfField={rhfField} onChange={handleChange} />
+      return <SnFieldTime rhfField={rhfField} onChange={handleSelect} />
     case 'glide_duration':
-      return <SnFieldDuration field={field} rhfField={rhfField} onChange={handleChange} />
+      return <SnFieldDuration field={field} rhfField={rhfField} onChange={handleSelect} />
     case 'url':
       return <SnFieldUrl rhfField={rhfField} onChange={handleChange} />
     case 'price':
     case 'currency':
-      return <SnFieldCurrency field={field} rhfField={rhfField} onChange={handleChange} />
+      return (
+        <SnFieldCurrency
+          field={field as SnCurrencyField}
+          readonly={readonly}
+          rhfField={rhfField}
+          onChange={handleChange}
+        />
+      )
     case 'integer':
     case 'float':
     case 'decimal':
       return (
         <SnFieldNumeric
+          readOnly={readonly}
           value={rhfField.value as number}
           onValueChange={value => handleChange(value ?? '')}
           onFocus={handleFocus}

@@ -33,11 +33,13 @@ export default function SnDataTable({
 }: SnDataTableProps) {
   const [error, setError] = useErrorState(inputError || "");
   const [rows, setRows] = useState<SnRow[]>([]);
+  const [rowsLoaded, setRowsLoaded] = useState(false);
   const [columns, setColumns] = useState<ColumnDef<SnRow, SnRowItem>[]>([]);
   const [pageIndex, setPageIndex] = useState(0);
   const [pageSize, setPageSize] = useState(defaultPageSize);
   const [pageCount, setPageCount] = useState(0);
   const [sorting, setSorting] = useSortingQuery(query);
+  const [totalRowCount, setTotalRowCount] = useState(0);
 
   /* Fetch column schema for column labels */
   useFetchSchema({
@@ -59,9 +61,12 @@ export default function SnDataTable({
     pageIndex,
     pageSize,
     defaultPageSize,
+    rowsLoaded,
+    setRowsLoaded,
     setRows,
     setPageCount,
     setError,
+    setTotalRowCount,
   });
 
   /* Handle page changes */
@@ -79,7 +84,7 @@ export default function SnDataTable({
     { error && <SnDataTableSkeletonError error={error} />}
 
     { !error && (
-      rows.length > 0 ? (
+      rowsLoaded ? (
         <DataTable
           pageIndex={pageIndex}
           pageSize={pageSize}
@@ -87,6 +92,7 @@ export default function SnDataTable({
           data={rows}
           columns={columns}
           sorting={sorting}
+          totalRowCount={totalRowCount}
           onSortingChange={setSorting}
           onPageChange={handlePageChange}
           onRowClick={onRowClick}

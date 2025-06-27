@@ -83,18 +83,19 @@ const _recordPickerItem = z.object({
   meta: z.custom<SnRow>().optional(),
 })
 
+const _attributes = z.object({
+  ref_ac_columns: z.string().optional(),
+  ref_ac_order_by: z.string().optional(),
+  ref_ac_table: z.string().optional(),
+  ref_ac_display_value: z.string().optional(),
+})
+
 const _ed = z.object({
   reference: z.string(),
   qualifier: z.string(),
   dependent_value: z.string().optional(),
   defaultOperator: z.string().optional(),
   searchField: z.string().optional(),
-  attributes: z.object({
-    ref_ac_columns: z.string().optional(),
-    ref_ac_order_by: z.string().optional(),
-    ref_ac_table: z.string().optional(),
-    ref_ac_display_value: z.string().optional(),
-  }),
 })
 
 export const pickerList = z.record(_recordPickerItem)
@@ -180,7 +181,7 @@ const _snBaseActivity = z.object({
   entries: z.array(_snBaseEntry),
   fields: z.array(_journalFieldSchema),
   primary_fields: z.string().array().optional(),
-  sys_timestamp: z.number()
+  sys_timestamp: z.number(),
 })
 
 export type SnBaseEntry = z.infer<typeof _snBaseEntry>
@@ -232,12 +233,20 @@ const _formField = z.object({
   max_length: z.number().optional(),
   choice: z.number().optional(),
   ed: _ed.optional(),
+  attributes: _attributes.optional(),
   currencyCode: z.string().optional(),
   currencyValue: z.string().optional(),
   currencyCodes: _currencyCode.array().optional(),
   dependentField: z.string().optional(),
   choices: z.array(_fieldChoiceItem).optional(),
   journalInputChanged: z.boolean().optional(),
+})
+
+const _currencyField = z.object({
+  label: z.string(),
+  currencyCode: z.string(),
+  currencyValue: z.string().optional(),
+  currencyCodes: _currencyCode.array(),
 })
 
 export type SnFieldPrimitive = string | string[] | boolean | number
@@ -247,6 +256,7 @@ export type SnFieldChoiceItem = z.infer<typeof _fieldChoiceItem>
 export type SnFormConfig = z.infer<typeof _formConfig>
 export type FormData = Record<string, string | boolean | number | null>
 export type RHFField = ControllerRenderProps<FormData, string>
+export type SnCurrencyField = z.infer<typeof _currencyField>
 
 export type SnFormApis = {
   formData: string

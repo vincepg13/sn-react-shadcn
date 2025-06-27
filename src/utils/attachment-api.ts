@@ -7,11 +7,12 @@ declare global {
   }
 }
 
-export async function getAttachments(table: string, guid: string): Promise<SnAttachment[]> {
+export async function getAttachments(table: string, guid: string, controller: AbortController): Promise<SnAttachment[]> {
   const axios = getAxiosInstance()
   try {
     const response = await axios.get(
-      `/angular.do?sysparm_type=ngk_attachments&action=list&sys_id=${guid}&table=${table}`
+      `/angular.do?sysparm_type=ngk_attachments&action=list&sys_id=${guid}&table=${table}`,
+      { signal: controller.signal }
     )
     return response.data.files || []
   } catch (error) {

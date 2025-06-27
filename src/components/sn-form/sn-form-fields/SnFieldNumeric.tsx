@@ -3,7 +3,6 @@ import { forwardRef, RefObject, useCallback, useEffect, useState, useRef } from 
 import { NumericFormat, NumericFormatProps } from 'react-number-format'
 import { Button } from '../../ui/button'
 import { Input } from '../../ui/input'
-import { useFieldUI } from '../contexts/FieldUIContext'
 
 interface NumberInputProps extends Omit<NumericFormatProps, 'value' | 'onValueChange'> {
   stepper?: number
@@ -18,12 +17,14 @@ interface NumberInputProps extends Omit<NumericFormatProps, 'value' | 'onValueCh
   onValueChange?: (value: number | undefined) => void
   fixedDecimalScale?: boolean
   decimalScale?: number
+  readonly?: boolean
 }
 
 export const SnFieldNumeric = forwardRef<HTMLInputElement, NumberInputProps>(
   (
     {
       stepper,
+      readonly,
       thousandSeparator,
       placeholder,
       defaultValue,
@@ -41,7 +42,6 @@ export const SnFieldNumeric = forwardRef<HTMLInputElement, NumberInputProps>(
   ) => {
     const internalRef = useRef<HTMLInputElement>(null)
     const combinedRef = ref || internalRef
-    const { readonly } = useFieldUI()
     const [value, setValue] = useState<number | undefined>(controlledValue ?? defaultValue)
 
     const handleIncrement = useCallback(() => {
@@ -118,7 +118,7 @@ export const SnFieldNumeric = forwardRef<HTMLInputElement, NumberInputProps>(
           getInputRef={combinedRef} // Use combined ref
           {...props}
         />
-        <div className="flex flex-col h-9">
+        <div className="flex flex-col h-9 max-w-[20%]">
           <Button
             type="button"
             aria-label="Increase value"

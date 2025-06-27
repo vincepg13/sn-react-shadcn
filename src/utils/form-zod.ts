@@ -33,13 +33,13 @@ export function mapFieldToZod(field: SnFieldSchema): ZodTypeAny {
 
     case 'glide_date':
       base = z.string().refine(val => (allowEmpty && val === '') || /^\d{4}-\d{2}-\d{2}$/.test(val), {
-        message: 'Invalid date format',
+        message: 'A date selection is required',
       })
       break
 
     case 'glide_date_time':
       base = z.string().refine(val => (allowEmpty && val === '') || /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(val), {
-        message: 'Invalid date format',
+        message: 'A date selection is required',
       })
       break
 
