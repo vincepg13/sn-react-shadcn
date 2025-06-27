@@ -4,13 +4,13 @@ import { SnValueDate } from './value-editors/sn-value-date'
 import { SnValueInput } from './value-editors/sn-value-input'
 import { SnValueChoice } from './value-editors/sn-value-choice'
 import { SnValueBetween } from './value-editors/sn-value-between'
+import { SnValueDuration } from './value-editors/sn-value-duration'
 import { SnValueCurrency } from './value-editors/sn-value-currency'
 import { SnValueReference } from './value-editors/sn-value-reference'
-import { SnConditionField, SnConditionRow, SnFieldOperator } from '@kit/types/condition-schema'
 import { SnValueFieldName } from './value-editors/sn-value-field-name'
 import { SnValueDateEquivalent } from './value-editors/sn-value-date-equivalent'
 import { SnValueDateComparative } from './value-editors/sn-value-date-comparative'
-import { SnValueDuration } from './value-editors/sn-value-duration'
+import { SnConditionField, SnConditionRow, SnFieldOperator } from '@kit/types/condition-schema'
 
 type SnConditionValueProps = {
   condition: SnConditionRow

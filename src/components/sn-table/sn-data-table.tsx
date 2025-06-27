@@ -39,6 +39,7 @@ export default function SnDataTable({
   const [pageSize, setPageSize] = useState(defaultPageSize);
   const [pageCount, setPageCount] = useState(0);
   const [sorting, setSorting] = useSortingQuery(query);
+  const [totalRowCount, setTotalRowCount] = useState(0);
 
   /* Fetch column schema for column labels */
   useFetchSchema({
@@ -65,6 +66,7 @@ export default function SnDataTable({
     setRows,
     setPageCount,
     setError,
+    setTotalRowCount,
   });
 
   /* Handle page changes */
@@ -90,6 +92,7 @@ export default function SnDataTable({
           data={rows}
           columns={columns}
           sorting={sorting}
+          totalRowCount={totalRowCount}
           onSortingChange={setSorting}
           onPageChange={handlePageChange}
           onRowClick={onRowClick}

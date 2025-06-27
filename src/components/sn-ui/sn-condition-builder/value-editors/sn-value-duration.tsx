@@ -1,5 +1,6 @@
 import { SnFieldDurationCore } from '@kit/components/sn-form/sn-form-fields/sn-field-duration'
 import { SnConditionField } from '@kit/types/condition-schema'
+import { useEffect } from 'react'
 
 type DurProps = {
   value: string
@@ -7,9 +8,12 @@ type DurProps = {
   onChange: (value: string) => void
 }
 
+const EPOCH = '1970-01-01 00:00:00'
+const EPOCH_JS = "javascript:gs.getDurationDate('0 0:0:0')"
+
 function parseDuration(value: string): string {
   const match = value.match(/gs\.getDurationDate\('([^']*)'\)/)
-  if (!match) return '1970-01-01 00:00:00'
+  if (!match) return 'NULL'
 
   const durationStr = match[1].trim()
   const [dayPart, timePart = '0:0:0'] = durationStr.includes(' ') ? durationStr.split(' ') : ['0', durationStr]
@@ -34,15 +38,21 @@ function parseDuration(value: string): string {
 
 export function SnValueDuration({ value, field, onChange }: DurProps) {
   const durField = { mandatory: false, readonly: false, ...field }
-  const parseDurationdValue = parseDuration(value)
+  const parsedDurationValue = parseDuration(value)
+
+  useEffect(() => {
+    if (parsedDurationValue === 'NULL') onChange(EPOCH_JS)
+  }, [parsedDurationValue, onChange])
+
+  const displayValue = parsedDurationValue === 'NULL' ? EPOCH : parsedDurationValue
 
   const handleChange = (_val: string, splits?: string[]) => {
     const formattedValue =
       splits && splits.length == 4
         ? `javascript:gs.getDurationDate('${splits[0]} ${splits[1]}:${splits[2]}:${splits[3]}')`
-        : ''
+        : EPOCH_JS
     onChange(formattedValue)
   }
 
-  return <SnFieldDurationCore field={durField} fVal={parseDurationdValue} size="sm" onChange={handleChange} />
+  return <SnFieldDurationCore field={durField} fVal={displayValue} size="sm" onChange={handleChange} />
 }

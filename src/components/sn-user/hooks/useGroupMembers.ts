@@ -18,7 +18,7 @@ export function useGroupMembers(
 
   useEffect(() => {
     const controller = new AbortController()
-    const fields = 'user,user.email,user.phone,user.photo'
+    const fields = 'user,user.email,user.phone,user.photo,user.avatar'
 
     const fetch = async () => {
       try {
@@ -36,7 +36,7 @@ export function useGroupMembers(
 
         setMembers(
           res.data.result.map((member: SnRow) => {
-            const photo = member['user.photo']?.display_value
+            const photo = member['user.avatar']?.display_value || member['user.photo']?.display_value
 
             return {
               name: member.user.display_value,

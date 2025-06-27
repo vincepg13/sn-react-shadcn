@@ -65,7 +65,8 @@ export function usePickerData({ table, fields, query, searchTerm, pageSize, open
       setHasMore(mapped.length === pageSize)
       setPage(pageNumber)
     } catch (e) {
-      if (!axios.isCancel(e)) console.error('Fetch failed', e)
+      if (axios.isAxiosError(e) && e.code === 'ERR_CANCELED') return
+      console.error('Fetch failed', e)
     } finally {
       setLoading(false)
     }

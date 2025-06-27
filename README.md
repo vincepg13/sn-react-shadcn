@@ -1,6 +1,6 @@
 # sn-shadcn-kit
 
-A tree shakeable collection of react components built using using [ShadCN UI](https://ui.shadcn.com/) and [Tailwind CSS](https://tailwindcss.com/).
+A tree shakeable collection of react components built using using [ShadCN UI](https://ui.shadcn.com/) and [Tailwind CSS](https://tailwindcss.com/). Built and tested using React 19.
 
 Designed to give ServiceNow developers easy access to react components on the platform. To find out more about creating a react environment inside of a ServiceNow instance visit [servicenow-react-app](https://github.com/elinsoftware/servicenow-react-app).
 
@@ -69,7 +69,9 @@ setAxiosInstance(axios)
 
 ## 🏓 Tables, Tables and More Tables
 
-When using either of the data tables, it will display each fields display value in the corresponding cell. If you want to take control of the UI, you can do this by passing in your own column definitions to the table. To find out more about column definitions in Tanstack visit the [Column Definition Guide](https://tanstack.com/table/v8/docs/guide/column-defs)
+When using either of the data tables, it will display each fields display value in the corresponding cell. If you want to take control of the UI, you can do this by passing in your own column definitions to the table. To find out more about column definitions in Tanstack visit the [Column Definition Guide](https://tanstack.com/table/v8/docs/guide/column-defs).
+
+Below is an example of how you would use the table but make all the short description values have red text.
 
 ```tsx
 import { SnDataTable, SnRow } from 'sn-shadcn-kit'
@@ -78,7 +80,7 @@ const columns = [
   {
     accessorKey: 'short_description',
     header: 'Short Description',
-    cell: ({ getValue }) => getValue()?.display_value,
+    cell: ({ getValue }) => <div className="text-red-500">{getValue()?.display_value}</div>,
   },
 ]
 
@@ -90,7 +92,7 @@ const columns = [
 ```
 
 Below is an Example of what SnTable looks like with no UI modifications:
-![Shadcn Components Demo](https://raw.githubusercontent.com/vincepg13/sn-react-shadcn-demo/refs/heads/main/assets/SN%20Table%20Demo.png)
+![SnTable Demo](/demo/SNDemoTableConditions.png)
 
 ### 🔧 Props
 
@@ -103,7 +105,7 @@ Below is an Example of what SnTable looks like with no UI modifications:
 | `query`             | `string` (optional)               | Encoded query string                      |
 | `defaultPageSize`   | `number` (optional)               | Default number of rows per page           |
 | `onRowClick`        | `(row: SnRow) => void` (optional) | Callback when a row is clicked            |
-| `columnDefinitions` | `ColumnDef<SnRow, SnRowItem>[]`   | Custom column definitions                 |
+| `columnDefinitions` | `ColumnDef<SnRow, SnRowItem>[]` (optional)   | Custom column definitions                 |
 
 ### `<SnTable />`
 
@@ -115,9 +117,11 @@ This has more or less the same properties as SnDataTable with the exception that
 - If they have no list view pref for that table, it will display the default view
 - You can pass in the view name of a specific view via the _view_ property
 
+You may also noticed in the screenshot above the table includes a Condition Builder. This is a stand alone component <SnFilter/> which you can read more about in the Generic 
+
 ---
 
-## ServiceNow Forms
+## 📝 ServiceNow Forms
 
 If your'e familiar with the ServicePortal you know ServiceNow provide a method in the GlideScriptable API ($sp.getForm) that can return you the entire metadata for any given form. The below component set is a **alpha version** of how you can consume that metadata and recreate a ServiceNow form with the same layout as well as UI policies, Client Scripts and UI actions.
 
@@ -130,167 +134,7 @@ This is where I currently stand with what works:
 - **UI Policies**: The form will evaluate basic UI policies. By this I mean policies which do not include scripting or setting values. The standard mandatory/visible/readonly options will work however. Also, not every single condition predicate will be mapped, but the ones for common field types (dates, numerics, strings, references etc) should work.
 - **Client Scripts**: onLoad and onChange scripts will attempt to be evaluated. If there are any g_form methods which have not been mapped the script will fail. Right now I have mapped what I consider the most common set of methods used in g_form but its only a fraction of whats available. These include: getValue, setValue, setReadOnly, setDisplay, setVisible, setMandatory, clearValue, getBooleanValue, isNewRecord, getTableName, addInfoMessage and addErrorMessage. Any other references to g_form methods or global objects (GlideAjax, UI scripts etc) will fail.
 
-To use the form you must provide it with all necessary metadata, I do this by a scripted API call in the global scope to the api method mentioned above. Below is the code I run in that endpoint:
-
-```js
-(function process( /*RESTAPIRequest*/ request, /*RESTAPIResponse*/ response) {
-    const table = request.pathParams.table;
-    const guid = request.pathParams.id;
-	const qry = request.queryParams.qry || "";
-	const view = request.queryParams.view || "";
-
-    if (!table || !guid) {
-        return sendError("400", "Table and id must be provided");
-    }
-
-    var grTarget = new GlideRecordSecure(table);
-    if (guid != -1 && !grTarget.get(guid)) {
-        return sendError("400", "Record was either not found or you are not authorised to view it.");
-    }
-
-    const instanceURI = gs.getProperty("glide.servlet.uri");
-    const formData = new GlideSPScriptable().getForm(table, guid, qry, view);
-    const hasActivityFormatter = hasActivity(formData._formatters);
-
-    if (!!hasActivityFormatter && guid != -1) {
-        formData.activity = getActivityData(table, guid, instanceURI);
-        formData.activity.formatter = hasActivityFormatter;
-    }
-
-    formData.attachments = getAttachments(table, guid, instanceURI);
-    modifyFields(formData._fields, formData.activity);
-
-    formData.react_config = {
-        user: gs.getUserID(),
-        base_url: instanceURI,
-        security: getSecurity(grTarget),
-        date_format: gs.getSession().getUser().getDateFormat()
-    };
-
-    response.setStatus(200);
-    response.setBody(formData);
-
-    function sendError(code, msg) {
-        var error = new sn_ws_err.ServiceError();
-        error.setStatus(code);
-        error.setMessage(msg);
-        return error;
-    }
-
-    function hasActivity(formatters) {
-        for (f in formatters) {
-            let formatterName = formatters[f].formatter;
-            if (formatterName === "activity.xml") {
-                return f;
-            }
-        }
-
-        return false;
-    }
-
-    function getActivityData(table, guid, instance) {
-        const meta = new GlideSPScriptable().getStream(table, guid);
-        const jFields = meta.journal_fields;
-        const readable = jFields.filter(f => f.can_read).map(f => f.name);
-        const writeable = jFields.filter(f => f.can_write).map(f => f.name);
-        let entries = meta.entries.filter(f => !!f.value);
-
-        const userImgMap = {};
-        const grUser = new GlideRecord("sys_user");
-        entries = entries.map(e => {
-            if (userImgMap[e.user_sys_id]) {
-                e.user_img = userImgMap[e.user_sys_id];
-            } else if (grUser.get(e.user_sys_id)) {
-				const userImg = grUser.getDisplayValue("avatar") || grUser.getDisplayValue("photo");
-                if (!userImg) return e;
-				
-                const photo = instance + userImg;
-                e.user_img = photo;
-                userImgMap[e.user_sys_id] = photo;
-            }
-            return e;
-        });
-
-        return {
-            ...meta,
-            entries,
-            readable,
-            writeable
-        };
-    }
-
-    function getSecurity(gr, guid) {
-        var access = {};
-
-        if (guid == -1) {
-            gr.initialize();
-            var canCreate = gr.canCreate();
-            access.canRead = canCreate;
-            access.canWrite = canCreate;
-        } else {
-            access.canRead = gr.canRead();
-            access.canWrite = gr.canWrite();
-            access.canDelete = gr.canDelete();
-        }
-
-        return access;
-    }
-
-    function modifyFields(fields, activityData) {
-        for (f in fields) {
-            var field = fields[f];
-
-            if (field.type === "glide_date" || field.type == "glide_date_time") {
-                if (field.value) {
-                    var gd = field.type == "glide_date" ? new GlideDate() : new GlideDateTime();
-                    gd.setDisplayValue(field.value);
-                    field.value = gd.getValue();
-                }
-            }
-
-            if (activityData && field.type == "journal_input") {
-                field.visible = false;
-                if (activityData.readable && !activityData.readable.includes(field.name)) {
-                    activityData.journal_fields.push({
-                        can_read: true,
-                        can_write: !field.readonly,
-                        color: "transparent",
-                        label: field.label,
-                        name: field.name
-                    });
-
-                    activityData.readable.push(field.name);
-                    if (!field.readonly) activityData.writeable.push(field.name);
-                }
-            }
-        }
-    }
-
-    function getAttachments(table, guid, instance) {
-        grAttach = new GlideRecordSecure("sys_attachment");
-        grAttach.addQuery("table_name", table);
-        grAttach.addQuery("table_sys_id", "IN", guid);
-        grAttach.orderBy("sys_created_on");
-        grAttach.query();
-
-        var attachments = [];
-        while (grAttach.next()) {
-            var id = grAttach.getUniqueValue();
-            attachments.push({
-                sys_id: id,
-                url: instance + 'sys_attachment.do?sys_id=' + id,
-                file_name: grAttach.getValue("file_name"),
-                content_type: grAttach.getValue("content_type"),
-            });
-        }
-
-        return attachments;
-    }
-
-})(request, response);
-```
-
-With the metadata available you can now make use of the components.
+To use the form you must provide it with all necessary metadata, I do this via a scripted API call in the global scope making use of the *$sp.getForm* api method mentioned above. You can find this code in the sn_scripts folder of the repo: [getFormMetadata.js](./sn_scripts/getFormMetadata.js)
 
 ### `<SnFormWrapper />` && `<SnForm />`
 
@@ -301,7 +145,7 @@ SnFormWrapper props:
 |----------------|--------------------- |------------------------------------------------|
 | `guid` | `string` | sys_id of a record |
 | `table` | `string` | Table name the record belongs to |
-| `api` | `string` | Resource path to metadata api |
+| `onValueChange` | `string` | Resource path to metadata api |
 
 This component will then consume the metadata from the api response and pass it to **`<SnForm/>`** to build the form
 
@@ -311,15 +155,51 @@ This component will then consume the metadata from the api response and pass it 
 ![SnFormMedia](/demo/SNDemoFormMedia.png)
 ![SnFormActivity](/demo/SNFormActivityDemo.png)
 
-### `<SnTabs />` && `<SnClippy/>`
+## 🧩 Standalone Components
+Within both the table and form components I make use of various standalone components. These are can be dropped in anywhere and do not have to exist only within tables or forms.
 
-Within the form component I make use of these two handy components which are also available to be used standalone.
+## `<SnTabs />` 
+A wrapper around the shadcn tab components which allow you to pass in an array of tabs to be rendered. Each tab just needs to set a label and the ReactNode element to be rendered, if there are any possibilities of duplicate labels among the tabs then also set a key.
 
-- **SnTabs** A wrapper around the shadcn tab components which allow you to pass in an array of tabs to be rendered. Each tab just needs to set a label and the ReactNode element to be rendered.
-- **SnClippy** ({table: string, guid: string, instance?: string})
-  - Your own personal clippy to be used in ServiceNow. Just give it a table and record then click the paperclip icon to view all the attachments in a shadcn sheet. From here you can delete attachments or add new onces using the drop zone in the footer of the sheet.
-- **SnActivity** ({table: string, guid: string, user: string, fullWidth?: boolean})
-  - Given the current users sys_id, a table and a record sys_id, this component will build the activity formatter. Currently the formatter will only display journal input field history and allow you to post directly to any of these fields. Field changes, attachment updates and html are not currently supported.
+SnTabs props:
+| Prop | Type | Description |
+|----------------|--------------------- |------------------------------------------------|
+| `tabs` | `string` | An Array of Tabs (`{label: string, key?: string, content: ReactNode}`) |
+| `value` | `string` (Optional) | The tab to preset on load |
+| `onValueChange` | `(val: string) => void` (Optional) | Callback method to execute when a tab changes |
+
+## `<SnClippy/>`
+Your own personal clippy to be used in ServiceNow. Just give it a table and record then click the paperclip icon to view all the attachments in a shadcn sheet. From here you can delete attachments or add new onces using the drop zone in the footer of the sheet.
+
+SnClippy props:
+| Prop | Type | Description |
+|----------------|--------------------- |------------------------------------------------|
+| `table` | `string` | The table name of the record to load attachments from |
+| `guid` | `string` | The sys_id of the record to load attachments from |
+| `instance` | `string` (Optional) | Only needed when testing on a dev server, but the SN instance name |
+
+## `<SnActivity/>` 
+Given the current users sys_id, a table and a record sys_id, this component will build the activity formatter. Currently the formatter will only display journal input field history and allow you to post directly to any of these fields. Field changes, attachment updates and html are not currently supported.
+
+SnActivity props:
+| Prop | Type | Description |
+|----------------|--------------------- |------------------------------------------------|
+| `table` | `string` | The table name of the record to load the activity formatter from |
+| `guid` | `string` | The sys_id of the record to load the activity formatter from |
+| `user` | `string` | The sys_id of the current user |
+| `fullwidth` | `boolean` (Optional) | Setting this to true will display each row in the formatter in full width instead of the default left/right chat layout |
+
+## `<SnFilter/>`
+Used to display the condition builder of any given table. The component presents itself as a filter icon with the current query next to it. You can then click on the filter icon to open the full condition builder (Which is its own component you can also use, *<SnConditionBuilder />*).
+
+SnFilter props:
+| Prop | Type | Description |
+|----------------|--------------------- |------------------------------------------------|
+| `table` | `string` | The table name of the record to load the conditions from |
+| `encodedQuery` | `string` (optional) | The initial query to build |
+| `initialOpenState` | `open OR closed` (optional) | Whether to have the condition builder open on first load. It will default to closed. |
+| `onQueryBuilt` | `(encoded: string)` | The callback called when the user executes the built condition by pressing the Run button |
+
 
 ![SnActivity](/demo/SNActivityDemo.png)
 ![SnFormAttachments](/demo/SNDemoFormAttachments.png)
@@ -372,7 +252,7 @@ export default function ServicenowUI() {
         <SnRecordPicker
           table="sys_user"
           fields={['name', 'email']}
-          metaFields={['title', 'photo', 'mobile_phone']}
+          metaFields={['title', 'avatar', 'mobile_phone']}
           query="active=true^nameSTARTSWITHVince"
           value={selected}
           onChange={setSelected}
@@ -384,7 +264,7 @@ export default function ServicenowUI() {
             im={`https://teams.microsoft.com/l/chat/0/0?users=${selected.meta.email.value}`}
             email={selected.meta.email.value}
             phone={selected.meta.mobile_phone.value}
-            image={`/${selected.meta.photo.display_value}`}
+            image={`/${selected.meta.avatar.display_value}`}
             primaryInfo={selected.meta.title.display_value}
           ></SnUserCard>
         )}
@@ -408,7 +288,9 @@ import type { SnUser, SnGroup } from 'sn-shadcn-kit'
 import type { SnRecordPickerItem, SnRecordPickerList } from 'sn-shadcn-kit'
 ```
 
-SnRowItem corresponds to a fields value which is simply an object with both its value and display_value. SnRow is a record (array) of SnRowItems.
+- SnRowItem corresponds to a fields value which is simply an object with both its value and display_value. SnRow is a record (array) of SnRowItems.
+- SnUser and SnGroup define the schema for a user and group object respectively
+- SnRecordPickerItem represents all the data you will get back when selecting a record using the SnRecordPicker component, and SnRecordPickerList is an array of these items
 
 ---
 

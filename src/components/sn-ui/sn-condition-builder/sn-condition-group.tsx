@@ -1,9 +1,9 @@
+import { useCallback } from 'react'
+import { CirclePlus } from 'lucide-react'
+import { ConditionRow } from './sn-condition-row'
 import { Button } from '@kit/components/ui/button'
 import { SnAddConditionType } from './hooks/useConditionModel'
-import { ConditionRow } from './sn-condition-row'
 import { SnConditionGroup, SnConditionMap, SnConditionRow } from '@kit/types/condition-schema'
-import { CirclePlus } from 'lucide-react'
-import { useCallback } from 'react'
 
 type GroupProps = {
   group: SnConditionGroup

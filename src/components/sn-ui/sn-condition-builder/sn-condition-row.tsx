@@ -17,8 +17,9 @@ type Props = {
 
 export function ConditionRow({ condition, onDelete, onOr, onChange }: Props) {
   const { table, fieldsByTable, setFieldsByTable } = useCondMeta()
-  const tableName = condition.table ?? table
+  
   const lastEditor = useRef('')
+  const tableName = condition.table ?? table
   const conditionField = condition.field?.split('.').pop() || ''
 
   const handleOperatorChange = useCallback(

@@ -1,6 +1,6 @@
 {
   "name": "sn-shadcn-kit",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
@@ -22,16 +22,16 @@
   },
   "homepage": "https://github.com/vincepg13/sn-react-shadcn#readme",
   "scripts": {
-    "build": "tsup src/index.ts --dts --format esm,cjs --out-dir dist",
+    "build": "tsup src/index.ts --dts --format esm,cjs --out-dir dist --external react,react-dom",
     "dev": "vite",
     "preview": "vite preview",
     "prepublishOnly": "npm run build"
   },
   "exports": {
     ".": {
+      "types": "./dist/index.d.ts",
       "import": "./dist/index.mjs",
-      "require": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "require": "./dist/index.js"
     }
   },
   "peerDependencies": {
@@ -98,8 +98,8 @@
     "@tanstack/eslint-plugin-query": "^5.73.3",
     "@types/lodash.isequal": "^4.5.8",
     "@types/node": "^22.15.3",
-    "@types/react": "^18.0.0",
-    "@types/react-dom": "^18.0.0",
+    "@types/react": "^19.1.8",
+    "@types/react-dom": "^19.1.6",
     "@typescript-eslint/eslint-plugin": "^8.31.0",
     "@typescript-eslint/parser": "^8.31.0",
     "@vitejs/plugin-react-swc": "^3.0.0",

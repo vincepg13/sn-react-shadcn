@@ -1,12 +1,14 @@
 import { ReactNode } from 'react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs'
 
+type SnTab = {
+  label: string
+  content: ReactNode
+  key?: string
+}
+
 type SnTabsProps = {
-  tabs: {
-    label: string
-    content: ReactNode
-    key?: string
-  }[]
+  tabs: SnTab[]
   value?: string
   onValueChange?: (val: string) => void
 }

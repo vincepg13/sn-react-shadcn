@@ -1,52 +1,24 @@
 import { useRef, useState } from 'react'
-import { SnConditionBuilder, SnConditionHandle } from './sn-condition-builder'
 import { Button } from '@kit/components/ui/button'
-import { ChevronRight, ListFilter } from 'lucide-react'
-import { SnConditionDisplayArray, SnConditionDisplayItem } from '@kit/types/condition-schema'
+import { mergeOrItems } from '@kit/utils/conditions-api'
+import { ChevronRight, ListFilter, LoaderCircle } from 'lucide-react'
+import { SnConditionDisplayArray } from '@kit/types/condition-schema'
+import { SnConditionBuilderRef, SnConditionHandle } from './sn-condition-builder'
 
 type FilterProps = {
   table: string
   encodedQuery?: string
+  initialOpenState?: 'open' | 'closed'
   onQueryBuilt: (encoded: string) => void
 }
 
-function mergeOrItems(groups: SnConditionDisplayArray): SnConditionDisplayArray {
-  return groups.map(group => {
-    const result: SnConditionDisplayItem[] = []
-    let buffer: SnConditionDisplayItem[] = []
-
-    for (const item of group) {
-      if (item.or) {
-        buffer.push(item)
-      } else {
-        if (buffer.length > 0) {
-          result.push(mergeBuffer(buffer))
-          buffer = []
-        }
-        result.push(item)
-      }
-    }
-    if (buffer.length > 0) {
-      result.push(mergeBuffer(buffer))
-    }
-
-    return result
-  })
-
-  function mergeBuffer(buffer: SnConditionDisplayItem[]): SnConditionDisplayItem {
-    return {
-      display: buffer.map(i => i.display).join(' .or. '),
-      id: buffer[buffer.length - 1].id,
-    }
-  }
-}
-
-export function SnFilter({ table, encodedQuery, onQueryBuilt }: FilterProps) {
+export function SnFilter({ table, encodedQuery, initialOpenState, onQueryBuilt }: FilterProps) {
   const localQuery = useRef<string>(encodedQuery || '')
   const conditionRef = useRef<SnConditionHandle>(null)
 
-  const [showBuilder, setShowBuilder] = useState(false)
+  const [displayLoading, setDisplayLoading] = useState(false)
   const [crumbs, setCrumbs] = useState<SnConditionDisplayArray | null>(null)
+  const [showBuilder, setShowBuilder] = useState(initialOpenState === 'open')
 
   const handleFilterChange = (gIndex: number, cIndex: number) => {
     if (gIndex < 0 && cIndex < 0) {
@@ -66,16 +38,22 @@ export function SnFilter({ table, encodedQuery, onQueryBuilt }: FilterProps) {
   }
 
   const handleQueryBuilt = (encoded: string) => {
+    setDisplayLoading(true)
     localQuery.current = encoded
     onQueryBuilt(encoded)
     if (showBuilder) setShowBuilder(false)
+  }
+
+  const handleDisplayUpdate = (display: SnConditionDisplayArray | null) => {
+    setCrumbs(display)
+    setDisplayLoading(false)
   }
 
   return (
     <div className="flex flex-col gap-4">
       <div className="flex gap-2 items-center">
         <Button variant="outline" size="icon" onClick={() => setShowBuilder(!showBuilder)}>
-          <ListFilter />
+          {displayLoading ? <LoaderCircle className="animate-spin" /> : <ListFilter />}
         </Button>
         <div>
           <span>
@@ -111,12 +89,12 @@ export function SnFilter({ table, encodedQuery, onQueryBuilt }: FilterProps) {
         </div>
       </div>
       <div className={showBuilder ? 'block' : 'hidden'}>
-        <SnConditionBuilder
+        <SnConditionBuilderRef
           ref={conditionRef}
           table={table}
           encodedQuery={encodedQuery}
           onQueryBuilt={handleQueryBuilt}
-          emitQueryDisplay={setCrumbs}
+          emitQueryDisplay={handleDisplayUpdate}
         />
       </div>
     </div>

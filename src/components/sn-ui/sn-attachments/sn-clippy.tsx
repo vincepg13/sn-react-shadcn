@@ -15,12 +15,16 @@ export function SnClippy({ table, guid, instance }: ClippyProps) {
   let canWrite = useRef(false)
 
   useEffect(() => {
+    const controller = new AbortController()
+    
     const fetchAttachments = async () => {
-      const aList = (await getAttachments(table, guid)) || []
+      const aList = (await getAttachments(table, guid, controller)) || []
       setAttachments(aList)
       canWrite.current = !aList.some(a => !a.canWrite)
     }
     fetchAttachments()
+
+    return () => controller.abort()
   }, [table, guid])
 
   return (

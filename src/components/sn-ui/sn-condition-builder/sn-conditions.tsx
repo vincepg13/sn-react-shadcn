@@ -1,15 +1,15 @@
-import { forwardRef, useImperativeHandle, useState } from 'react'
-import { /*toast,*/ Toaster } from 'sonner'
+import { Toaster } from 'sonner'
 import { Button } from '@kit/components/ui/button'
+import { ConditionGroup } from './sn-condition-group'
+import { useFieldCache } from './hooks/useFieldCache'
 import { Separator } from '@kit/components/ui/separator'
 import { CirclePlus, CircleX, Play } from 'lucide-react'
+import { TooltipProvider } from '@kit/components/ui/tooltip'
 import { useConditionModel } from './hooks/useConditionModel'
-import { ConditionGroup } from './sn-condition-group'
+import { SnConditionSkeleton } from './sn-condition-skeleton'
+import { forwardRef, useImperativeHandle, useState } from 'react'
 import { SnConditionsContext } from './contexts/SnConditionsContext'
 import { SnConditionMap, SnConditionModel, SnDateTimeMeta, SnFieldCurrencyChoice } from '@kit/types/condition-schema'
-import { useFieldCache } from './hooks/useFieldCache'
-import { TooltipProvider } from '@kit/components/ui/tooltip'
-import { SnConditionSkeleton } from './sn-condition-skeleton'
 
 type SnConditionsHandle = {
   adjustModel: (gIndex: number, cIndex: number) => void
@@ -48,17 +48,11 @@ export const SnConditions = forwardRef<SnConditionsHandle, ConditionProps>(
     }))
 
     const runQuery = (customModel?: SnConditionModel) => {
-      const encoded = executeQuery(customModel)
-      // if (!encoded) {
-      //   return toast.warning('Please complete all conditions before running the query.')
-      // }
-      return onQueryBuilt(encoded || '')
+      return onQueryBuilt(executeQuery(customModel) || '')
     }
 
     const notLoaded = Object.values(cacheLoaded).some(value => value === false)
-    if (notLoaded) {
-      return <SnConditionSkeleton />
-    }
+    if (notLoaded) return <SnConditionSkeleton />
 
     return (
       <div>

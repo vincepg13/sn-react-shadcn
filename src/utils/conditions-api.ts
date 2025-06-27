@@ -14,6 +14,9 @@ import {
   SnFieldCurrencyChoice,
 } from './../types/condition-schema'
 
+/********************************************************************
+ *    Utility functions to normalize and parse conditions API data  *
+ *******************************************************************/
 function normalizeFieldMetadata(columns: SnConditionsApiResult) {
   const fields: SnConditionMap = {}
 
@@ -111,6 +114,40 @@ function buildQueryDisplay(parsed: any): SnConditionDisplayArray | null {
   }
 }
 
+export function mergeOrItems(groups: SnConditionDisplayArray): SnConditionDisplayArray {
+  return groups.map(group => {
+    const result: SnConditionDisplayItem[] = []
+    let buffer: SnConditionDisplayItem[] = []
+
+    for (const item of group) {
+      if (item.or) {
+        buffer.push(item)
+      } else {
+        if (buffer.length > 0) {
+          result.push(mergeBuffer(buffer))
+          buffer = []
+        }
+        result.push(item)
+      }
+    }
+    if (buffer.length > 0) {
+      result.push(mergeBuffer(buffer))
+    }
+
+    return result
+  })
+
+  function mergeBuffer(buffer: SnConditionDisplayItem[]): SnConditionDisplayItem {
+    return {
+      display: buffer.map(i => i.display).join(' .or. '),
+      id: buffer[buffer.length - 1].id,
+    }
+  }
+}
+
+/********************************************************************
+ *                            API Methods                           *
+ *******************************************************************/
 
 export function parseEncodedQuery(result: any): SnConditionModel {
   return (result.predicates || []).flatMap((predicate: any) => predicate.subpredicates.map(parseCompound))

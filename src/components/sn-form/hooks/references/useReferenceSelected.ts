@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
-import { SnFieldSchema } from '@kit/types/form-schema';
+// import { SnFieldSchema } from '@kit/types/form-schema';
 
-export function useReferenceSelected(field: SnFieldSchema): { value: string[]; display: string[] } {
+export function useReferenceSelected(field: {value: string, displayValue: string}): { value: string[]; display: string[] } {
   const value = useMemo(() => {
     if (!field.value) return []
     return typeof field.value === 'string' ? field.value.split(',') : field.value

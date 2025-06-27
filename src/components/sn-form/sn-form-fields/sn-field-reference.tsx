@@ -44,8 +44,7 @@ export function SnFieldReference({
   const ed = useMemo(() => {
     const clonedEd = { ...field.ed! }
 
-    if (type === 'document_id')
-      clonedEd.reference = dependentValue ?? field.ed!.dependent_value!
+    if (type === 'document_id') clonedEd.reference = dependentValue ?? field.ed!.dependent_value!
 
     return clonedEd
   }, [type, dependentValue, field.ed])
@@ -79,7 +78,10 @@ export function SnFieldReference({
     return [...new Set([...coreDisplay, ...refFields])]
   }, [attributes?.ref_ac_columns, ed.searchField])
 
-  const { value: rawValue, display: rawDisplay } = useReferenceSelected(field)
+  const { value: rawValue, display: rawDisplay } = useReferenceSelected({
+    value: formValues[field.name],
+    displayValue: field.displayValue,
+  })
 
   const selected = useMemo(() => {
     return rawValue.map(
@@ -140,15 +142,18 @@ export function SnFieldReference({
     const record = records.find(r => r.value === val)
     if (!record) return
 
+    //field.displayValue mutated below only for display purposes
     if (isMultiple) {
       const updated = isSelected(val) ? selectedRecords.filter(r => r.value !== val) : [...selectedRecords, record]
       setSelectedRecords(updated)
       onChange(updated.map(r => r.value).toString())
+      field.displayValue = updated.map(r => r.display_value).join(',')
     } else {
       setSelectedRecords([record])
       onChange(record.value)
       setOpen(false)
       setSearch('')
+      field.displayValue = record.display_value
     }
   }
 
@@ -198,6 +203,7 @@ export function SnFieldReference({
                       const updated = selectedRecords.filter(r => r.value !== record.value)
                       setSelectedRecords(updated)
                       onChange(updated.map(r => r.value))
+                      field.displayValue = updated.map(r => r.display_value).join(',')
                     }}
                   />
                 </div>

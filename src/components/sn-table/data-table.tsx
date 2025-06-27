@@ -33,6 +33,7 @@ interface DataTableProps<TData, TValue> {
   pageSize: number
   pageCount: number
   sorting: SortingState
+  totalRowCount: number
   onSortingChange: (updaterOrValue: Updater<SortingState>) => void
   onPageChange: (updaterOrValue: Updater<PaginationState>) => void
   onRowClick?: (row: Row<TData>) => void
@@ -45,6 +46,7 @@ export function DataTable<TData, TValue>({
   pageSize,
   pageCount,
   sorting,
+  totalRowCount,
   onSortingChange,
   onPageChange,
   onRowClick,
@@ -140,7 +142,7 @@ export function DataTable<TData, TValue>({
           </TableBody>
         </Table>
       </div>
-      <DataTablePagination table={table} />
+      <DataTablePagination table={table} total={totalRowCount}/>
     </div>
   )
 }

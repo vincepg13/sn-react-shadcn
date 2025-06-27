@@ -1,11 +1,11 @@
 import { AlertCircle } from 'lucide-react'
-import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react'
 import { SnConditions } from './sn-conditions'
 import { useParsedQuery } from './hooks/useParsedQuery'
 import { useFieldMetadata } from './hooks/useTableMetadata'
 import { SnConditionSkeleton } from './sn-condition-skeleton'
-import { Alert, AlertTitle, AlertDescription } from '@kit/components/ui/alert'
 import { SnConditionDisplayArray } from '@kit/types/condition-schema'
+import { Alert, AlertTitle, AlertDescription } from '@kit/components/ui/alert'
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react'
 
 type BuilderProps = {
   table: string
@@ -18,7 +18,7 @@ export type SnConditionHandle = {
   adjustModel: (gIndex: number, cIndex: number) => void
 }
 
-export const SnConditionBuilder = forwardRef<SnConditionHandle, BuilderProps>(
+export const SnConditionBuilderRef = forwardRef<SnConditionHandle, BuilderProps>(
   ({ table, encodedQuery, emitQueryDisplay, onQueryBuilt }: BuilderProps, ref) => {
     const [error, setError] = useState<string>('')
     const [loaded, setLoaded] = useState(false)
@@ -39,7 +39,8 @@ export const SnConditionBuilder = forwardRef<SnConditionHandle, BuilderProps>(
     useEffect(() => {
       const display = queryDisplay
       if (emitDisplay) emitQueryDisplay?.(display)
-    }, [emitDisplay, emitQueryDisplay, queryDisplay])
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [emitDisplay, queryDisplay])
 
     const handleQueryBuilt = useCallback(
       async (encoded: string) => {
@@ -72,3 +73,16 @@ export const SnConditionBuilder = forwardRef<SnConditionHandle, BuilderProps>(
     }
   }
 )
+
+export function SnConditionBuilder({ table, encodedQuery, onQueryBuilt, emitQueryDisplay }: BuilderProps) {
+  return (
+    <div className="flex flex-col gap-4">
+      <SnConditionBuilderRef
+        table={table}
+        encodedQuery={encodedQuery}
+        emitQueryDisplay={emitQueryDisplay}
+        onQueryBuilt={onQueryBuilt}
+      />
+    </div>
+  )
+}

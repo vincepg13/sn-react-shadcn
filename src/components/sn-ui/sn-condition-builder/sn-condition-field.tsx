@@ -25,9 +25,9 @@ export function SnConditionField({ condition, fieldsByTable, setFieldsByTable, o
   const [path, setPath] = useState<{ name: string; label: string }[]>([])
 
   const currentTable = path.reduce((table, field) => {
-    const ref = fieldsByTable[table]?.[field.name]?.reference
-    return ref || table
+    return fieldsByTable[table]?.[field.name]?.reference || table
   }, baseTable)
+  
   const currentFields = fieldsByTable[currentTable] || {}
 
   useEffect(() => {
@@ -69,7 +69,7 @@ export function SnConditionField({ condition, fieldsByTable, setFieldsByTable, o
 
   const handleBack = () => {
     setSearch('')
-     setPath(prev => prev.slice(0, -1))
+    setPath(prev => prev.slice(0, -1))
   }
 
   const handleReset = () => {
