@@ -22,8 +22,8 @@ export function useClientScripts({
       script: SnClientScript,
       context: {
         fieldName?: string;
-        oldValue?: any;
-        newValue?: any;
+        oldValue?: string;
+        newValue?: string;
         isLoading?: boolean;
       }
     ) => {
@@ -41,8 +41,8 @@ export function useClientScripts({
 
         func(
           null,
-          context.oldValue,
-          context.newValue,
+          context.oldValue?.toString(),
+          context.newValue?.toString(),
           context.isLoading ?? false,
           false,
           gForm

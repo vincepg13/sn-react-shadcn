@@ -200,10 +200,10 @@ const _currencyCode = z.object({
 })
 
 const _fieldChoiceItem = z.object({
-  name: z.string(),
+  name: z.string().optional(),
   label: z.string(),
-  type: z.string(),
-  display: boolean(),
+  type: z.string().optional(),
+  display: boolean().optional(),
   value: z.string(),
 })
 
@@ -271,7 +271,7 @@ export type FieldUIState = {
 
 export interface SnFieldBaseProps<T> {
   rhfField: RHFField
-  onChange: (val: T) => void
+  onChange: (val: T, display?: string) => void
   field?: SnFieldSchema
 }
 
@@ -279,6 +279,8 @@ export type SnSectionField = { name: string; type: string }
 export type SnSectionColumn = { fields: SnSectionField[] }
 export type SnSection = {
   id: string
+  visible: boolean
+  caption?: string
   captionDisplay?: string
   _parent?: string
   _bootstrap_cells: number

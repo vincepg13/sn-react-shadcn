@@ -12,7 +12,7 @@ import { SnFieldNumeric } from './SnFieldNumeric'
 import { SnFieldTextarea } from './sn-field-textarea'
 import { SnFieldCheckbox } from './sn-field-checkbox'
 import { SnFieldTableName } from './sn-field-table'
-import { ReactNode, useRef, useCallback, memo } from 'react'
+import { ReactNode, useRef, useCallback, memo, RefObject } from 'react'
 import { SnFieldReference } from './sn-field-reference'
 import { FieldUIContext } from '../contexts/FieldUIContext'
 import { useEffectiveFieldState } from '../hooks/useFieldUiState'
@@ -25,12 +25,13 @@ import { SnFieldDuration } from './sn-field-duration'
 interface SnFieldProps {
   field: SnFieldSchema
   fieldUIState: Record<string, FieldUIState>
+  displayValues: RefObject<Record<string, string>>
   updateFieldUI: (field: string, updates: Partial<FieldUIState>) => void
   table: string
   guid: string
 }
 
-function SnFieldComponent({ field, fieldUIState, guid, table }: SnFieldProps) {
+function SnFieldComponent({ field, fieldUIState, guid, table, displayValues }: SnFieldProps) {
   const { control, getValues, setValue, watch, trigger } = useFormContext()
   const { runClientScriptsForFieldChange, fieldChangeHandlers } = useClientScripts()
   const { runUiPoliciesForField } = useUiPoliciesContext()
@@ -44,13 +45,16 @@ function SnFieldComponent({ field, fieldUIState, guid, table }: SnFieldProps) {
   })
 
   const handleChange = useCallback(
-    (newValue: SnFieldPrimitive) => {
+    (newValue: SnFieldPrimitive, display?: string) => {
       setValue(field.name, newValue, { shouldDirty: true, shouldTouch: true })
       runClientScriptsForFieldChange(field.name, oldValueRef.current, newValue, false)
       runUiPoliciesForField(field.name)
       oldValueRef.current = newValue
+
+      displayValues.current[field.name] = display || newValue.toString() || ''
+      console.log(`Display value for ${field.name} updated to:`, displayValues.current[field.name])
     },
-    [field.name, setValue, runClientScriptsForFieldChange, runUiPoliciesForField]
+    [setValue, field.name, runClientScriptsForFieldChange, runUiPoliciesForField, displayValues]
   )
 
   fieldChangeHandlers[field.name] = handleChange
@@ -65,8 +69,8 @@ function SnFieldComponent({ field, fieldUIState, guid, table }: SnFieldProps) {
         render={({ field: rhfField }) => {
           const handleFocus = () => {}
 
-          const handleSelect = (newValue: SnFieldPrimitive) => {
-            handleChange(newValue)
+          const handleSelect = (newValue: SnFieldPrimitive, displayValue?: string) => {
+            handleChange(newValue, displayValue)
             trigger(field.name)
           }
 
@@ -111,8 +115,8 @@ function renderFieldComponent(
   field: SnFieldSchema,
   rhfField: RHFField,
   readonly: boolean,
-  handleChange: (value: SnFieldPrimitive) => void,
-  handleSelect: (value: SnFieldPrimitive) => void,
+  handleChange: (value: SnFieldPrimitive, display?: string) => void,
+  handleSelect: (value: SnFieldPrimitive, display?: string) => void,
   handleFocus: () => void,
   formValues: Record<string, string>,
   watch: ReturnType<typeof useFormContext>['watch']

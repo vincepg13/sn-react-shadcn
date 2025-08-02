@@ -14,7 +14,7 @@ import { buildReferenceQuery, getTableDisplayFields } from '../../../utils/form-
 
 interface SnReferenceProps {
   field: SnFieldSchema
-  onChange: (val: string | string[]) => void
+  onChange: (val: string | string[], displayValue?: string) => void
   formValues: Record<string, string>
   table: string
   recordSysId: string
@@ -146,11 +146,13 @@ export function SnFieldReference({
     if (isMultiple) {
       const updated = isSelected(val) ? selectedRecords.filter(r => r.value !== val) : [...selectedRecords, record]
       setSelectedRecords(updated)
-      onChange(updated.map(r => r.value).toString())
-      field.displayValue = updated.map(r => r.display_value).join(',')
+
+      const dv = updated.map(r => r.display_value).join(',')
+      onChange(updated.map(r => r.value).toString(), dv)
+      field.displayValue = dv
     } else {
       setSelectedRecords([record])
-      onChange(record.value)
+      onChange(record.value, record.display_value)
       setOpen(false)
       setSearch('')
       field.displayValue = record.display_value
@@ -161,7 +163,7 @@ export function SnFieldReference({
     (e?: MouseEvent) => {
       if (e) e.stopPropagation()
       setSelectedRecords([])
-      onChange(isMultiple ? [] : '')
+      onChange(isMultiple ? [] : '', '')
     },
     [onChange, isMultiple]
   )

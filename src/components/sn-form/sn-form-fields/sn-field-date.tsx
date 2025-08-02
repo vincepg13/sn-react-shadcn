@@ -9,10 +9,14 @@ import { cn } from '../../../lib/utils'
 import { SnFieldSchema } from '../../../types/form-schema'
 import { useState, ChangeEvent } from 'react'
 import { XCircle } from 'lucide-react'
+import { useFormLifecycle } from '../contexts/SnFormLifecycleContext'
+
 
 export function SnFieldDate({ field, rhfField, onChange }: SnFieldBaseProps<string> & { field: SnFieldSchema }) {
   const { readonly } = useFieldUI()
+  const { formConfig } = useFormLifecycle()
   const isDateTime = field.type === 'glide_date_time'
+  
 
   const rawValue = rhfField.value
   const maybeDate =
@@ -41,9 +45,16 @@ export function SnFieldDate({ field, rhfField, onChange }: SnFieldBaseProps<stri
       date.setSeconds(Number(ss))
     }
 
-    const formatted = isDateTime ? format(date, 'yyyy-MM-dd HH:mm:ss') : format(date, 'yyyy-MM-dd')
+    let formatted = '', displayFormat = ''
+    if (isDateTime) {
+      formatted = format(date, 'yyyy-MM-dd HH:mm:ss')
+      displayFormat = format(date, formConfig.date_format + ' HH:mm:ss')
+    } else {
+      formatted = format(date, 'yyyy-MM-dd')
+      displayFormat = format(date, formConfig.date_format)
+    }
 
-    onChange(formatted)
+    onChange(formatted, displayFormat)
   }
 
   const handleTimeChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -58,7 +69,8 @@ export function SnFieldDate({ field, rhfField, onChange }: SnFieldBaseProps<stri
       updated.setSeconds(0)
 
       const formatted = format(updated, 'yyyy-MM-dd HH:mm:ss')
-      onChange(formatted)
+      const displayFormat = format(updated, formConfig.date_format + ' HH:mm:ss')
+      onChange(formatted, displayFormat)
     }
   }
 

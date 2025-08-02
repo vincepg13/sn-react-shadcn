@@ -20,7 +20,8 @@ interface SnFormActionsProps {
   handleSubmit: ReturnType<typeof useFormContext>['handleSubmit']
   onValidationError: (errors: FieldErrors) => void
   runUiActionCallbacks: (type: 'pre' | 'post') => Promise<void>
-  snSubmit?(guid: string): void
+  snSubmit(guid: string): void
+  snInsert?(guid: string): void
 }
 
 export function SnFormActions({
@@ -30,6 +31,7 @@ export function SnFormActions({
   formFields,
   attachments,
   attachmentGuid,
+  snInsert,
   snSubmit,
   handleSubmit,
   setAttachments,
@@ -72,10 +74,11 @@ export function SnFormActions({
         return toast.error(notif)
       }
 
-      if (snSubmit && uiRes?.isInsert) {
-        return snSubmit(uiRes.sys_id)
+      if (snInsert && uiRes?.isInsert) {
+        return snInsert(uiRes.sys_id)
       }
 
+      snSubmit(uiRes.sys_id)
       toast.success(`${action.name} executed successfully`)
     } catch (e) {
       console.error(e)
