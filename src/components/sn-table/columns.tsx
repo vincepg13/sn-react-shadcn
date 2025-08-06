@@ -1,12 +1,12 @@
 import React from 'react'
 import { ColumnDef } from '@tanstack/react-table'
 import { getColumnLabel } from '../../utils/table-helper'
-import { SnRow, SnRowItem, SnColSchemea } from '../../types/table-schema'
+import { SnRow, SnRowItem, SnColSchema } from '../../types/table-schema'
 import { DataTableColumnHeader } from './data-table-column-header'
 
 export function getColumnViaFields(
   fields: string[],
-  colSchema: SnColSchemea[] = [],
+  colSchema: SnColSchema[] = [],
   providedDefs?: ColumnDef<SnRow, SnRowItem>[]
 ): ColumnDef<SnRow, SnRowItem>[] {
   const columns: ColumnDef<SnRow, SnRowItem>[] = fields.map((field, index) => {

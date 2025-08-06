@@ -10,6 +10,11 @@ export { default as SnDataTable } from './components/sn-table/sn-data-table'
 export { default as SnTable } from './components/sn-table/sn-table'
 export { DataTableColumnHeader } from './components/sn-table/data-table-column-header'
 export { SnSimplePagination } from './components/sn-table/sn-simple-pagination'
+export { DataTable } from './components/sn-table/data-table'
+export type { ColumnDef, Updater } from '@tanstack/react-table'
+export * as SnTableUtils from './utils/table-helper'
+export * as SnTableApi from './utils/table-api'
+
 //simple list?
 
 //Form Components
@@ -28,5 +33,6 @@ export { getAxiosInstance, setAxiosInstance } from './utils/axios-client'
 
 // Types
 export type { SnUser, SnGroup } from './types/user-schema'
-export type { SnRow, SnRowItem } from './types/table-schema'
+// export { SnAttachment } from './types/attachment-schema';
 export type { SnRecordPickerItem, SnRecordPickerList } from './types/form-schema'
+export type { SnRow, SnRowItem, SnApiResponse, SnColSchema } from './types/table-schema'

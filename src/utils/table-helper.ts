@@ -1,5 +1,5 @@
 import { SortingState, Updater } from "@tanstack/react-table";
-import { SnColSchemea } from "../types/table-schema";
+import { SnColSchema } from "../types/table-schema";
 
 function isUpdaterFunction<T>(updater: Updater<T>): updater is (prev: T) => T {
   return typeof updater === "function";
@@ -9,7 +9,7 @@ export function resolveUpdater<T>(updater: Updater<T>, previous: T): T {
   return isUpdaterFunction(updater) ? updater(previous) : updater;
 }
 
-export function getColumnLabel(field: string, colSchema: SnColSchemea[]): string {
+export function getColumnLabel(field: string, colSchema: SnColSchema[]): string {
   const column = colSchema.find((col) => col.name === field);
   if (column) {
     return column.label || field.replace(/_/g, " ").replace(/^./, (c) => c.toUpperCase());
