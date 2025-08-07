@@ -1,43 +1,39 @@
-import { SortingState, Updater } from "@tanstack/react-table";
-import { SnColSchema } from "../types/table-schema";
+import { SortingState, Updater } from '@tanstack/react-table'
+import { SnColSchema } from '../types/table-schema'
 
 function isUpdaterFunction<T>(updater: Updater<T>): updater is (prev: T) => T {
-  return typeof updater === "function";
+  return typeof updater === 'function'
 }
 
 export function resolveUpdater<T>(updater: Updater<T>, previous: T): T {
-  return isUpdaterFunction(updater) ? updater(previous) : updater;
+  return isUpdaterFunction(updater) ? updater(previous) : updater
 }
 
 export function getColumnLabel(field: string, colSchema: SnColSchema[]): string {
-  const column = colSchema.find((col) => col.name === field);
+  const column = colSchema.find(col => col.name === field)
   if (column) {
-    return column.label || field.replace(/_/g, " ").replace(/^./, (c) => c.toUpperCase());
+    return column.label || field.replace(/_/g, ' ').replace(/^./, c => c.toUpperCase())
   }
-  return field.replace(/_/g, " ").replace(/^./, (c) => c.toUpperCase());
+  return field.replace(/_/g, ' ').replace(/^./, c => c.toUpperCase())
 }
 
 export function getSortedQuery(sorting: SortingState, query: string): string {
-  const sortKey = `^ORDERBY${sorting[0].desc ? "DESC" : ""}${sorting[0].id}`;
-
-  if (query.includes("ORDERBY")) {
-    return query.replace(/\^?ORDERBY[^^]*/, sortKey);
-  }
-
-  return `${query}${sortKey}`;
+  const sortKey = `^ORDERBY${sorting[0].desc ? 'DESC' : ''}${sorting[0].id}`
+  const sortedQry = query.includes('ORDERBY') ? query.replace(/\^?ORDERBY[^^]*/, sortKey) : `${query}${sortKey}`
+  return sortedQry.startsWith('^') ? sortedQry.slice(1) : sortedQry
 }
 
 export function getDefaultSortingFromQuery(query?: string): SortingState {
-  if (!query) return [];
+  if (!query) return []
 
-  const match = query.match(/ORDERBY(DESC)?([a-zA-Z0-9_]+)/i);
-  if (!match) return [];
+  const match = query.match(/ORDERBY(DESC)?([a-zA-Z0-9_]+)/i)
+  if (!match) return []
 
-  const [, descFlag, field] = match;
+  const [, descFlag, field] = match
   return [
     {
       id: field,
       desc: !!descFlag,
     },
-  ];
+  ]
 }
