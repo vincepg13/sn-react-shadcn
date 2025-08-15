@@ -30,7 +30,7 @@ export function SnUserCard({ name, email, phone, im, image, primaryInfo, initial
         {email && (
           <>
             <Button variant="ghost" className="flex-1" asChild>
-              <a href={`mailto:${email}`}>
+              <a href={`mailto:${email}`} target="_blank">
                 <Mail /> Email
               </a>
             </Button>
@@ -41,7 +41,7 @@ export function SnUserCard({ name, email, phone, im, image, primaryInfo, initial
           <>
             <Separator orientation="vertical" className="!h-auto self-stretch" />
             <Button variant="ghost" className="flex-1" asChild>
-              <a href={im}>
+              <a href={im} target="_blank">
                 <MessageSquareMore /> IM
               </a>
             </Button>

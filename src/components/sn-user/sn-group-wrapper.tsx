@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { SnGroupCard } from './sn-group-card'
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert'
 import { AlertCircle } from 'lucide-react'
@@ -10,12 +10,21 @@ interface SnGroupWrapperProps {
   guid: string
   pageSize?: number
   getImLink?: (row: SnRow, key: string) => string
+  setGroupLoaded?: (loaded: boolean) => void
 }
 
-export function SnGroupWrapper({ guid, pageSize = 10, getImLink }: SnGroupWrapperProps) {
+export function SnGroupWrapper({ guid, pageSize = 10, getImLink, setGroupLoaded }: SnGroupWrapperProps) {
   const [currentPage, setCurrentPage] = useState(1)
   const { group, error } = useSnGroup(guid, getImLink)
   const { members, total } = useGroupMembers(guid, currentPage, pageSize, getImLink)
+
+  const alertLoad = useRef(false)
+  useEffect(() => {
+    if (group && members && !alertLoad.current) {
+      alertLoad.current = true
+      setGroupLoaded?.(true)
+    }
+  }, [group, members, setGroupLoaded])
 
   return (
     <>
