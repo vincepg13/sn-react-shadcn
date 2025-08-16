@@ -8,12 +8,13 @@ import { SnRow } from '../../types/table-schema'
 
 interface SnGroupWrapperProps {
   guid: string
+  nested?: boolean
   pageSize?: number
   getImLink?: (row: SnRow, key: string) => string
   setGroupLoaded?: (loaded: boolean) => void
 }
 
-export function SnGroupWrapper({ guid, pageSize = 10, getImLink, setGroupLoaded }: SnGroupWrapperProps) {
+export function SnGroupWrapper({ guid, nested, pageSize = 10, getImLink, setGroupLoaded }: SnGroupWrapperProps) {
   const [currentPage, setCurrentPage] = useState(1)
   const { group, error } = useSnGroup(guid, getImLink)
   const { members, total } = useGroupMembers(guid, currentPage, pageSize, getImLink)
@@ -42,6 +43,7 @@ export function SnGroupWrapper({ guid, pageSize = 10, getImLink, setGroupLoaded 
           totalMembers={total}
           currentPage={currentPage}
           pageSize={pageSize}
+          nested={nested}
           onPageChange={setCurrentPage}
         />
       )}

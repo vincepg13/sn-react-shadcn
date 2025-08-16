@@ -11,6 +11,7 @@ interface SnGroupCardProps extends SnGroup {
   totalMembers: number
   currentPage: number
   pageSize: number
+  nested?: boolean
   onPageChange: (page: number) => void
 }
 
@@ -20,9 +21,10 @@ interface GroupMemberProps {
   image?: string
   im?: string
   phone?: string
+  nested?: boolean
 }
 
-function GroupMember({ name, email, image, im, phone }: GroupMemberProps) {
+function GroupMember({ name, email, image, im, phone, nested }: GroupMemberProps) {
   const hasContactOptions = email || phone || im
 
   return (
@@ -36,7 +38,7 @@ function GroupMember({ name, email, image, im, phone }: GroupMemberProps) {
       </div>
 
       {hasContactOptions && (
-        <DropdownMenu>
+        <DropdownMenu modal={!nested}>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" size="icon">
               <MessagesSquare className="h-4 w-4" />
@@ -82,6 +84,7 @@ export function SnGroupCard({
   totalMembers,
   currentPage,
   pageSize,
+  nested,
   onPageChange,
 }: SnGroupCardProps) {
   const totalPages = Math.ceil(totalMembers / pageSize)
@@ -101,6 +104,7 @@ export function SnGroupCard({
             image={manager.image}
             im={manager.im}
             phone={manager.phone}
+            nested={nested}
           />
           <Separator />
         </CardContent>
@@ -116,6 +120,7 @@ export function SnGroupCard({
                 image={member.image}
                 im={member.im}
                 phone={member.phone}
+                nested={nested}
               />
             </div>
           ))}
