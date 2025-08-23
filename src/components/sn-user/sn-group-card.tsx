@@ -90,7 +90,7 @@ export function SnGroupCard({
   const totalPages = Math.ceil(totalMembers / pageSize)
 
   return (
-    <Card className="w-full gap-4 py-6 rounded-md">
+    <Card className="h-full w-full gap-4 py-6 rounded-md">
       <CardHeader className="px-4">
         <CardTitle>{name}</CardTitle>
         {description && <CardDescription>{description}</CardDescription>}
