@@ -97,7 +97,7 @@ export function SnGroupCard({
       </CardHeader>
 
       {manager && (
-        <CardContent className="px-4">
+        <CardContent className="px-4 overflow-x-auto">
           <GroupMember
             name={manager.name}
             email={manager.email}
@@ -111,7 +111,7 @@ export function SnGroupCard({
       )}
 
       {!!members?.length && (
-        <CardContent className="px-4">
+        <CardContent className="px-4 overflow-x-auto">
           {members.map((member, index) => (
             <div key={index}>
               <GroupMember
