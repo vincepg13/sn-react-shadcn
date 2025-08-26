@@ -32,8 +32,8 @@ function GroupMember({ name, email, image, im, phone, nested }: GroupMemberProps
       <div className="flex gap-4 items-center">
         <SnAvatar name={name} image={image || ''} className="size-9" />
         <div>
-          <p className="text-sm font-medium">{name}</p>
-          <p className="text-sm text-muted-foreground">{email}</p>
+          <p className="text-sm font-medium break-words break-all whitespace-normal">{name}</p>
+          <p className="text-sm text-muted-foreground break-words break-all whitespace-normal">{email}</p>
         </div>
       </div>
 
@@ -97,7 +97,7 @@ export function SnGroupCard({
       </CardHeader>
 
       {manager && (
-        <CardContent className="px-4 overflow-x-auto">
+        <CardContent className="px-4 overflow-x-auto sn-group-manager">
           <GroupMember
             name={manager.name}
             email={manager.email}
@@ -106,12 +106,13 @@ export function SnGroupCard({
             phone={manager.phone}
             nested={nested}
           />
-          <Separator />
         </CardContent>
       )}
 
+      {(manager || !!members?.length) && <Separator className="sn-group-seperator"/>}
+
       {!!members?.length && (
-        <CardContent className="px-4 overflow-x-auto">
+        <CardContent className="px-4 overflow-x-auto sn-group-members">
           {members.map((member, index) => (
             <div key={index}>
               <GroupMember
@@ -128,7 +129,7 @@ export function SnGroupCard({
       )}
 
       {totalPages > 1 && (
-        <CardContent className="px-4">
+        <CardContent className="px-4 sn-group-pagination">
           <div className="flex items-center justify-between flex-wrap gap-4">
             <SnSimplePagination
               currentPage={currentPage}
