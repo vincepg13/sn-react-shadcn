@@ -28,7 +28,7 @@ function GroupMember({ name, email, image, im, phone, nested }: GroupMemberProps
   const hasContactOptions = email || phone || im
 
   return (
-    <div className="flex gap-4 items-center mb-4 justify-between">
+    <div className="flex gap-4 items-center justify-between">
       <div className="flex gap-4 items-center">
         <SnAvatar name={name} image={image || ''} className="size-9" />
         <div>
@@ -112,7 +112,7 @@ export function SnGroupCard({
       {(manager || !!members?.length) && <Separator className="sn-group-seperator"/>}
 
       {!!members?.length && (
-        <CardContent className="px-4 overflow-x-auto sn-group-members">
+        <CardContent className="px-4 overflow-x-auto sn-group-members flex flex-col gap-4">
           {members.map((member, index) => (
             <div key={index}>
               <GroupMember
