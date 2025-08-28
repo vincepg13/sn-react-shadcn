@@ -7,11 +7,13 @@ import { SnAttachment } from '@kit/types/attachment-schema'
 import { SnActivity, SnFormApis, SnSection } from '@kit/types/form-schema'
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert'
 import { SnUiAction, SnFieldsSchema, SnFormConfig, SnClientScript, SnPolicy } from '@kit/types/form-schema'
+import { SnFormSkeleton } from './sn-form-skeleton'
 
 interface SnFormProps {
   table: string
   guid: string
   apis: SnFormApis
+  snInsert?(guid: string): void
   snSubmit?(guid: string): void
 }
 
@@ -22,8 +24,9 @@ function unionClientScripts(scripts: Record<string, SnClientScript[]>) {
   }, [] as SnClientScript[])
 }
 
-export function SnFormWrapper({ apis, table, guid, snSubmit }: SnFormProps) {
+export function SnFormWrapper({ apis, table, guid, snInsert, snSubmit }: SnFormProps) {
   const fetchIdRef = useRef(0)
+  const [subCount, setSubCount] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [uiActions, setUiActions] = useState<SnUiAction[]>([])
@@ -35,6 +38,13 @@ export function SnFormWrapper({ apis, table, guid, snSubmit }: SnFormProps) {
   const [activity, setActivity] = useState<SnActivity | undefined>(undefined)
   const [attachments, setAttachments] = useState<SnAttachment[]>([])
   const [attachmentGuid, setAttachmentGuid] = useState<string>(guid)
+
+  const handleSubmit = snSubmit
+    ? snSubmit
+    : (guid: string) => {
+        console.log(`Default Submitting form with GUID: ${guid}`)
+        setSubCount(subCount + 1)
+      }
 
   useEffect(() => {
     setLoading(true)
@@ -88,9 +98,15 @@ export function SnFormWrapper({ apis, table, guid, snSubmit }: SnFormProps) {
     return () => {
       controller.abort()
     }
-  }, [apis.formData, table, guid])
+  }, [apis.formData, table, guid, subCount])
 
-  if (loading) return <div>Loading form...</div>
+  if (loading)
+    return (
+      <div className='w-full'>
+        {/* Loading form... */}
+        <SnFormSkeleton />
+      </div>
+    )
 
   if (!loading && (!formConfig || !formFields || sections.length === 0))
     return (
@@ -125,7 +141,8 @@ export function SnFormWrapper({ apis, table, guid, snSubmit }: SnFormProps) {
           activity={activity}
           attachments={attachments}
           setAttachments={setAttachments}
-          snSubmit={snSubmit}
+          snInsert={snInsert}
+          snSubmit={handleSubmit}
         ></SnForm>
       )}
     </>

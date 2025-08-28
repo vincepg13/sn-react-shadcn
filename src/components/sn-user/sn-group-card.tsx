@@ -11,6 +11,7 @@ interface SnGroupCardProps extends SnGroup {
   totalMembers: number
   currentPage: number
   pageSize: number
+  nested?: boolean
   onPageChange: (page: number) => void
 }
 
@@ -20,23 +21,24 @@ interface GroupMemberProps {
   image?: string
   im?: string
   phone?: string
+  nested?: boolean
 }
 
-function GroupMember({ name, email, image, im, phone }: GroupMemberProps) {
+function GroupMember({ name, email, image, im, phone, nested }: GroupMemberProps) {
   const hasContactOptions = email || phone || im
 
   return (
-    <div className="flex gap-4 items-center mb-4 justify-between">
+    <div className="flex gap-4 items-center justify-between">
       <div className="flex gap-4 items-center">
         <SnAvatar name={name} image={image || ''} className="size-9" />
         <div>
-          <p className="text-sm font-medium">{name}</p>
-          <p className="text-sm text-muted-foreground">{email}</p>
+          <p className="text-sm font-medium break-words break-all whitespace-normal">{name}</p>
+          <p className="text-sm text-muted-foreground break-words break-all whitespace-normal">{email}</p>
         </div>
       </div>
 
       {hasContactOptions && (
-        <DropdownMenu>
+        <DropdownMenu modal={!nested}>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" size="icon">
               <MessagesSquare className="h-4 w-4" />
@@ -82,32 +84,35 @@ export function SnGroupCard({
   totalMembers,
   currentPage,
   pageSize,
+  nested,
   onPageChange,
 }: SnGroupCardProps) {
   const totalPages = Math.ceil(totalMembers / pageSize)
 
   return (
-    <Card className="w-full gap-4 py-6 rounded-md">
+    <Card className="h-full w-full gap-4 py-6 rounded-md">
       <CardHeader className="px-4">
         <CardTitle>{name}</CardTitle>
         {description && <CardDescription>{description}</CardDescription>}
       </CardHeader>
 
       {manager && (
-        <CardContent className="px-4">
+        <CardContent className="px-4 overflow-x-auto sn-group-manager">
           <GroupMember
             name={manager.name}
             email={manager.email}
             image={manager.image}
             im={manager.im}
             phone={manager.phone}
+            nested={nested}
           />
-          <Separator />
         </CardContent>
       )}
 
+      {(manager || !!members?.length) && <Separator className="sn-group-seperator"/>}
+
       {!!members?.length && (
-        <CardContent className="px-4">
+        <CardContent className="px-4 overflow-x-auto sn-group-members flex flex-col gap-4">
           {members.map((member, index) => (
             <div key={index}>
               <GroupMember
@@ -116,6 +121,7 @@ export function SnGroupCard({
                 image={member.image}
                 im={member.im}
                 phone={member.phone}
+                nested={nested}
               />
             </div>
           ))}
@@ -123,7 +129,7 @@ export function SnGroupCard({
       )}
 
       {totalPages > 1 && (
-        <CardContent className="px-4">
+        <CardContent className="px-4 sn-group-pagination">
           <div className="flex items-center justify-between flex-wrap gap-4">
             <SnSimplePagination
               currentPage={currentPage}

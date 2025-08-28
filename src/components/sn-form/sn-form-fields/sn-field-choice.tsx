@@ -11,7 +11,7 @@ import {
   SelectValue,
 } from '../../ui/select'
 
-interface SnFieldChoiceProps extends Omit<SnFieldBaseProps<string>, "field"> {
+interface SnFieldChoiceProps extends Omit<SnFieldBaseProps<string>, 'field'> {
   field: SnFieldSchema
 }
 
@@ -19,7 +19,8 @@ export function SnFieldChoice({ field, rhfField, onChange }: SnFieldChoiceProps)
   const { readonly } = useFieldUI()
 
   const handleValueChange = (val: string) => {
-    onChange(val)
+    const display = field.choices?.find(choice => choice.value === val)?.label ?? ''
+    onChange(val, display)
   }
   return (
     <div className="relative w-full">

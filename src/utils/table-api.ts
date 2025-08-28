@@ -1,5 +1,5 @@
 import { getAxiosInstance } from "./axios-client";
-import { SnRow, SnColSchemea, SnListPref, SnListView, SnListViewElement } from "../types/table-schema";
+import { SnRow, SnColSchema, SnListPref, SnListView, SnListViewElement } from "../types/table-schema";
 import { SnApiResponse } from "../types/table-schema";
 
 
@@ -62,7 +62,7 @@ export function getListViewElements(
   );
 }
 
-export function getTableSchema(table: string, controller: AbortController): Promise<SnApiResponse<SnColSchemea[]>> {
+export function getTableSchema(table: string, controller: AbortController): Promise<SnApiResponse<SnColSchema[]>> {
   const axios = getAxiosInstance();
   return axios.get(`/api/now/doc/table/schema/${table}`, {
     signal: controller.signal,

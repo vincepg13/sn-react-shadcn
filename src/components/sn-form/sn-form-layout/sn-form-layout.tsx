@@ -61,35 +61,37 @@ export function SnFormLayout({
     onFieldTabMap?.(fieldToTab)
   }, [fieldToTab, onFieldTabMap])
 
-  const tabs = tabSections.map(section => {
-    const tabKey = section.id
-    const children = nestedMap.get(section.id) ?? []
+  const tabs = tabSections
+    .filter(section => section.visible)
+    .map(section => {
+      const tabKey = section.id
+      const children = nestedMap.get(section.id) ?? []
 
-    return {
-      key: tabKey,
-      label: section.captionDisplay!,
-      content: (
-        <div className="space-y-6">
-          <SnFormSection
-            columns={section.columns}
-            bootstrapCells={section._bootstrap_cells}
-            renderField={renderField}
-          />
-          {children.map(child => (
+      return {
+        key: tabKey,
+        label: section.captionDisplay!,
+        content: (
+          <div className="space-y-6">
             <SnFormSection
-              key={child.id}
-              columns={child.columns}
-              bootstrapCells={child._bootstrap_cells}
+              columns={section.columns}
+              bootstrapCells={section._bootstrap_cells}
               renderField={renderField}
             />
-          ))}
-        </div>
-      ),
-    }
-  })
+            {children.map(child => (
+              <SnFormSection
+                key={child.id}
+                columns={child.columns}
+                bootstrapCells={child._bootstrap_cells}
+                renderField={renderField}
+              />
+            ))}
+          </div>
+        ),
+      }
+    })
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-4">
       {primarySection && (
         <SnFormSection
           columns={primarySection.columns}

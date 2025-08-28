@@ -44,7 +44,8 @@ interface SnFormProps {
   attachments: SnAttachment[]
   activity?: SnActivity
   setAttachments: (attachments: SnAttachment[]) => void
-  snSubmit?(guid: string): void
+  snSubmit(guid: string): void
+  snInsert?(guid: string): void
 }
 
 export function SnForm({
@@ -61,10 +62,18 @@ export function SnForm({
   attachments,
   activity,
   setAttachments,
+  snInsert,
   snSubmit,
 }: SnFormProps) {
   const fieldTabMapRef = useRef<Record<string, string>>({})
   const fieldChangeHandlersRef = useRef<Record<string, (val: SnFieldPrimitive) => void>>({})
+
+  const displayValuesRef = useRef<Record<string, string>>({})
+  useEffect(() => {
+    displayValuesRef.current = Object.fromEntries(
+      Object.entries(formFields).map(([name, field]) => [name, field.displayValue ?? ''])
+    )
+  }, [formFields])
 
   const [overrideTab, setOverrideTab] = useState<string | undefined>()
   const { fieldUIState, updateFieldUI } = useFieldUIStateManager(formFields)
@@ -78,8 +87,19 @@ export function SnForm({
   })
 
   const gForm = useMemo(() => {
-    return createGFormBridge(form.getValues, form.setValue, updateFieldUI, fieldChangeHandlersRef, table, guid)
-  }, [form, guid, table, updateFieldUI])
+    const clientSections = sections.filter(s => !!s.caption)
+    return createGFormBridge(
+      formFields,
+      form.getValues,
+      form.setValue,
+      updateFieldUI,
+      fieldChangeHandlersRef,
+      clientSections,
+      displayValuesRef,
+      table,
+      guid
+    )
+  }, [form.getValues, form.setValue, formFields, guid, sections, table, updateFieldUI])
 
   const { runClientScriptsForFieldChange } = useClientScripts({
     form,
@@ -170,6 +190,7 @@ export function SnForm({
                         key={field.name}
                         field={field}
                         fieldUIState={fieldUIState}
+                        displayValues={displayValuesRef}
                         updateFieldUI={updateFieldUI}
                         table={table}
                         guid={guid}
@@ -185,6 +206,7 @@ export function SnForm({
                   formFields={formFields}
                   attachments={attachments}
                   attachmentGuid={attachmentGuid}
+                  snInsert={snInsert}
                   snSubmit={snSubmit}
                   setAttachments={setAttachments}
                   handleSubmit={form.handleSubmit}
