@@ -12,5 +12,6 @@ export function useRecordWatch(table: string, query: string, callback: subscribe
   useEffect(() => {
     const unsubscribe = amb.subscribe(`/rw/default/${table}/` + encodeQuery(query), callback)
     return () => unsubscribe()
-  }, [amb, table, query, callback])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 }
