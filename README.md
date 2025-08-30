@@ -190,7 +190,7 @@ SnActivity props:
 | `fullwidth` | `boolean` (Optional) | Setting this to true will display each row in the formatter in full width instead of the default left/right chat layout |
 
 ## `<SnFilter/>`
-Used to display the condition builder of any given table. The component presents itself as a filter icon with the current query next to it. You can then click on the filter icon to open the full condition builder (Which is its own component you can also use, *<SnConditionBuilder />*).
+Used to display the condition builder of any given table. The component presents itself as a filter icon with the current query next to it. You can then click on the filter icon to open the full condition builder (Which is its own component you can also use, **`<SnConditionBuilder />`**).
 
 SnFilter props:
 | Prop | Type | Description |
@@ -276,6 +276,26 @@ export default function ServicenowUI() {
 
 ![SnUserCardDemo](https://github.com/vincepg13/sn-react-shadcn-demo/blob/main/assets/SnGroupUser%20Cards.png?raw=true)
 
+---
+## Hooks
+
+A useful hook exported by this package which allows you to react to database changes in ServiceNow is **`useRecordWatch`**
+
+This hook makes use of the same web socket connection ServicePortal and UI Builder use to provide real time updates. Just give it a table, query and a callback function, then when updates to watched records are made your callback function will be triggered with a message object of type SnAmbMessage. This will provide all information related to the database change.
+
+Example use:
+
+```ts
+import { SnAmbMessage, useRecordWatch } from "sn-shadcn-kit";
+
+export function ServicenowAmb() {
+  const watcherCallback = (message: SnAmbMessage) => {
+    console.log("Record changed: ", message);
+  }
+
+  useRecordWatch("problem", "active=true", watcherCallback);
+}
+```
 ---
 
 ## 📘 Types
