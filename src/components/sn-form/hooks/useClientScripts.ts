@@ -1,8 +1,8 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useCallback, useEffect } from 'react';
-import { SnClientScript, SnFieldsSchema } from '@kit/types/form-schema';
+import { GlideAjax } from '../../../lib/glide-ajax';
 import { getDefaultValue } from '@kit/utils/form-client';
+import { SnClientScript, SnFieldsSchema } from '@kit/types/form-schema';
 
 export function useClientScripts({
   form,
@@ -34,7 +34,7 @@ export function useClientScripts({
           'newValue',
           'isLoading',
           'isTemplate',
-          `const g_form = arguments[5];\n${script.script};\nreturn ${
+          `const g_form = arguments[5];\nconst GlideAjax = arguments[6];\n${script.script};\nreturn ${
             script.type === 'onChange' ? 'onChange(control, oldValue, newValue, isLoading, isTemplate);' : 'onLoad();'
           }`
         );
@@ -45,7 +45,8 @@ export function useClientScripts({
           context.newValue?.toString(),
           context.isLoading ?? false,
           false,
-          gForm
+          gForm,
+          GlideAjax
         );
       } catch (e) {
         console.error(`Failed to run client script [${script.type}]`, e);
