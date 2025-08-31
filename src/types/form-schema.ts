@@ -211,6 +211,7 @@ const _formConfig = z.object({
   user: z.string(),
   date_format: z.string(),
   base_url: z.string(),
+  scope: z.string(),
   security: z.object({
     canWrite: z.boolean(),
     canRead: z.boolean(),

@@ -2,7 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { SnField } from './sn-form-fields/sn-field'
 import { Toaster } from '../../components/ui/sonner'
 import { useUiPolicies } from './hooks/useUiPolicies'
-import { createGFormBridge } from '@kit/utils/form-client'
+import { createGFormBridge } from '@kit/lib/g-form'
 import { useZodFormSchema } from './hooks/useZodFormSchema'
 import { useClientScripts } from './hooks/useClientScripts'
 import { SnFormLayout } from './sn-form-layout/sn-form-layout'
@@ -33,6 +33,7 @@ import {
 interface SnFormProps {
   table: string
   guid: string
+  view: string
   attachmentGuid: string
   uiActions: SnUiAction[]
   formFields: SnFieldsSchema
@@ -51,6 +52,7 @@ interface SnFormProps {
 export function SnForm({
   table,
   guid,
+  view,
   attachmentGuid,
   uiActions,
   formFields,
@@ -96,16 +98,19 @@ export function SnForm({
       fieldChangeHandlersRef,
       clientSections,
       displayValuesRef,
+      formConfig.scope,
+      view,
       table,
       guid
     )
-  }, [form.getValues, form.setValue, formFields, guid, sections, table, updateFieldUI])
+  }, [form.getValues, form.setValue, formConfig.scope, view, formFields, guid, sections, table, updateFieldUI])
 
   const { runClientScriptsForFieldChange } = useClientScripts({
     form,
     clientScripts: clientScripts || [],
     formFields,
     gForm,
+    scope: formConfig.scope
   })
 
   const { runUiPolicies, runUiPoliciesForField } = useUiPolicies({

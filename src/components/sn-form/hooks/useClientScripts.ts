@@ -1,30 +1,47 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useCallback, useEffect } from 'react';
-import { GlideAjax } from '../../../lib/glide-ajax';
-import { getDefaultValue } from '@kit/utils/form-client';
-import { SnClientScript, SnFieldsSchema } from '@kit/types/form-schema';
+import { useCallback, useEffect, useMemo, useRef } from 'react'
+import { GlideAjax } from '../../../lib/glide-ajax'
+import { getDefaultValue } from '@kit/utils/form-client'
+import { SnClientScript, SnFieldsSchema } from '@kit/types/form-schema'
 
-export function useClientScripts({
-  form,
-  clientScripts,
-  formFields,
-  gForm,
-}: {
-  form: any;
-  clientScripts: SnClientScript[];
-  formFields: SnFieldsSchema | null;
-  gForm: any;
-}) {
+type CsParams = {
+  form: any
+  clientScripts: SnClientScript[]
+  formFields: SnFieldsSchema | null
+  gForm: any
+  scope: string
+}
+
+export function useClientScripts({ form, clientScripts, formFields, gForm, scope }: CsParams) {
+  //Single Abort Controller Ref for hook lifecyle for any async operations
+  const controllerRef = useRef<AbortController>(new AbortController())
+
+  useEffect(() => {
+    if (controllerRef.current.signal.aborted) {
+      controllerRef.current = new AbortController()
+    }
+    return () => controllerRef.current.abort()
+  }, [])
+
+  // Initialise scope for GlideAjax
+  const ScopedGlideAjax = useMemo(() => {
+    return class extends GlideAjax {
+      constructor(processor: string) {
+        super(processor, controllerRef.current)
+        if (scope) this.setScope(scope)
+      }
+    }
+  }, [scope])
 
   //Execute any client script
   const executeClientScript = useCallback(
     (
       script: SnClientScript,
       context: {
-        fieldName?: string;
-        oldValue?: string;
-        newValue?: string;
-        isLoading?: boolean;
+        fieldName?: string
+        oldValue?: string
+        newValue?: string
+        isLoading?: boolean
       }
     ) => {
       try {
@@ -37,7 +54,7 @@ export function useClientScripts({
           `const g_form = arguments[5];\nconst GlideAjax = arguments[6];\n${script.script};\nreturn ${
             script.type === 'onChange' ? 'onChange(control, oldValue, newValue, isLoading, isTemplate);' : 'onLoad();'
           }`
-        );
+        )
 
         func(
           null,
@@ -46,58 +63,54 @@ export function useClientScripts({
           context.isLoading ?? false,
           false,
           gForm,
-          GlideAjax
-        );
+          ScopedGlideAjax
+        )
       } catch (e) {
-        console.error(`Failed to run client script [${script.type}]`, e);
+        console.error(`Failed to run client script [${script.type}]`, e)
       }
     },
-    [gForm]
-  );
+    [ScopedGlideAjax, gForm]
+  )
 
   //Execute client script for field change
   const runClientScriptsForFieldChange = useCallback(
     (fieldName: string, oldValue: any, newValue: any, isLoading = false) => {
-      const matchingScripts = clientScripts.filter(
-        (s) => s.type === 'onChange' && s.fieldName === fieldName
-      );
+      const matchingScripts = clientScripts.filter(s => s.type === 'onChange' && s.fieldName === fieldName)
 
       for (const script of matchingScripts) {
-        executeClientScript(script, { fieldName, oldValue, newValue, isLoading });
+        executeClientScript(script, { fieldName, oldValue, newValue, isLoading })
       }
     },
     [clientScripts, executeClientScript]
-  );
+  )
 
   // Execute onLoad client scripts
   const runOnLoadClientScripts = useCallback(() => {
-    const onLoadScripts = clientScripts.filter((s) => s.type === 'onLoad' && s.tableName != "global");
+    const onLoadScripts = clientScripts.filter(s => s.type === 'onLoad' && s.tableName != 'global')
 
     for (const script of onLoadScripts) {
-      executeClientScript(script, {});
+      executeClientScript(script, {})
     }
-  }, [clientScripts, executeClientScript]);
+  }, [clientScripts, executeClientScript])
 
   //Initial load trigger onload and onchange
   useEffect(() => {
-    if (!formFields) return;
+    if (!formFields) return
 
-    const values = Object.fromEntries(
-      Object.values(formFields).map((f) => [f.name, getDefaultValue(f)])
-    );
+    const values = Object.fromEntries(Object.values(formFields).map(f => [f.name, getDefaultValue(f)]))
 
-    form.reset(values);
+    form.reset(values)
 
     Object.entries(values).forEach(([fieldName, value]) => {
-      runClientScriptsForFieldChange(fieldName, undefined, value, true);
-    });
+      runClientScriptsForFieldChange(fieldName, undefined, value, true)
+    })
 
-    runOnLoadClientScripts();
-  }, [formFields, form, runClientScriptsForFieldChange, runOnLoadClientScripts]);
+    runOnLoadClientScripts()
+  }, [formFields, form, runClientScriptsForFieldChange, runOnLoadClientScripts])
 
   return {
     clientScripts,
     runClientScriptsForFieldChange,
     runOnLoadClientScripts,
-  };
+  }
 }

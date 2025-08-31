@@ -26,6 +26,7 @@ function unionClientScripts(scripts: Record<string, SnClientScript[]>) {
 
 export function SnFormWrapper({ apis, table, guid, snInsert, snSubmit }: SnFormProps) {
   const fetchIdRef = useRef(0)
+  const [view, setView] = useState("")
   const [subCount, setSubCount] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -68,6 +69,7 @@ export function SnFormWrapper({ apis, table, guid, snInsert, snSubmit }: SnFormP
           setActivity(form.activity)
           setAttachments(form.attachments || [])
           setAttachmentGuid(form._attachmentGUID || guid)
+          setView(form.view || "")
         }
       } catch (error: unknown) {
         if (axios.isAxiosError(error)) {
@@ -130,6 +132,7 @@ export function SnFormWrapper({ apis, table, guid, snInsert, snSubmit }: SnFormP
         <SnForm
           table={table}
           guid={guid}
+          view={view}
           apis={apis}
           attachmentGuid={attachmentGuid}
           formFields={formFields!}
