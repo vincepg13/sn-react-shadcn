@@ -1,5 +1,6 @@
 import { boolean, z } from 'zod'
 import { SnRow } from './table-schema'
+import { _GlideUserSchema } from './client-scripts'
 import { ControllerRenderProps } from 'react-hook-form'
 import { getAllPredicates } from '@kit/types/predicate-definitions'
 
@@ -212,6 +213,7 @@ const _formConfig = z.object({
   date_format: z.string(),
   base_url: z.string(),
   scope: z.string(),
+  glide_user: _GlideUserSchema,
   security: z.object({
     canWrite: z.boolean(),
     canRead: z.boolean(),

@@ -1,8 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useCallback, useEffect, useMemo, useRef } from 'react'
 import { GlideAjax } from '../../../lib/glide-ajax'
 import { getDefaultValue } from '@kit/utils/form-client'
+import { GlideUserSchema } from '@kit/types/client-scripts'
+import { useCallback, useEffect, useMemo, useRef } from 'react'
 import { SnClientScript, SnFieldsSchema } from '@kit/types/form-schema'
+import { GlideUser } from '@kit/lib/g-user'
 
 type CsParams = {
   form: any
@@ -10,9 +12,10 @@ type CsParams = {
   formFields: SnFieldsSchema | null
   gForm: any
   scope: string
+  glideUser: GlideUserSchema
 }
 
-export function useClientScripts({ form, clientScripts, formFields, gForm, scope }: CsParams) {
+export function useClientScripts({ form, clientScripts, formFields, gForm, scope, glideUser }: CsParams) {
   //Single Abort Controller Ref for hook lifecyle for any async operations
   const controllerRef = useRef<AbortController>(new AbortController())
 
@@ -22,6 +25,10 @@ export function useClientScripts({ form, clientScripts, formFields, gForm, scope
     }
     return () => controllerRef.current.abort()
   }, [])
+
+  const g_user = useMemo(() => {
+    return new GlideUser(glideUser)
+  }, [glideUser])
 
   // Initialise scope for GlideAjax
   const ScopedGlideAjax = useMemo(() => {
@@ -51,7 +58,11 @@ export function useClientScripts({ form, clientScripts, formFields, gForm, scope
           'newValue',
           'isLoading',
           'isTemplate',
-          `const g_form = arguments[5];\nconst GlideAjax = arguments[6];\n${script.script};\nreturn ${
+          `const g_form = arguments[5];
+          \nconst GlideAjax = arguments[6];
+          \nconst g_user = arguments[7];
+          \n${script.script};
+          \nreturn ${
             script.type === 'onChange' ? 'onChange(control, oldValue, newValue, isLoading, isTemplate);' : 'onLoad();'
           }`
         )
@@ -63,13 +74,14 @@ export function useClientScripts({ form, clientScripts, formFields, gForm, scope
           context.isLoading ?? false,
           false,
           gForm,
-          ScopedGlideAjax
+          ScopedGlideAjax,
+          g_user
         )
       } catch (e) {
         console.error(`Failed to run client script [${script.type}]`, e)
       }
     },
-    [ScopedGlideAjax, gForm]
+    [ScopedGlideAjax, gForm, g_user]
   )
 
   //Execute client script for field change

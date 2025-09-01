@@ -28,6 +28,7 @@
   formData.react_config = {
     user: gs.getUserID(),
     base_url: instanceURI,
+    glide_user: getGlideUser(),
     scope: getScopeName(table),
     security: getSecurity(grTarget),
     date_format: gs.getSession().getUser().getDateFormat(),
@@ -158,5 +159,19 @@
     }
 
     return attachments
+  }
+
+  function getGlideUser() {
+    const gsu = gs.getUser()
+
+    return {
+      roles: j2js(gsu.getAllRoles()),
+      departmentID: gsu.getDeparmentID(),
+      firstName: gsu.getFirstName(),
+      lastName: gsu.getLastName(),
+      fullName: gsu.getFullName(),
+      userID: gsu.getID(),
+      userName: gsu.getName(),
+    }
   }
 })(request, response)

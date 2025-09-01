@@ -110,7 +110,6 @@ export class GlideAjax {
       return xml
     } catch (err) {
       if (ax.isAxiosError(err) && err.code === 'ERR_CANCELED') return ''
-      cfg.onError?.(err, { processor: this.processor, params: { ...this.params } })
       throw err
     }
   }
@@ -120,10 +119,7 @@ export class GlideAjax {
    * @throws Error always
    */
   getXMLWait(): never {
-    const cfg = { ...DEFAULTS, ...getGlideAjaxConfig() }
-    const err = new Error('GlideAjax.getXMLWait() is not supported. Use getXML()/getXMLAnswer() (async). ')
-    cfg.onError?.(err, { processor: this.processor, params: { ...this.params } })
-    throw err
+    throw new Error('GlideAjax.getXMLWait() is not supported. Use getXML()/getXMLAnswer() (async). ')
   }
 
   /**
@@ -131,9 +127,6 @@ export class GlideAjax {
    * @throws Error always
    */
   getAnswer(): never {
-    const cfg = { ...DEFAULTS, ...getGlideAjaxConfig() }
-    const err = new Error('GlideAjax.getAnswer() is not supported. Call getXMLAnswer instead and capture the result.')
-    cfg.onError?.(err, { processor: this.processor, params: { ...this.params } })
-    throw err
+    throw new Error('GlideAjax.getAnswer() is not supported. Call getXMLAnswer instead and capture the result.')
   }
 }

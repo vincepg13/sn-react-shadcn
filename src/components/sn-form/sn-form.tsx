@@ -110,7 +110,8 @@ export function SnForm({
     clientScripts: clientScripts || [],
     formFields,
     gForm,
-    scope: formConfig.scope
+    scope: formConfig.scope,
+    glideUser: formConfig.glide_user,
   })
 
   const { runUiPolicies, runUiPoliciesForField } = useUiPolicies({
