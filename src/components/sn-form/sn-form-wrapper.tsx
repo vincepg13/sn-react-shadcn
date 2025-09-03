@@ -19,18 +19,21 @@ interface SnFormProps {
 
 function unionClientScripts(scripts: Record<string, SnClientScript[]>) {
   return Object.values(scripts).reduce((acc, curr) => {
-    const merged = acc.concat(curr)
-    return merged
+    if (Array.isArray(curr)) {
+      return acc.concat(curr)
+    }
+    return acc
   }, [] as SnClientScript[])
 }
 
 export function SnFormWrapper({ apis, table, guid, snInsert, snSubmit }: SnFormProps) {
   const fetchIdRef = useRef(0)
-  const [view, setView] = useState("")
+  const [view, setView] = useState('')
   const [subCount, setSubCount] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [uiActions, setUiActions] = useState<SnUiAction[]>([])
+  const [messages, setMessages] = useState<Record<string, string>>({})
   const [formFields, setFormFields] = useState<SnFieldsSchema | null>(null)
   const [formConfig, setFormConfig] = useState<SnFormConfig | null>(null)
   const [clientScripts, setClientScripts] = useState<SnClientScript[]>([])
@@ -39,13 +42,9 @@ export function SnFormWrapper({ apis, table, guid, snInsert, snSubmit }: SnFormP
   const [activity, setActivity] = useState<SnActivity | undefined>(undefined)
   const [attachments, setAttachments] = useState<SnAttachment[]>([])
   const [attachmentGuid, setAttachmentGuid] = useState<string>(guid)
+  const [scratchpad, setScratchpad] = useState<Record<string, unknown>>({})
 
-  const handleSubmit = snSubmit
-    ? snSubmit
-    : (guid: string) => {
-        console.log(`Default Submitting form with GUID: ${guid}`)
-        setSubCount(subCount + 1)
-      }
+  const handleSubmit = snSubmit ? snSubmit : () => setSubCount(subCount + 1)
 
   useEffect(() => {
     setLoading(true)
@@ -64,12 +63,14 @@ export function SnFormWrapper({ apis, table, guid, snInsert, snSubmit }: SnFormP
           setUiActions(form._ui_actions)
           setFormFields(form._fields)
           setClientScripts(unionClientScripts(form.client_script))
+          setMessages(form.client_script.messages || {})
           setUiPolicies(form.policy || [])
           setSections(form._sections || [])
           setActivity(form.activity)
           setAttachments(form.attachments || [])
           setAttachmentGuid(form._attachmentGUID || guid)
-          setView(form.view || "")
+          setView(form.view || '')
+          setScratchpad(form.g_scratchpad || {})
         }
       } catch (error: unknown) {
         if (axios.isAxiosError(error)) {
@@ -104,7 +105,7 @@ export function SnFormWrapper({ apis, table, guid, snInsert, snSubmit }: SnFormP
 
   if (loading)
     return (
-      <div className='w-full'>
+      <div className="w-full">
         {/* Loading form... */}
         <SnFormSkeleton />
       </div>
@@ -143,6 +144,8 @@ export function SnFormWrapper({ apis, table, guid, snInsert, snSubmit }: SnFormP
           sections={sections}
           activity={activity}
           attachments={attachments}
+          scratchpad={scratchpad}
+          messages={messages}
           setAttachments={setAttachments}
           snInsert={snInsert}
           snSubmit={handleSubmit}

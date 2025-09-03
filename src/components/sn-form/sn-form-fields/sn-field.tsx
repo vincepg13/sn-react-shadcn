@@ -52,7 +52,6 @@ function SnFieldComponent({ field, fieldUIState, guid, table, displayValues }: S
       oldValueRef.current = newValue
 
       displayValues.current[field.name] = display || newValue.toString() || ''
-      console.log(`Display value for ${field.name} updated to:`, displayValues.current[field.name])
     },
     [setValue, field.name, runClientScriptsForFieldChange, runUiPoliciesForField, displayValues]
   )

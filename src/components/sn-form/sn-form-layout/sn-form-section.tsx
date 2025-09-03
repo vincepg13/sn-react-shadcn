@@ -22,7 +22,7 @@ export function SnFormSection({ columns, bootstrapCells, renderField }: SnSectio
   return (
     <div className={gridClass}>
       {columns.map((column, colIndex) => (
-        <div key={colIndex} className="space-y-4">
+        <div key={colIndex}>
           {column.fields.map(field => (
             <div key={field.name}>{renderField(field.name)}</div>
           ))}

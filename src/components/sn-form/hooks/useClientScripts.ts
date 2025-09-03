@@ -5,6 +5,7 @@ import { GlideUserSchema } from '@kit/types/client-scripts'
 import { useCallback, useEffect, useMemo, useRef } from 'react'
 import { SnClientScript, SnFieldsSchema } from '@kit/types/form-schema'
 import { GlideUser } from '@kit/lib/g-user'
+import { GlideRecord } from '@kit/lib/glide-record'
 
 type CsParams = {
   form: any
@@ -13,9 +14,20 @@ type CsParams = {
   gForm: any
   scope: string
   glideUser: GlideUserSchema
+  messages: Record<string, string>
+  scratchpad: Record<string, unknown>
 }
 
-export function useClientScripts({ form, clientScripts, formFields, gForm, scope, glideUser }: CsParams) {
+export function useClientScripts({
+  form,
+  clientScripts,
+  formFields,
+  gForm,
+  scope,
+  glideUser,
+  messages,
+  scratchpad,
+}: CsParams) {
   //Single Abort Controller Ref for hook lifecyle for any async operations
   const controllerRef = useRef<AbortController>(new AbortController())
 
@@ -40,6 +52,18 @@ export function useClientScripts({ form, clientScripts, formFields, gForm, scope
     }
   }, [scope])
 
+  //Inject controller into client side GlideRecord
+  const ControlledGlideRecord = useMemo(() => {
+    return class extends GlideRecord {
+      constructor(table: string) {
+        super(table, controllerRef.current)
+      }
+    }
+  }, [])
+
+  //Helper to get localized message
+  const getMessage = useCallback((key: string) => messages[key] || '', [messages])
+
   //Execute any client script
   const executeClientScript = useCallback(
     (
@@ -59,8 +83,11 @@ export function useClientScripts({ form, clientScripts, formFields, gForm, scope
           'isLoading',
           'isTemplate',
           `const g_form = arguments[5];
-          \nconst GlideAjax = arguments[6];
-          \nconst g_user = arguments[7];
+          \nconst g_user = arguments[6];
+          \nconst g_scratchpad = arguments[7];
+          \nconst getMessage = arguments[8];
+          \nconst GlideAjax = arguments[9];
+          \nconst GlideRecord = arguments[10];
           \n${script.script};
           \nreturn ${
             script.type === 'onChange' ? 'onChange(control, oldValue, newValue, isLoading, isTemplate);' : 'onLoad();'
@@ -74,14 +101,17 @@ export function useClientScripts({ form, clientScripts, formFields, gForm, scope
           context.isLoading ?? false,
           false,
           gForm,
+          g_user,
+          scratchpad,
+          getMessage,
           ScopedGlideAjax,
-          g_user
+          ControlledGlideRecord
         )
       } catch (e) {
         console.error(`Failed to run client script [${script.type}]`, e)
       }
     },
-    [ScopedGlideAjax, gForm, g_user]
+    [gForm, g_user, scratchpad, getMessage, ScopedGlideAjax, ControlledGlideRecord]
   )
 
   //Execute client script for field change

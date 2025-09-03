@@ -43,6 +43,8 @@ interface SnFormProps {
   sections: SnSection[]
   apis: SnFormApis
   attachments: SnAttachment[]
+  messages: Record<string, string>
+  scratchpad: Record<string, unknown>
   activity?: SnActivity
   setAttachments: (attachments: SnAttachment[]) => void
   snSubmit(guid: string): void
@@ -63,6 +65,8 @@ export function SnForm({
   apis,
   attachments,
   activity,
+  messages,
+  scratchpad,
   setAttachments,
   snInsert,
   snSubmit,
@@ -110,6 +114,8 @@ export function SnForm({
     clientScripts: clientScripts || [],
     formFields,
     gForm,
+    scratchpad,
+    messages,
     scope: formConfig.scope,
     glideUser: formConfig.glide_user,
   })
@@ -192,15 +198,17 @@ export function SnForm({
                     if (!field) return null
 
                     return (
-                      <SnField
-                        key={field.name}
-                        field={field}
-                        fieldUIState={fieldUIState}
-                        displayValues={displayValuesRef}
-                        updateFieldUI={updateFieldUI}
-                        table={table}
-                        guid={guid}
-                      />
+                      <div className="TESTFIELDWRAP">
+                        <SnField
+                          key={field.name}
+                          field={field}
+                          fieldUIState={fieldUIState}
+                          displayValues={displayValuesRef}
+                          updateFieldUI={updateFieldUI}
+                          table={table}
+                          guid={guid}
+                        />
+                      </div>
                     )
                   }}
                 />
