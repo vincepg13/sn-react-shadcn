@@ -123,16 +123,15 @@ You may also noticed in the screenshot above the table includes a Condition Buil
 
 ## 📝 ServiceNow Forms
 
-If your'e familiar with the ServicePortal you know ServiceNow provide a method in the GlideScriptable API ($sp.getForm) that can return you the entire metadata for any given form. The below component set is a **alpha version** of how you can consume that metadata and recreate a ServiceNow form with the same layout as well as UI policies, Client Scripts and UI actions.
+If your'e familiar with widget development in the ServicePortal you'll know ServiceNow provide a method in the GlideScriptable API ($sp.getForm) that can return you the entire metadata for any given form. The below component set is a **beta version** of how you can consume that metadata and recreate a ServiceNow form with the same layout as well as UI policies, Client Scripts and UI actions.
 
-Since we have no access to any gForm object, it does mean remapping everything into logic that react can understand which will be very time consuming. However, it does work, with the limitation being it will only display field types that have been re-mapped or make use of ServiceNow client logic that has been re-mapped into Reacts world. This is why these components as in their alpha stage since I have only re-mapped a common set of fields and client logic and will be building this out over time. I will likely never get to the point where its an exact replica of all ServiceNow fields and client logic, but I believe covering the most common use cases will make this form component very useable in most cases.
+My aim is to provide the same level of support for [Client Side APIs](https://www.servicenow.com/docs/bundle/xanadu-platform-user-interface/page/build/service-portal/reference/client-script-reference.html) that ServiceNow provide in the service portal. 
 
-This is where I currently stand with what works:
-
-- **Fields**: The following field types have been remapped - strings, choices, booleans, references, lists, dates, date times, integers, floats and decimals
-- **Form Layout**: The form will render in the layout provided by ServiceNow which includes tabbed sections and their respective columns
-- **UI Policies**: The form will evaluate basic UI policies. By this I mean policies which do not include scripting or setting values. The standard mandatory/visible/readonly options will work however. Also, not every single condition predicate will be mapped, but the ones for common field types (dates, numerics, strings, references etc) should work.
-- **Client Scripts**: onLoad and onChange scripts will attempt to be evaluated. If there are any g_form methods which have not been mapped the script will fail. Right now I have mapped what I consider the most common set of methods used in g_form but its only a fraction of whats available. These include: getValue, setValue, setReadOnly, setDisplay, setVisible, setMandatory, clearValue, getBooleanValue, isNewRecord, getTableName, addInfoMessage and addErrorMessage. Any other references to g_form methods or global objects (GlideAjax, UI scripts etc) will fail.
+Supported currently:
+- **Fields**: Most, but not every, field types are supported. If the form encounters an unmapped field type it will be hidden.
+- **Form Layout**: Form will render in the layout provided by ServiceNow which includes tabbed sections and their respective columns.
+- **UI Policies**: None scripted UI Policies using the standard mandatory/visible/readonly options. The set and clear value options are currently unsupported.
+- **Client Scripts**: onLoad and onChange scripts. Any unmapped g_form methods will send a warning to the console but still attempt to process the rest of the client script. Any failures will terminate the current client script and proceed to the next. Support for onSubmit scripts will be coming soon.
 
 To use the form you must provide it with all necessary metadata, I do this via a scripted API call in the global scope making use of the *$sp.getForm* api method mentioned above. You can find this code in the sn_scripts folder of the repo: [getFormMetadata.js](./sn_scripts/getFormMetadata.js)
 

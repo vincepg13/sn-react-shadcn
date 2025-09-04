@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { postFormAction } from './form-api'
-import { SnFieldSchema, SnFieldsSchema } from '../types/form-schema'
+import { FieldUIState, SnFieldSchema, SnFieldsSchema } from '../types/form-schema'
 
 export function formatSectionName(input: string): string {
   let cleaned = input.replace(/[^a-zA-Z0-9 ]+/g, '')
@@ -65,4 +65,21 @@ export async function triggerNativeUIAction({
   }
 
   return result
+}
+
+export function computeEffectiveFieldState(
+  field: SnFieldSchema | undefined,
+  fieldVal: unknown,
+  override: Partial<FieldUIState> | undefined
+): FieldUIState {
+  const sysRo = !!field?.sys_readonly
+  const ro = (override?.readonly ?? field?.readonly ?? false) as boolean
+  const man = (override?.mandatory ?? field?.mandatory ?? false) as boolean
+  const visible = (override?.visible ?? field?.visible ?? true) as boolean
+
+  return {
+    readonly: sysRo ? true : ro && !!(fieldVal || !man),
+    mandatory: sysRo ? false : man,
+    visible,
+  }
 }

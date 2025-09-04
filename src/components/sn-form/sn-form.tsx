@@ -2,7 +2,6 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { SnField } from './sn-form-fields/sn-field'
 import { Toaster } from '../../components/ui/sonner'
 import { useUiPolicies } from './hooks/useUiPolicies'
-import { createGFormBridge } from '@kit/lib/g-form'
 import { useZodFormSchema } from './hooks/useZodFormSchema'
 import { useClientScripts } from './hooks/useClientScripts'
 import { SnFormLayout } from './sn-form-layout/sn-form-layout'
@@ -10,13 +9,14 @@ import { SnFormActions } from './sn-form-layout/sn-form-actions'
 import { SnUiPolicyContext } from './contexts/SnUiPolicyContext'
 import { useUiActionLifecycle } from './hooks/useUiActionLifecycle'
 import { useForm, FormProvider, FieldErrors } from 'react-hook-form'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { SnClientScriptContext } from './contexts/SnClientScriptContext'
 import { SnAttachment } from '@kit/types/attachment-schema'
 import { SnFormLifecycleContext } from './contexts/SnFormLifecycleContext'
 import { SnFormActivity } from '../sn-ui/sn-activity/sn-form-activity'
 import { useFieldUIStateManager } from './hooks/useFieldUiState'
 import { useNormalizedDefaultValues } from './hooks/useNormalizedDefaultValues'
+import { useGFormBridge } from './hooks/useGFormBridge'
 
 import {
   SnActivity,
@@ -74,13 +74,6 @@ export function SnForm({
   const fieldTabMapRef = useRef<Record<string, string>>({})
   const fieldChangeHandlersRef = useRef<Record<string, (val: SnFieldPrimitive) => void>>({})
 
-  const displayValuesRef = useRef<Record<string, string>>({})
-  useEffect(() => {
-    displayValuesRef.current = Object.fromEntries(
-      Object.entries(formFields).map(([name, field]) => [name, field.displayValue ?? ''])
-    )
-  }, [formFields])
-
   const [overrideTab, setOverrideTab] = useState<string | undefined>()
   const { fieldUIState, updateFieldUI } = useFieldUIStateManager(formFields)
   const { defaultValues, buildNormalizedValues } = useNormalizedDefaultValues(formFields)
@@ -92,22 +85,18 @@ export function SnForm({
     mode: 'onBlur',
   })
 
-  const gForm = useMemo(() => {
-    const clientSections = sections.filter(s => !!s.caption)
-    return createGFormBridge(
-      formFields,
-      form.getValues,
-      form.setValue,
-      updateFieldUI,
-      fieldChangeHandlersRef,
-      clientSections,
-      displayValuesRef,
-      formConfig.scope,
-      view,
-      table,
-      guid
-    )
-  }, [form.getValues, form.setValue, formConfig.scope, view, formFields, guid, sections, table, updateFieldUI])
+  const { gForm, displayValuesRef } = useGFormBridge({
+    form,
+    formFields,
+    sections,
+    fieldUIState,
+    updateFieldUI,
+    fieldChangeHandlersRef,
+    scope: formConfig.scope,
+    view,
+    table,
+    guid,
+  })
 
   const { runClientScriptsForFieldChange } = useClientScripts({
     form,
@@ -128,12 +117,11 @@ export function SnForm({
     formConfig,
   })
 
+  // Normalize once on mount
   useEffect(() => {
     if (!formFields || !schema) return
-
     const rawValues = form.getValues()
     const normalizedValues = buildNormalizedValues(formFields, rawValues)
-
     form.reset(normalizedValues, {
       keepErrors: true,
       keepDirty: true,
@@ -142,13 +130,11 @@ export function SnForm({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const handleValidationError = (errors: FieldErrors) => {
+  const handleValidationError = useCallback((errors: FieldErrors) => {
     const firstErrorField = Object.keys(errors)[0]
     const tabKey = fieldTabMapRef.current[firstErrorField]
-    if (tabKey) {
-      setOverrideTab(tabKey)
-    }
-  }
+    if (tabKey) setOverrideTab(tabKey)
+  }, [])
 
   //Expose Lifecycle Callbacks
   const { registerPreUiActionCallback, registerPostUiActionCallback, runUiActionCallbacks } = useUiActionLifecycle()
@@ -159,6 +145,7 @@ export function SnForm({
         value={{
           runClientScriptsForFieldChange,
           fieldChangeHandlers: fieldChangeHandlersRef.current,
+          fieldUIState,
           gForm,
           apis,
         }}

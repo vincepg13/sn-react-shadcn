@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { SnFieldSchema, SnFieldsSchema } from '@kit/types/form-schema'
 import { FieldUIState } from '../../../types/form-schema'
+import { computeEffectiveFieldState } from '@kit/utils/form-client'
 
 interface SingleFieldProps {
   field: SnFieldSchema
@@ -13,32 +14,8 @@ interface MultiFieldProps {
   uiState: Record<string, FieldUIState>
 }
 
-function computeEffectiveFieldState(
-  field: SnFieldSchema,
-  fieldVal: string,
-  uiState: Record<string, FieldUIState>
-): FieldUIState {
-  function isReadonly(sysRo: boolean, ro: boolean, man: boolean): boolean {
-    return sysRo ? true : ro && !!(fieldVal || !man)
-  }
-
-  function isMandatory(sysRo: boolean, man: boolean): boolean {
-    return sysRo ? false : man
-  }
-
-  const overrides = uiState[field.name] || {}
-  const ro = overrides.readonly ?? field.readonly ?? false
-  const man = overrides.mandatory ?? field.mandatory ?? false
-
-  return {
-    readonly: isReadonly(!!field.sys_readonly, ro, man),
-    visible: overrides.visible ?? field.visible ?? true,
-    mandatory: isMandatory(!!field.sys_readonly, man),
-  }
-}
-
 export function useEffectiveFieldState({ field, fieldVal, uiState }: SingleFieldProps): FieldUIState {
-  return useMemo(() => computeEffectiveFieldState(field, fieldVal, uiState), [
+  return useMemo(() => computeEffectiveFieldState(field, fieldVal, uiState[field.name]), [
     field,
     fieldVal,
     uiState,
@@ -49,7 +26,7 @@ export function useEffectiveFieldStates({ fields, uiState }: MultiFieldProps): R
   return useMemo(() => {
     const result: Record<string, FieldUIState> = {}
     for (const { field, fieldVal } of fields) {
-      result[field.name] = computeEffectiveFieldState(field, fieldVal, uiState)
+      result[field.name] = computeEffectiveFieldState(field, fieldVal, uiState[field.name])
     }
     return result
   }, [fields, uiState])
@@ -58,44 +35,37 @@ export function useEffectiveFieldStates({ fields, uiState }: MultiFieldProps): R
 export function useFieldUIStateManager(formFields: SnFieldsSchema) {
   const [fieldUIState, setFieldUIState] = useState<Record<string, FieldUIState>>({})
 
-  const enforceJournalVisibility = useCallback(() => {
-    const journalFields = Object.values(formFields).filter(f => f.type === 'journal_input')
-    const anyMandatory = journalFields.some(f => {
-      const override = fieldUIState[f.name]
+  const enforceJournalVisibility = useCallback((nextState: Record<string, FieldUIState>) => {
+    const journals = Object.values(formFields).filter(f => f.type === 'journal_input')
+
+    const anyMandatory = journals.some(f => {
+      const override = nextState[f.name]
       return override?.mandatory ?? f.mandatory
     })
 
+    // Build a minimal patch over nextState
+    const patched: Record<string, FieldUIState> = { ...nextState }
     if (anyMandatory) {
-      journalFields.forEach(f => {
-        if (!fieldUIState[f.name]?.visible) {
-          setFieldUIState(prev => ({
-            ...prev,
-            [f.name]: {
-              ...prev[f.name],
-              visible: true,
-            },
-          }))
+      journals.forEach(f => {
+        if (!patched[f.name]?.visible) {
+          patched[f.name] = { ...(patched[f.name] ?? {}), visible: true }
         }
       })
     } else {
-      journalFields.forEach(f => {
-        if (fieldUIState[f.name]?.visible) {
-          setFieldUIState(prev => ({
-            ...prev,
-            [f.name]: {
-              ...prev[f.name],
-              visible: f.visible ?? false,
-            },
-          }))
+      journals.forEach(f => {
+        const desired = f.visible ?? false
+        if (patched[f.name]?.visible !== desired) {
+          patched[f.name] = { ...(patched[f.name] ?? {}), visible: desired }
         }
       })
     }
-  }, [formFields, fieldUIState])
+    return patched
+  }, [formFields])
 
   const updateFieldUI = useCallback((field: string, updates: Partial<FieldUIState>) => {
     setFieldUIState(prev => {
       const originalMandatory = prev[field]?.mandatory ?? formFields[field]?.mandatory
-      const next = {
+      let next = {
         ...prev,
         [field]: {
           ...prev[field],
@@ -103,24 +73,24 @@ export function useFieldUIStateManager(formFields: SnFieldsSchema) {
         },
       }
 
+      // If a journal's mandatory flips, recompute visibility synchronously on the next snapshot
       if (
         formFields[field]?.type === 'journal_input' &&
         updates.mandatory !== undefined &&
         updates.mandatory !== originalMandatory
       ) {
-        setTimeout(() => enforceJournalVisibility(), 0)
+        next = enforceJournalVisibility(next)
       }
 
       return next
     })
-  }, [])
-
-  useEffect(() => {
-    enforceJournalVisibility()
   }, [formFields, enforceJournalVisibility])
 
-  return {
-    fieldUIState,
-    updateFieldUI,
-  }
+  useEffect(() => {
+    // When formFields change, re-enforce once against the current state
+    setFieldUIState(prev => enforceJournalVisibility(prev))
+  }, [formFields, enforceJournalVisibility])
+
+  return { fieldUIState, updateFieldUI }
 }
+
