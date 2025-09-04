@@ -1,17 +1,4 @@
-/**
- * This script retrieves all the metadata required to make use of the <SnForm /> component.
- * 
- * It should be used in ServiceNow scripted REST message resource in the global scope.
- * 
- * @param {string} table - A servicenow tables name (database value).
- * @param {string} id - The sys_id of the record to retrieve metadata for (-1 for new record).
- * @param {string} qry (optional) - A query to preset values for a new record.
- * @param {string} view (optional) - The name of the view to use for the form.
- * 
- * @returns {object} - An object containing the form metadata, including fields, activity, attachments, and react configuration.
- */
-
-(function process(/*RESTAPIRequest*/ request, /*RESTAPIResponse*/ response) {
+;(function process(/*RESTAPIRequest*/ request, /*RESTAPIResponse*/ response) {
   const table = request.pathParams.table
   const guid = request.pathParams.id
   const qry = request.queryParams.qry || ''
@@ -41,6 +28,8 @@
   formData.react_config = {
     user: gs.getUserID(),
     base_url: instanceURI,
+    glide_user: getGlideUser(),
+    scope: getScopeName(table),
     security: getSecurity(grTarget),
     date_format: gs.getSession().getUser().getDateFormat(),
   }
@@ -94,6 +83,13 @@
       entries,
       readable,
       writeable,
+    }
+  }
+
+  function getScopeName(table) {
+    var grDb = new GlideRecord('sys_db_object')
+    if (grDb.get('name', table)) {
+      return grDb.sys_scope.scope.toString()
     }
   }
 
@@ -163,5 +159,19 @@
     }
 
     return attachments
+  }
+
+  function getGlideUser() {
+    const gsu = gs.getUser()
+
+    return {
+      roles: j2js(gsu.getAllRoles()),
+      departmentID: gsu.getDeparmentID(),
+      firstName: gsu.getFirstName(),
+      lastName: gsu.getLastName(),
+      fullName: gsu.getFullName(),
+      userID: gsu.getID(),
+      userName: gsu.getName(),
+    }
   }
 })(request, response)

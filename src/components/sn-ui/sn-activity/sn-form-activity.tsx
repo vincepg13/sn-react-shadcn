@@ -85,8 +85,10 @@ export function SnFormActivity({
       .filter(f => !fieldUiMap[f.name]?.visible && !fieldUiMap[f.name]?.readonly)
       .map(f => {
         const journal = journalInputs.find(j => j.name === f.name)
-        return { name: journal!.name, label: journal!.label || journal!.name }
+        return journal ? { name: journal!.name, label: journal!.label || journal!.name } : null
       })
+      .filter(f => f !== null)
+
     setEntryFields(useable)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [journalFields, journalInputs])

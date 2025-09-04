@@ -1,3 +1,10 @@
+/**
+ * This file is sourced from - https://github.com/lucasschirm/amb-client-react
+ * 
+ * Modified to fix the channel listener subscription not firing the provided callback
+ *
+ * Then rewrapped in the "useRecordWatch" hook to provide a more convenient API for consuming record updates.
+ */
 import { useState } from 'react'
 import { SnAmbMessage } from '@kit/types/record-watch'
 import amb, { type subscribeCallback, type AmbClient, type AmbChannelListener } from 'amb-client-js'

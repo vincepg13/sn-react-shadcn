@@ -1,11 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { SnFormApis } from '@kit/types/form-schema'
 import { createContext, useContext } from 'react'
+import { FieldUIState, SnFormApis } from '@kit/types/form-schema'
 
 interface ClientScriptContextValue {
   fieldChangeHandlers: Record<string, (val: any) => void>
   runClientScriptsForFieldChange: (fieldName: string, oldValue: any, newValue: any, isLoading?: boolean) => void
   gForm: any
+  fieldUIState: Record<string, FieldUIState>,
   apis?: SnFormApis
 }
 

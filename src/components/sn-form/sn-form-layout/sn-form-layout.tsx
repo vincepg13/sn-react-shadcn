@@ -35,6 +35,7 @@ export function SnFormLayout({
   }, [sections])
 
   const primarySection = topLevelSections[0]
+  const primaryChildren = nestedMap.get(primarySection.id) ?? []
   const tabSections = topLevelSections.slice(1)
 
   const fieldToTab = useMemo(() => {
@@ -99,6 +100,15 @@ export function SnFormLayout({
           renderField={renderField}
         />
       )}
+
+      {primaryChildren.map((child, i) => (
+        <SnFormSection
+          key={`${primarySection.id}-${i}`}
+          columns={child.columns}
+          bootstrapCells={child._bootstrap_cells}
+          renderField={renderField}
+        />
+      ))}
 
       {tabs.length > 0 && (
         <SnTabs
