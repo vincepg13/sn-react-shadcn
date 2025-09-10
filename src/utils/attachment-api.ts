@@ -7,12 +7,16 @@ declare global {
   }
 }
 
-export async function getAttachments(table: string, guid: string, controller: AbortController): Promise<SnAttachment[]> {
+export async function getAttachments(
+  table: string,
+  guid: string,
+  controller: AbortController | AbortSignal
+): Promise<SnAttachment[]> {
   const axios = getAxiosInstance()
   try {
     const response = await axios.get(
       `/angular.do?sysparm_type=ngk_attachments&action=list&sys_id=${guid}&table=${table}`,
-      { signal: controller.signal }
+      { signal: controller instanceof AbortController ? controller.signal : controller }
     )
     return response.data.files || []
   } catch (error) {
@@ -41,7 +45,7 @@ export async function uploadAttachment(
   table: string,
   sysId: string,
   fieldName?: string,
-  controller?: AbortController
+  controller?: AbortController | AbortSignal
 ) {
   const axios = getAxiosInstance()
   const url = `/angular.do?sysparm_type=ngk_attachments&action=add&sys_id=${sysId}&table=${table}&load_attachment_record=true`
@@ -54,7 +58,7 @@ export async function uploadAttachment(
   formData.append('attachFile', file)
   if (fieldName) formData.append('field_name', fieldName)
 
-  let cont = controller ? { signal: controller.signal } : {}
+  let cont = controller ? { signal: controller instanceof AbortController ? controller.signal : controller } : {}
 
   try {
     return await axios.post(url, formData, cont).then(res => res.data)

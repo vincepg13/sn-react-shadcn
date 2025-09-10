@@ -1,4 +1,6 @@
 #Change Log
+## [V1.5.1]
+Exported skeleton loaders to make use of as placeholders for when you choose to fetch your own data instead of using one of the data loading components.
 
 ## [V1.5]
 Moved SnForm from alpha state to beta. Mapped more g_form methods and implemented support for the following client side APIs:

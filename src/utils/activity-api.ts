@@ -5,13 +5,13 @@ import { SnBaseEntry, SnActivityEntry, SnBaseActivity } from '@kit/types/form-sc
 export async function getJournalEntries(
   table: string,
   guid: string,
-  controller: AbortController
+  controller: AbortController | AbortSignal
 ): Promise<SnBaseActivity | false> {
   const axios = getAxiosInstance()
   try {
     const response = await axios.get(
       `/angular.do?sysparm_type=list_history&action=get_new_entries&table=${table}&sys_id=${guid}&sysparm_source=from_form`,
-      { signal: controller.signal }
+      { signal: controller instanceof AbortController ? controller.signal : controller }
     )
 
     if (response.status === 200) {
@@ -31,14 +31,14 @@ export async function postJournalEntry(
   guid: string,
   field: string,
   entry: string,
-  controller: AbortController
+  controller: AbortController | AbortSignal
 ): Promise<boolean | SnActivityEntry> {
   const axios = getAxiosInstance()
   try {
     const post = await axios.post(
       `/angular.do?sysparm_type=list_history&action=insert&table=${table}&sys_id=${guid}&sysparm_source=from_form`,
       { entries: [{ field, text: entry }] },
-      { signal: controller.signal }
+      { signal: controller instanceof AbortController ? controller.signal : controller }
     )
 
     if (post.status === 200) {

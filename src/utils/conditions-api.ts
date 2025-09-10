@@ -75,41 +75,41 @@ function parseCompound(comp: any): SnConditionGroup {
 }
 
 function buildQueryDisplay(parsed: any): SnConditionDisplayArray | null {
-  if (!parsed || !Array.isArray(parsed.predicates)) return null;
+  if (!parsed || !Array.isArray(parsed.predicates)) return null
 
-  const topLevelOr = parsed.predicates.find((p: any) => p.compound_type === "or");
-  if (!topLevelOr || !Array.isArray(topLevelOr.subpredicates)) return null;
+  const topLevelOr = parsed.predicates.find((p: any) => p.compound_type === 'or')
+  if (!topLevelOr || !Array.isArray(topLevelOr.subpredicates)) return null
 
-  const groups: SnConditionDisplayArray = [];
+  const groups: SnConditionDisplayArray = []
 
   for (let i = 0; i < topLevelOr.subpredicates.length; i++) {
-    const segment: SnConditionDisplayItem[] = [];
-    const index = { j: 0 };
-    collectDisplayTerms(topLevelOr.subpredicates[i], segment, i, index);
-    groups.push(segment);
+    const segment: SnConditionDisplayItem[] = []
+    const index = { j: 0 }
+    collectDisplayTerms(topLevelOr.subpredicates[i], segment, i, index)
+    groups.push(segment)
   }
 
-  return groups;
+  return groups
 
   function collectDisplayTerms(node: any, acc: SnConditionDisplayItem[], i: number, index: { j: number }) {
-    if (node.type === "compound" && Array.isArray(node.subpredicates)) {
-      if (node.compound_type === "or") {
+    if (node.type === 'compound' && Array.isArray(node.subpredicates)) {
+      if (node.compound_type === 'or') {
         for (const element of node.subpredicates) {
           if (element.term_label) {
-            acc.push({ display: element.term_label, id: `${i}:${index.j}`, or: true });
-            index.j++;
-          } else if (element.type === "compound") {
-            collectDisplayTerms(element, acc, i, index); 
+            acc.push({ display: element.term_label, id: `${i}:${index.j}`, or: true })
+            index.j++
+          } else if (element.type === 'compound') {
+            collectDisplayTerms(element, acc, i, index)
           }
         }
       } else {
         for (const child of node.subpredicates) {
-          collectDisplayTerms(child, acc, i, index);
+          collectDisplayTerms(child, acc, i, index)
         }
       }
     } else if (node.term_label) {
-      acc.push({ display: node.term_label, id: `${i}:${index.j}` });
-      index.j++;
+      acc.push({ display: node.term_label, id: `${i}:${index.j}` })
+      index.j++
     }
   }
 }
@@ -155,7 +155,7 @@ export function parseEncodedQuery(result: any): SnConditionModel {
 
 export async function getTableMetadata(
   table: string,
-  controller: AbortController,
+  controller: AbortController | AbortSignal,
   setError?: (msg: string) => void
 ): Promise<SnConditionMap | false> {
   const axios = getAxiosInstance()
@@ -164,7 +164,7 @@ export async function getTableMetadata(
   try {
     const { data } = await axios.get(`/api/now/ui/meta/${table}`, {
       params: { sysparm_operators: true, sysparm_keywords: true },
-      signal: controller.signal,
+      signal: controller instanceof AbortController ? controller.signal : controller,
     })
 
     return data.result?.columns ? normalizeFieldMetadata(data.result.columns as SnConditionsApiResult) : false
@@ -180,16 +180,16 @@ export async function getParsedQuery(
   table: string,
   query: string,
   display: boolean,
-  controller: AbortController,
+  controller: AbortController | AbortSignal,
   setError?: (msg: string) => void
-): Promise<{model: SnConditionModel, display?: SnConditionDisplayArray|null} | false> {
+): Promise<{ model: SnConditionModel; display?: SnConditionDisplayArray | null } | false> {
   const axios = getAxiosInstance()
   const errorMsg = `Failed to parse query for table: ${table}`
 
   try {
     const { data } = await axios.get(`/api/now/ui/query_parse/${table}/map`, {
       params: { sysparm_query: query },
-      signal: controller.signal,
+      signal: controller instanceof AbortController ? controller.signal : controller,
     })
 
     const res = data?.result
@@ -207,12 +207,15 @@ export async function getParsedQuery(
   }
 }
 
-export async function getDateMetadata(table: string, controller: AbortController): Promise<SnDateTimeMeta | false> {
+export async function getDateMetadata(
+  table: string,
+  controller: AbortController | AbortSignal
+): Promise<SnDateTimeMeta | false> {
   const axios = getAxiosInstance()
 
   try {
     const { data } = await axios.get(`/api/now/ui/date_time?table_name=${table}`, {
-      signal: controller.signal,
+      signal: controller instanceof AbortController ? controller.signal : controller,
     })
     return data?.result || false
   } catch (error) {
@@ -222,11 +225,15 @@ export async function getDateMetadata(table: string, controller: AbortController
   }
 }
 
-export async function getActiveCurrencies(controller: AbortController): Promise<SnFieldCurrencyChoice[] | false> {
+export async function getActiveCurrencies(
+  controller: AbortController | AbortSignal
+): Promise<SnFieldCurrencyChoice[] | false> {
   const axios = getAxiosInstance()
 
   try {
-    const { data } = await axios.get('/api/now/ui/currency/active', { signal: controller.signal })
+    const { data } = await axios.get('/api/now/ui/currency/active', {
+      signal: controller instanceof AbortController ? controller.signal : controller,
+    })
     return data?.result || false
   } catch (error) {
     if (baseAxios.isAxiosError(error) && error.code === 'ERR_CANCELED') return false

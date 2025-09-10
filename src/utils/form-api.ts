@@ -2,10 +2,10 @@
 import { getAxiosInstance } from './axios-client'
 import { SnFieldChoiceItem, SnFieldsSchema } from '@kit/types/form-schema'
 
-export function getFormData(metadataApi: string, controller: AbortController): Promise<any> {
+export function getFormData(metadataApi: string, controller: AbortController | AbortSignal): Promise<any> {
   const axios = getAxiosInstance()
   return axios.get(metadataApi, {
-    signal: controller.signal,
+    signal: controller instanceof AbortController ? controller.signal : controller,
     validateStatus: status => status >= 200 && status < 300,
   })
 }
@@ -57,13 +57,13 @@ async function _getTableDisplayFieldDictionary(table: string): Promise<string[]>
   return dictionaryDisplay
 }
 
-export async function getFieldList(table: string, controller: AbortController): Promise<SnFieldChoiceItem[]> {
+export async function getFieldList(table: string, controller: AbortController | AbortSignal): Promise<SnFieldChoiceItem[]> {
   let fieldList: SnFieldChoiceItem[] = []
   const axios = getAxiosInstance()
   try {
     fieldList = await axios
       .get(`/angular.do?sysparm_type=table_fields&exclude_formatters=true&fd_table=${table}`, {
-        signal: controller.signal,
+        signal: controller instanceof AbortController ? controller.signal : controller,
       })
       .then(res => res.data)
   } catch (error) {
