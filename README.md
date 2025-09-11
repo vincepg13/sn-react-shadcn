@@ -133,8 +133,6 @@ Supported currently:
 - **UI Policies**: None scripted UI Policies using the standard mandatory/visible/readonly options. The set and clear value options are currently unsupported.
 - **Client Scripts**: onLoad and onChange scripts. Any unmapped g_form methods will send a warning to the console but still attempt to process the rest of the client script. Any failures will terminate the current client script and proceed to the next. Support for onSubmit scripts will be coming soon.
 
-To use the form you must provide it with all necessary metadata, I do this via a scripted API call in the global scope making use of the *$sp.getForm* api method mentioned above. You can find this code in the sn_scripts folder of the repo: [getFormMetadata.js](./sn_scripts/getFormMetadata.js)
-
 ### `<SnFormWrapper />` && `<SnForm />`
 
 Load a form using SnFormWrapper by giving it the api path to a scripted rest message above, the table name to load, and a guid (sysid)
@@ -144,7 +142,20 @@ SnFormWrapper props:
 |----------------|--------------------- |------------------------------------------------|
 | `guid` | `string` | sys_id of a record |
 | `table` | `string` | Table name the record belongs to |
-| `onValueChange` | `string` | Resource path to metadata api |
+| `apis` | `SnFormApis` | Resource path to metadata apis |
+| `snInsert?` | (guid: string) => void | Optional callback triggered on record insert |
+| `snUpdate?` | (guid: string) => void | Optional callback triggered on record insert |
+
+To use the form you must provide it with all necessary metadata, I do this via a scripted API calls in the global scope. The apis property should be an object which stores these endpoints e.g:
+
+```js
+{
+  formData: '/api/659318/react_form/fd/problem/-1?view=', 
+  refDisplay: '/api/659318/react_form/ref_display'
+}
+```
+
+You can find this code in the sn_scripts folder of the repo: [getFormMetadata.js](./sn_scripts/getFormMetadata.js), [getReferenceDisplay.js](./sn_scripts/getReferenceDisplay.js)
 
 This component will then consume the metadata from the api response and pass it to **`<SnForm/>`** to build the form
 

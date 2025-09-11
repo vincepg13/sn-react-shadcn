@@ -1,4 +1,18 @@
-;(function process(/*RESTAPIRequest*/ request, /*RESTAPIResponse*/ response) {
+/**
+ * This script retrieves form metadata for a specified table and record ID. It includes everything that
+ * should be passed to the SnForm component to operate.
+ *
+ * It should be used in ServiceNow scripted REST message resource in the global scope, with the "turn
+ * on EXMAScript 2021" option enabled.
+ *
+ * @param {string} table - A servicenow tables name (database value).
+ * @param {string} guid - The sys_id of the record to retrieve, or -1 for a new record.
+ * @param {string} [qry] - An optional encoded query string to filter reference fields.
+ * @param {string} [view] - An optional view name to render the form with.
+ *
+ * @returns {object} - An object containing the form metadata and related information.
+ */
+(function process(/*RESTAPIRequest*/ request, /*RESTAPIResponse*/ response) {
   const table = request.pathParams.table
   const guid = request.pathParams.id
   const qry = request.queryParams.qry || ''
