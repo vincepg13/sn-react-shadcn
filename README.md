@@ -155,7 +155,7 @@ To use the form you must provide it with all necessary metadata, I do this via a
 }
 ```
 
-You can find this code in the sn_scripts folder of the repo: [getFormMetadata.js](./sn_scripts/getFormMetadata.js), [getReferenceDisplay.js](./sn_scripts/getReferenceDisplay.js)
+You can find this code in the sn-scripts folder of the repo: [getFormMetadata.js](./sn-scripts/getFormMetadata.js), [getReferenceDisplay.js](./sn-scripts/getReferenceDisplay.js)
 
 This component will then consume the metadata from the api response and pass it to **`<SnForm/>`** to build the form
 

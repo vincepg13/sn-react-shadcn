@@ -1,6 +1,6 @@
 {
   "name": "sn-shadcn-kit",
-  "version": "1.5.2",
+  "version": "1.5.4",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
@@ -43,7 +43,7 @@
   },
   "dependencies": {
     "@hookform/resolvers": "^5.0.1",
-    "@radix-ui/react-avatar": "^1.1.7",
+    "@radix-ui/react-avatar": "^1.1.10",
     "@radix-ui/react-checkbox": "^1.2.3",
     "@radix-ui/react-dialog": "^1.1.14",
     "@radix-ui/react-dropdown-menu": "^2.1.12",
@@ -58,6 +58,7 @@
     "@radix-ui/react-toggle": "^1.1.8",
     "@radix-ui/react-toggle-group": "^1.1.9",
     "@radix-ui/react-tooltip": "^1.2.6",
+    "@radix-ui/react-use-is-hydrated": "^0.1.0",
     "@tanstack/react-pacer": "^0.8.0",
     "@tanstack/react-virtual": "^3.13.8",
     "@tiptap/extension-code-block-lowlight": "^2.12.0",

@@ -1,4 +1,10 @@
 #Change Log
+## [v1.5.3]
+Updated prettier config to require semicolons for js files so the context of sn-scripts can be copied into scripted rest apis without any warnings.
+
+## [V1.5.2]
+Added signals to all exposed api classes instead of just AbortController
+
 ## [V1.5.1]
 Exported skeleton loaders to make use of as placeholders for when you choose to fetch your own data instead of using one of the data loading components.
 
