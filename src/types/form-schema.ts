@@ -9,7 +9,7 @@ const _action = z.object({
   action_name: z.string(),
   form_style: z.string(),
   is_button: z.boolean(),
-  is_contextual: z.boolean(),
+  is_context: z.boolean(),
   is_link: z.boolean(),
   name: z.string(),
   primary: z.boolean(),
@@ -31,6 +31,8 @@ const _uiResponse = z.object({
 })
 export type SnUiAction = z.infer<typeof _action>
 export type SnUiResponse = z.infer<typeof _uiResponse>
+export type UiActionHandler = (a: SnUiAction) => Promise<void>
+
 
 //Client Scripts
 const _clientScript = z.object({

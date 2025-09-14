@@ -1,22 +1,23 @@
-import { zodResolver } from '@hookform/resolvers/zod'
 import { SnField } from './sn-form-fields/sn-field'
 import { Toaster } from '../../components/ui/sonner'
+import { useUiActions } from './hooks/useUiActions'
+import { zodResolver } from '@hookform/resolvers/zod'
 import { useUiPolicies } from './hooks/useUiPolicies'
+import { useGFormBridge } from './hooks/useGFormBridge'
 import { useZodFormSchema } from './hooks/useZodFormSchema'
 import { useClientScripts } from './hooks/useClientScripts'
+import { SnAttachment } from '@kit/types/attachment-schema'
 import { SnFormLayout } from './sn-form-layout/sn-form-layout'
 import { SnFormActions } from './sn-form-layout/sn-form-actions'
 import { SnUiPolicyContext } from './contexts/SnUiPolicyContext'
-import { useUiActionLifecycle } from './hooks/useUiActionLifecycle'
-import { useForm, FormProvider, FieldErrors } from 'react-hook-form'
+import { SnUiActionContext } from './contexts/SnUiActionContext'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { SnClientScriptContext } from './contexts/SnClientScriptContext'
-import { SnAttachment } from '@kit/types/attachment-schema'
-import { SnFormLifecycleContext } from './contexts/SnFormLifecycleContext'
-import { SnFormActivity } from '../sn-ui/sn-activity/sn-form-activity'
 import { useFieldUIStateManager } from './hooks/useFieldUiState'
+import { useForm, FormProvider, FieldErrors } from 'react-hook-form'
+import { SnFormActivity } from '../sn-ui/sn-activity/sn-form-activity'
+import { SnClientScriptContext } from './contexts/SnClientScriptContext'
+import { SnFormLifecycleContext } from './contexts/SnFormLifecycleContext'
 import { useNormalizedDefaultValues } from './hooks/useNormalizedDefaultValues'
-import { useGFormBridge } from './hooks/useGFormBridge'
 
 import {
   SnActivity,
@@ -85,7 +86,7 @@ export function SnForm({
     mode: 'onBlur',
   })
 
-  const { gForm, displayValuesRef } = useGFormBridge({
+  const { gForm, displayValuesRef, setUiActionHandler } = useGFormBridge({
     form,
     formFields,
     sections,
@@ -96,9 +97,10 @@ export function SnForm({
     view,
     table,
     guid,
+    uiActions,
   })
 
-  const { runClientScriptsForFieldChange } = useClientScripts({
+  const { runClientScriptsForFieldChange, runOnSubmitClientScripts } = useClientScripts({
     form,
     clientScripts: clientScripts || [],
     formFields,
@@ -130,93 +132,100 @@ export function SnForm({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const handleValidationError = useCallback((errors: FieldErrors) => {
+  //UI Action handling and Lifecycle Callbacks
+  const onValidationError = useCallback((errors: FieldErrors) => {
     const firstErrorField = Object.keys(errors)[0]
     const tabKey = fieldTabMapRef.current[firstErrorField]
     if (tabKey) setOverrideTab(tabKey)
   }, [])
 
-  //Expose Lifecycle Callbacks
-  const { registerPreUiActionCallback, registerPostUiActionCallback, runUiActionCallbacks } = useUiActionLifecycle()
+  const { handleUiAction, loadingActionId, registerPreUiActionCallback, registerPostUiActionCallback } = useUiActions({
+    form,
+    onValidationError,
+    formFields,
+    uiActions,
+    table,
+    guid,
+    attachmentGuid,
+    runOnSubmitClientScripts,
+    snSubmit,
+    snInsert,
+    setUiActionHandler,
+  })
 
   return (
     <SnFormLifecycleContext.Provider value={{ formConfig, registerPreUiActionCallback, registerPostUiActionCallback }}>
       <SnClientScriptContext.Provider
         value={{
+          apis,
+          gForm,
+          fieldUIState,
+          runOnSubmitClientScripts,
           runClientScriptsForFieldChange,
           fieldChangeHandlers: fieldChangeHandlersRef.current,
-          fieldUIState,
-          gForm,
-          apis,
         }}
       >
         <SnUiPolicyContext.Provider value={{ formConfig, runUiPolicies, runUiPoliciesForField }}>
-          <FormProvider {...form}>
-            <Toaster position="top-center" expand={true} richColors />
-            <div className="w-full">
-              <form className="w-full">
-                <SnFormLayout
-                  sections={sections}
-                  overrideTab={overrideTab}
-                  clearOverrideTab={() => setOverrideTab(undefined)}
-                  onFieldTabMap={map => {
-                    fieldTabMapRef.current = map
-                  }}
-                  renderField={name => {
-                    const field = formFields[name]
+          <SnUiActionContext.Provider value={{ handleUiAction, uiActions, loadingActionId }}>
+            <FormProvider {...form}>
+              <Toaster position="top-center" expand={true} richColors />
+              <div className="w-full">
+                <form className="w-full">
+                  <SnFormLayout
+                    sections={sections}
+                    overrideTab={overrideTab}
+                    clearOverrideTab={() => setOverrideTab(undefined)}
+                    onFieldTabMap={map => {
+                      fieldTabMapRef.current = map
+                    }}
+                    renderField={name => {
+                      const field = formFields[name]
 
-                    if (activity && name.includes(activity.formatter)) {
-                      const journals = Object.values(formFields).filter(f => f.type === 'journal_input')
+                      if (activity && name.includes(activity.formatter)) {
+                        const journals = Object.values(formFields).filter(f => f.type === 'journal_input')
+                        return (
+                          <SnFormActivity
+                            journalEntries={activity.entries}
+                            journalFields={activity.journal_fields}
+                            user={formConfig.user}
+                            table={table}
+                            guid={guid}
+                            fieldUIState={fieldUIState}
+                            journalInputs={journals}
+                            getValues={form.getValues}
+                            setValue={form.setValue}
+                          />
+                        )
+                      }
+
+                      if (!field) return null
+
                       return (
-                        <SnFormActivity
-                          journalEntries={activity.entries}
-                          journalFields={activity.journal_fields}
-                          user={formConfig.user}
-                          table={table}
-                          guid={guid}
-                          fieldUIState={fieldUIState}
-                          journalInputs={journals}
-                          getValues={form.getValues}
-                          setValue={form.setValue}
-                        />
+                        <div>
+                          <SnField
+                            key={field.name}
+                            field={field}
+                            fieldUIState={fieldUIState}
+                            displayValues={displayValuesRef}
+                            updateFieldUI={updateFieldUI}
+                            table={table}
+                            guid={guid}
+                          />
+                        </div>
                       )
-                    }
+                    }}
+                  />
 
-                    if (!field) return null
-
-                    return (
-                      <div className="TESTFIELDWRAP">
-                        <SnField
-                          key={field.name}
-                          field={field}
-                          fieldUIState={fieldUIState}
-                          displayValues={displayValuesRef}
-                          updateFieldUI={updateFieldUI}
-                          table={table}
-                          guid={guid}
-                        />
-                      </div>
-                    )
-                  }}
-                />
-
-                <SnFormActions
-                  table={table}
-                  recordID={guid}
-                  uiActions={uiActions}
-                  formFields={formFields}
-                  attachments={attachments}
-                  attachmentGuid={attachmentGuid}
-                  snInsert={snInsert}
-                  snSubmit={snSubmit}
-                  setAttachments={setAttachments}
-                  handleSubmit={form.handleSubmit}
-                  onValidationError={handleValidationError}
-                  runUiActionCallbacks={runUiActionCallbacks}
-                />
-              </form>
-            </div>
-          </FormProvider>
+                  <SnFormActions
+                    table={table}
+                    attachments={attachments}
+                    attachmentGuid={attachmentGuid}
+                    setAttachments={setAttachments}
+                  />
+                </form>
+              </div>
+            </FormProvider>
+          </SnUiActionContext.Provider>
         </SnUiPolicyContext.Provider>
       </SnClientScriptContext.Provider>
     </SnFormLifecycleContext.Provider>
