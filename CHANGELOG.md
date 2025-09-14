@@ -2,7 +2,7 @@
 ## [V1.5.5]
 Updates to SnForm:
 - Added support for onSubmit client scripts
-- mapped the following g_form methods: getActionName 
+- mapped the following g_form methods: getActionName, save, submit
 
 ## [V1.5.3]
 Updated prettier config to require semicolons for js files so the context of sn-scripts can be copied into scripted rest apis without any warnings.
