@@ -2,26 +2,51 @@
 import { toast } from 'sonner'
 import { RefObject } from 'react'
 import { GlideAjax } from './glide-ajax'
-import { computeEffectiveFieldState, formatSectionName } from '@kit/utils/form-client'
 import { parseAjaxGlideRecord } from '@kit/utils/xml-parser'
-import { FieldUIState, SnFieldsSchema, SnSection } from '../types/form-schema'
+import { computeEffectiveFieldState, formatSectionName } from '@kit/utils/form-client'
+import { FieldUIState, SnFieldsSchema, SnSection, SnUiAction, UiActionHandler } from '../types/form-schema'
 
 const refCache = new Map<string, any>()
+let _actionName = ''
 
-export function createGFormBridge(
-  formFieldsRef: RefObject<SnFieldsSchema>,
-  getValues: () => any,
-  setValue: (field: string, value: string, opts?: any) => void,
-  updateFieldUI: (field: string, updates: Partial<FieldUIState>) => void,
-  fieldChangeHandlers: RefObject<Record<string, (value: any) => void>>,
-  sectionsRef: RefObject<SnSection[]>,
-  displayValuesRef: RefObject<Record<string, string>>,
-  fieldUIStateRef: RefObject<Record<string, FieldUIState>>,
-  scope: string,
-  view: string,
-  table?: string,
+export function setActionName(name: string) {
+  _actionName = name
+}
+
+interface GFormBridgeOptions {
+  formFieldsRef: RefObject<SnFieldsSchema>
+  getValues: () => any
+  setValue: (field: string, value: string, opts?: any) => void
+  updateFieldUI: (field: string, updates: Partial<FieldUIState>) => void
+  fieldChangeHandlers: RefObject<Record<string, (value: any) => void>>
+  sectionsRef: RefObject<SnSection[]>
+  displayValuesRef: RefObject<Record<string, string>>
+  fieldUIStateRef: RefObject<Record<string, FieldUIState>>
+  scope: string
+  view: string
+  table?: string
   guid?: string
-) {
+  uiActions: SnUiAction[]
+  uiActionHandlerRef: RefObject<UiActionHandler | undefined>
+}
+
+export function createGFormBridge(opts: GFormBridgeOptions) {
+  const {
+    formFieldsRef,
+    getValues,
+    setValue,
+    updateFieldUI,
+    fieldChangeHandlers,
+    sectionsRef,
+    displayValuesRef,
+    fieldUIStateRef,
+    scope,
+    view,
+    table,
+    guid,
+    uiActions,
+    uiActionHandlerRef,
+  } = opts
   const _uniqueValue = guid || '-1'
 
   // Ref deref helpers (always read the latest snapshot)
@@ -44,6 +69,14 @@ export function createGFormBridge(
     return computeEffectiveFieldState(def, val, overrides[fieldName])
   }
 
+  const clientSubmit = (actionName: string) => {
+    const fn = uiActionHandlerRef.current
+    const action = uiActions.find(a => a.action_name === actionName)
+    if (action && fn) return fn(action)
+
+    console.warn(`g_form.save: no handler or action found for ${actionName}`)
+  }
+
   const base: Record<string, any> = {
     // Meta
     getViewName: () => view,
@@ -59,7 +92,7 @@ export function createGFormBridge(
     // Value accessors
     getValue: (field: string) => {
       const vals = getValues() || {}
-      return vals[field]
+      return String(vals[field] ?? '')
     },
     getIntValue: (field: string) => {
       const v = base.getValue(field)
@@ -102,6 +135,11 @@ export function createGFormBridge(
     isMandatory(field: string): boolean {
       return getFieldUIState(field).mandatory
     },
+
+    // UI Action Operations
+    getActionName: () => _actionName,
+    save: () => clientSubmit("sysverb_update_and_stay"),
+    submit: () => clientSubmit("sysverb_update"),
 
     // UI State updates
     setDisabled: (field: string) => updateFieldUI(field, { readonly: true }),
@@ -195,10 +233,6 @@ export function createGFormBridge(
     addDecoration() {
       console.warn('GForm addDecoration method is not supported in React')
     },
-    getActionName() {
-      // used in onSubmit scripts to determine which button was clicked to submit the form
-      console.warn('GForm getActionName method is not supported in React')
-    },
     getEncodedRecord() {
       console.warn('GForm getEncodedRecord method is not supported in React')
     },
@@ -210,12 +244,6 @@ export function createGFormBridge(
     },
     hideFieldMsg() {
       console.warn('GForm hideFieldMsg method is not supported in React')
-    },
-    save() {
-      console.warn('GForm save method is not supported in React')
-    },
-    submit() {
-      console.warn('GForm submit method is not supported in React')
     },
     removeDecoration() {
       console.warn('GForm removeDecoration method is not supported in React')

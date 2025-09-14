@@ -128,10 +128,10 @@ If your'e familiar with widget development in the ServicePortal you'll know Serv
 My aim is to provide the same level of support for [Client Side APIs](https://www.servicenow.com/docs/bundle/xanadu-platform-user-interface/page/build/service-portal/reference/client-script-reference.html) that ServiceNow provide in the service portal. 
 
 Supported currently:
-- **Fields**: Most, but not every, field types are supported. If the form encounters an unmapped field type it will be hidden.
+- **Fields**: Most(but not every) field types are supported. If the form encounters an unmapped field type it will be hidden.
 - **Form Layout**: Form will render in the layout provided by ServiceNow which includes tabbed sections and their respective columns.
-- **UI Policies**: None scripted UI Policies using the standard mandatory/visible/readonly options. The set and clear value options are currently unsupported.
-- **Client Scripts**: onLoad and onChange scripts. Any unmapped g_form methods will send a warning to the console but still attempt to process the rest of the client script. Any failures will terminate the current client script and proceed to the next. Support for onSubmit scripts will be coming soon.
+- **UI Policies**: None-scripted UI Policies using the standard mandatory/visible/readonly options. The set and clear value options are currently unsupported.
+- **Client Scripts**: All will attempt to execute. Any unmapped g_form methods will send a warning to the console but still attempt to process the rest of the client script. Any failures will terminate the current client script and proceed to the next.
 
 ### `<SnFormWrapper />` && `<SnForm />`
 

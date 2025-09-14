@@ -2,7 +2,7 @@
 import { RefObject, useEffect, useRef } from 'react'
 import { Path, UseFormReturn } from 'react-hook-form'
 import { createGFormBridge } from '@kit/lib/g-form'
-import { FieldUIState, SnFieldsSchema, SnSection } from '@kit/types/form-schema'
+import { FieldUIState, SnFieldsSchema, SnSection, SnUiAction, UiActionHandler } from '@kit/types/form-schema'
 
 type FieldChangeHandlers = RefObject<Record<string, (value: any) => void>>
 
@@ -15,6 +15,7 @@ interface UseGFormBridgeParams<TFormValues extends Record<string, any> = Record<
   fieldChangeHandlersRef: FieldChangeHandlers
   scope: string
   view: string
+  uiActions: SnUiAction[]
   table?: string
   guid?: string
 }
@@ -34,12 +35,18 @@ export function useGFormBridge<TFormValues extends Record<string, any> = Record<
   view,
   table,
   guid,
+  uiActions,
 }: UseGFormBridgeParams<TFormValues>) {
   // Keep mutable inputs in refs so the bridge can stay a singleton
   const formFieldsRef = useRef(formFields)
   const sectionsRef = useRef(sections)
   const displayValuesRef = useRef<Record<string, string>>({})
   const fieldUIStateRef = useRef<Record<string, FieldUIState>>({})
+  const uiActionHandlerRef = useRef<UiActionHandler>(undefined)
+
+  const setUiActionHandler = (fn?: UiActionHandler) => {
+      uiActionHandlerRef.current = fn
+  }
 
   useEffect(() => {
     fieldUIStateRef.current = fieldUIState
@@ -85,24 +92,27 @@ export function useGFormBridge<TFormValues extends Record<string, any> = Record<
   // Create the bridge once
   const gFormRef = useRef<ReturnType<typeof createGFormBridge> | null>(null)
   if (!gFormRef.current) {
-    gFormRef.current = createGFormBridge(
+    gFormRef.current = createGFormBridge({
       formFieldsRef,
-      getValuesSafe,
-      setValueSafe,
-      updateFieldUISafe,
-      fieldChangeHandlersRef,
+      getValues: getValuesSafe,
+      setValue: setValueSafe,
+      updateFieldUI: updateFieldUISafe,
+      fieldChangeHandlers: fieldChangeHandlersRef,
       sectionsRef,
       displayValuesRef,
       fieldUIStateRef,
       scope,
       view,
       table,
-      guid
-    )
+      guid,
+      uiActions,
+      uiActionHandlerRef,
+    })
   }
 
   return {
     gForm: gFormRef.current!,
     displayValuesRef,
+    setUiActionHandler
   }
 }

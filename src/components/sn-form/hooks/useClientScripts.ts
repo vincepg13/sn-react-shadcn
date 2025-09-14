@@ -1,11 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { GlideUser } from '@kit/lib/g-user'
 import { GlideAjax } from '../../../lib/glide-ajax'
+import { setActionName } from '../../../lib/g-form'
+import { GlideRecord } from '@kit/lib/glide-record'
 import { getDefaultValue } from '@kit/utils/form-client'
 import { GlideUserSchema } from '@kit/types/client-scripts'
 import { useCallback, useEffect, useMemo, useRef } from 'react'
 import { SnClientScript, SnFieldsSchema } from '@kit/types/form-schema'
-import { GlideUser } from '@kit/lib/g-user'
-import { GlideRecord } from '@kit/lib/glide-record'
 
 type CsParams = {
   form: any
@@ -16,6 +17,15 @@ type CsParams = {
   glideUser: GlideUserSchema
   messages: Record<string, string>
   scratchpad: Record<string, unknown>
+}
+
+function mapCsTypeToMethod(type: 'onChange' | 'onSubmit' | 'onLoad') {
+  const methodMap = {
+    onChange: 'onChange(control, oldValue, newValue, isLoading, isTemplate);',
+    onSubmit: 'onSubmit();',
+    onLoad: 'onLoad();',
+  }
+  return methodMap[type]
 }
 
 export function useClientScripts({
@@ -89,12 +99,10 @@ export function useClientScripts({
           \nconst GlideAjax = arguments[9];
           \nconst GlideRecord = arguments[10];
           \n${script.script};
-          \nreturn ${
-            script.type === 'onChange' ? 'onChange(control, oldValue, newValue, isLoading, isTemplate);' : 'onLoad();'
-          }`
+          \nreturn ${mapCsTypeToMethod(script.type)}`
         )
 
-        func(
+        return func(
           null,
           context.oldValue?.toString(),
           context.newValue?.toString(),
@@ -126,13 +134,26 @@ export function useClientScripts({
     [clientScripts, executeClientScript]
   )
 
-  // Execute onLoad client scripts
+  //Execute onLoad client scripts
   const runOnLoadClientScripts = useCallback(() => {
     const onLoadScripts = clientScripts.filter(s => s.type === 'onLoad' && s.tableName != 'global')
 
     for (const script of onLoadScripts) {
       executeClientScript(script, {})
     }
+  }, [clientScripts, executeClientScript])
+
+  //Execute onSubmit client scripts
+  const runOnSubmitClientScripts = useCallback((action: string) => {
+    setActionName(action)
+    const onSubmitScripts = clientScripts.filter(s => s.type === 'onSubmit')
+
+    for (const script of onSubmitScripts) {
+      const res = executeClientScript(script, {})
+      if (res === false) return false
+    }
+
+    return true
   }, [clientScripts, executeClientScript])
 
   //Initial load trigger onload and onchange
@@ -154,5 +175,6 @@ export function useClientScripts({
     clientScripts,
     runClientScriptsForFieldChange,
     runOnLoadClientScripts,
+    runOnSubmitClientScripts,
   }
 }
