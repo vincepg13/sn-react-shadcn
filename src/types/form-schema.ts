@@ -1,6 +1,7 @@
 import { boolean, z } from 'zod'
 import { SnRow } from './table-schema'
 import { _GlideUserSchema } from './client-scripts'
+import { Options as PrettierOptions } from 'prettier'
 import { ControllerRenderProps } from 'react-hook-form'
 import { getAllPredicates } from '@kit/types/predicate-definitions'
 
@@ -216,6 +217,7 @@ const _formConfig = z.object({
   base_url: z.string(),
   scope: z.string(),
   glide_user: _GlideUserSchema,
+  prettier: z.custom<PrettierOptions>(),
   security: z.object({
     canWrite: z.boolean(),
     canRead: z.boolean(),

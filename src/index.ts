@@ -33,15 +33,18 @@ export { SnGroupCard } from './components/sn-user/sn-group-card'
 export { default as SnAvatar } from './components/sn-user/sn-avatar'
 export { SnGroupWrapper } from './components/sn-user/sn-group-wrapper'
 
+// Scripting
+export { SnScriptEditor, SnScriptEditorHandle } from './components/sn-ui/sn-script-editor/sn-script-editor'
+
 // Data Fetching
 export { getAxiosInstance, setAxiosInstance } from './utils/axios-client'
 
 //Hooks
 export { useRecordWatch } from './components/sn-amb/hooks/useRecordWatch'
+export { useFullScreen } from './components/sn-ui/sn-script-editor/hooks/useFullScreen'
 
 // Types
 export type { SnAmbMessage } from './types/record-watch'
 export type { SnUser, SnGroup } from './types/user-schema'
-// export { SnAttachment } from './types/attachment-schema';
 export type { SnRecordPickerItem, SnRecordPickerList } from './types/form-schema'
 export type { SnRow, SnRowItem, SnApiResponse, SnColSchema } from './types/table-schema'
