@@ -1,19 +1,22 @@
 import { createPortal } from 'react-dom'
 import { css } from '@codemirror/lang-css'
 import { html } from '@codemirror/lang-html'
-import { RefObject, useMemo, useRef } from 'react'
-import { Lock, Wand2, Minimize2 } from 'lucide-react'
+import { RefObject, useEffect, useMemo, useRef, useState } from 'react'
 import { atomone } from '@uiw/codemirror-theme-atomone'
 import { javascript } from '@codemirror/lang-javascript'
 import { LanguageSupport } from '@codemirror/language'
 import { SnSimpleTooltip } from '@kit/components/sn-ui/sn-tooltip'
+import { getAutocompleteData } from '@kit/utils/script-editor-api'
 import { SnFieldBaseProps, SnFieldSchema } from '@kit/types/form-schema'
 import { useFieldUI } from '@kit/components/sn-form/contexts/FieldUIContext'
+import { useInlineTern } from '@kit/components/sn-ui/sn-script-editor/hooks/useTernInline'
 import { useFullScreen } from '@kit/components/sn-ui/sn-script-editor/hooks/useFullScreen'
+import { Lock, Wand2, Minimize2, SearchCode, MessageSquareCode, Maximize2 } from 'lucide-react'
 import { SnScriptEditor, SnScriptEditorHandle } from '@kit/components/sn-ui/sn-script-editor/sn-script-editor'
 
 interface SnFieldScriptProps extends Omit<SnFieldBaseProps<string>, 'field'> {
   field: SnFieldSchema
+  table: string
   adornmentRef?: RefObject<HTMLElement | null>
 }
 
@@ -23,25 +26,52 @@ const typeToLang: Record<string, LanguageSupport> = {
   css: css(),
 }
 
-export function SnFieldScript({ field, rhfField, adornmentRef, onChange }: SnFieldScriptProps) {
+export function SnFieldScript({ table, field, rhfField, adornmentRef, onChange }: SnFieldScriptProps) {
   const { readonly } = useFieldUI()
   const { isMaximized, toggleMax } = useFullScreen()
   const editorRef = useRef<SnScriptEditorHandle | null>(null)
+  const [snDefs, setSnDefs] = useState<unknown | null>(null)
+
+  useEffect(() => {
+    const controller = new AbortController()
+
+    const loadSnDefs = async () => {
+      const snCompletionSet = await getAutocompleteData(table, field.name, controller)
+      setSnDefs(snCompletionSet)
+    }
+
+    loadSnDefs()
+    return () => controller.abort()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  const { completionSource: tern, signatureExt } = useInlineTern({
+    serviceNowDefs: snDefs,
+    fileName: `${field.name}.js`,
+  })
+
+  console.log('TERGN SOURCE', tern)
 
   const Icons = useMemo(
     () => (
       <div className="flex items-center gap-3">
+        <button type="button" className="hover:opacity-80" onClick={() => editorRef.current?.openSearch()}>
+          <SnSimpleTooltip trigger={<SearchCode size={18} />} content="Search (Ctrl + F)" />
+        </button>
         {readonly ? (
           <SnSimpleTooltip trigger={<Lock size={18} />} content="Readonly field" />
         ) : (
           <>
+            <button type="button" className="hover:opacity-80" onClick={() => editorRef.current?.toggleComment()}>
+              <SnSimpleTooltip trigger={<MessageSquareCode size={18} />} content="Comment (Ctrl + /)" />
+            </button>
             <button type="button" className="hover:opacity-80" onClick={() => editorRef.current?.format()}>
-              <SnSimpleTooltip trigger={<Wand2 size={18} />} content="Format" />
+              <SnSimpleTooltip trigger={<Wand2 size={18} />} content="Format (Shift + Alt + F)" />
             </button>
           </>
         )}
         <button type="button" className="hover:opacity-80" onClick={toggleMax}>
-          <SnSimpleTooltip trigger={<Minimize2 size={18} />} content="Full screen" />
+          <SnSimpleTooltip trigger={<Maximize2 size={18} />} content="Full screen (Ctrl + M)" />
         </button>
       </div>
     ),
@@ -59,10 +89,13 @@ export function SnFieldScript({ field, rhfField, adornmentRef, onChange }: SnFie
           ref={editorRef}
           lang={typeToLang[field.type]}
           content={String(rhfField.value ?? '')}
-          onBlur={onChange}
           theme={atomone}
           readonly={readonly}
           height={editorHeight}
+          signatureExt={signatureExt}
+          autocompleteType="override"
+          onBlur={onChange}
+          completionSource={tern}
         />
         {isMaximized && (
           <button

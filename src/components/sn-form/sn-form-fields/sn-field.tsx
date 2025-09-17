@@ -214,7 +214,7 @@ function renderFieldComponent(
     case 'script':
     case 'css':
     case 'html_template':
-      return <SnFieldScript field={field} rhfField={rhfField} adornmentRef={adornmentRef} onChange={handleChange} />
+      return <SnFieldScript table={table} field={field} rhfField={rhfField} adornmentRef={adornmentRef} onChange={handleChange} />
     case 'video':
     case 'user_image': {
       const extension = field.type === 'user_image' ? '.iix' : '.vvx'

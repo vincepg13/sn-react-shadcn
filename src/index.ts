@@ -34,7 +34,7 @@ export { default as SnAvatar } from './components/sn-user/sn-avatar'
 export { SnGroupWrapper } from './components/sn-user/sn-group-wrapper'
 
 // Scripting
-export { SnScriptEditor, SnScriptEditorHandle } from './components/sn-ui/sn-script-editor/sn-script-editor'
+export { SnScriptEditor, type SnScriptEditorHandle } from './components/sn-ui/sn-script-editor/sn-script-editor'
 
 // Data Fetching
 export { getAxiosInstance, setAxiosInstance } from './utils/axios-client'
