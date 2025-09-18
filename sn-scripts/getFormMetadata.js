@@ -218,7 +218,7 @@
     };
 
     const jsv = jsVersion();
-    if (guid == -1 || jsv == 'latest') return jsVersion;
+    if (guid == -1 || jsv == 'latest') return jsv;
 
     const grEsLatest = new GlideRecord('sys_es_latest_script');
     grEsLatest.addQuery('id', guid);
