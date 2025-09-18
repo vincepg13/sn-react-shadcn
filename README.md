@@ -210,7 +210,26 @@ SnFilter props:
 | `initialOpenState` | `open OR closed` (optional) | Whether to have the condition builder open on first load. It will default to closed. |
 | `onQueryBuilt` | `(encoded: string)` | The callback called when the user executes the built condition by pressing the Run button |
 
+## `<SnScriptEditor />`
+A modern script editor built using CodeMirror V6, designed to work seamlessly with ServiceNow script fields. This editor includes formatting, jslint, themeing, plus all the built in codemirror commands such as searching and commenting etc. If you refer to the [SnFieldScript](/src/components/sn-form/sn-form-fields/sn-field-script.tsx) internal component you will see how I make use of the Script Editor to display script fields inside a form.
 
+| Prop                | Type                                                                | Description                                                                                                                                              |
+| ------------------- | ------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `lang`              | `LanguageSupport`                                                   | The CodeMirror language support to use (e.g., from `@codemirror/lang-javascript`, `@codemirror/lang-html`, etc.). **Required.**                          |
+| `height`            | `string` (optional)                                                 | Editor height (e.g., `'400px'`, `'100vh'`). Defaults to `'400px'`.                                                                                       |
+| `content`           | `string` (optional)                                                 | Initial text content. If this prop changes, the editor synchronizes to the new value.                                                                    |
+| `readonly`          | `boolean` (optional)                                                | Renders the editor in read-only mode. Formatting shortcuts and edits are disabled. Defaults to `false`.                                                  |
+| `theme`             | `ReactCodeMirrorProps['theme']` (optional)                          | CodeMirror theme (e.g., a theme object or `'dark'`). Defaults to `'dark'`.                                                                               |
+| `prettierOptions`   | `PrettierOptions` (optional)                                        | Options passed to the Prettier formatter when formatting is invoked.                                                                                     |
+| `signatureExt`      | `Extension[]` (optional)                                            | Additional CodeMirror extensions, typically for signature/help overlays that should be applied on top of the base config.                                |
+| `autocompleteType`  | `'default' \| 'override'` (optional)                                | How custom completions integrate with built-ins. `'default'` augments defaults; `'override'` replaces them. Defaults to `'default'`.                     |
+| `completionSources` | `CompletionSource[]` (optional)                                     | Custom completion sources used by the editor’s autocomplete system.                                                                                      |
+| `esLint`            | `object` (optional)                                                 | Configuration for inline ESLint via the `useEsLint` hook. Common fields: `enabled: boolean`, `debounceMs: number`, `config: EsLintConfig`. |
+| `onToggleMax`       | `() => void` (optional)                                             | Called when the user triggers the fullscreen toggle keybinds (`Mod-m` or `Escape`).                                                                      |
+| `onBlur`            | `(value: string) => void` (optional)                                | Fired when the editor loses focus. Receives the current editor content.                                                                                  |
+| `onFormat`          | `(result: { changed: boolean; error?: string }) => void` (optional) | Called after a format attempt (keyboard shortcut or programmatic). Indicates whether content changed and, if applicable, includes an error message.      |
+
+![SnScript](/demo/SNDemoScriptEditor.png)
 ![SnActivity](/demo/SNActivityDemo.png)
 ![SnFormAttachments](/demo/SNDemoFormAttachments.png)
 

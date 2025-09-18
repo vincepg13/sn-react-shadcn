@@ -28,7 +28,7 @@
   }
 
   const instanceURI = gs.getProperty('glide.servlet.uri');
-  const formData = new GlideSPScriptable().getForm(table, guid, qry, view);
+  const formData = new global.GlideSPScriptable().getForm(table, guid, qry, view);
   const hasActivityFormatter = hasActivity(formData._formatters);
 
   if (!!hasActivityFormatter && guid != -1) {
@@ -46,6 +46,13 @@
     scope: getScopeName(table),
     security: getSecurity(grTarget),
     date_format: gs.getSession().getUser().getDateFormat(),
+    prettier: {
+      semi: true,
+      singleQuote: true,
+      tabWidth: 4,
+      printWidth: 120,
+    },
+    es_lint: getLinting(grTarget, guid),
   };
 
   response.setStatus(200);
@@ -186,6 +193,60 @@
       fullName: gsu.getFullName(),
       userID: gsu.getID(),
       userName: gsu.getName(),
+    };
+  }
+
+  function getEsMode(gr, guid) {
+    let jsVersion = () => {
+      if (guid == -1) {
+        const scope = gs.getCurrentApplicationId();
+        if (scope == 'global') return 5;
+
+        var grScope = new GlideRecord('sys_scope');
+        if (grScope.get(scope)) {
+          const esMode = grScope.getValue('js_level');
+          return esMode == 'es_latest' ? 'latest' : 5;
+        }
+      }
+
+      const scope = gr.sys_scope;
+      if (scope) {
+        const esMode = scope.js_level.getValue();
+        return esMode == 'es_latest' ? 'latest' : 5;
+      }
+      return 5;
+    };
+
+    const jsv = jsVersion();
+    if (guid == -1 || jsv == 'latest') return jsVersion;
+
+    const grEsLatest = new GlideRecord('sys_es_latest_script');
+    grEsLatest.addQuery('id', guid);
+    grEsLatest.addQuery('use_es_latest', true);
+    grEsLatest.query();
+
+    return grEsLatest.next() ? 'latest' : jsv;
+  }
+
+  function getLinting(gr, guid) {
+    let jsVersion = getEsMode(gr, guid);
+
+    return {
+      rules: {
+        semi: ['warn', 'always'],
+        'no-unused-vars': [
+          'warn',
+          {
+            args: 'none',
+          },
+        ],
+      },
+      languageOptions: {
+        parserOptions: {
+          ecmaVersion: jsVersion,
+          sourceType: 'script',
+        },
+      },
     };
   }
 })(request, response);

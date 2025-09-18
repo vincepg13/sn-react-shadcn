@@ -1,16 +1,19 @@
+import { isAxiosError } from 'axios'
 import { createPortal } from 'react-dom'
 import { css } from '@codemirror/lang-css'
 import { html } from '@codemirror/lang-html'
-import { RefObject, useEffect, useMemo, useRef, useState } from 'react'
 import { atomone } from '@uiw/codemirror-theme-atomone'
 import { javascript } from '@codemirror/lang-javascript'
 import { LanguageSupport } from '@codemirror/language'
+import { getAutocompleteData } from '@kit/utils/script-editor'
 import { SnSimpleTooltip } from '@kit/components/sn-ui/sn-tooltip'
-import { getAutocompleteData } from '@kit/utils/script-editor-api'
+import { useFormLifecycle } from '../contexts/SnFormLifecycleContext'
+import { RefObject, useEffect, useMemo, useRef, useState } from 'react'
 import { SnFieldBaseProps, SnFieldSchema } from '@kit/types/form-schema'
 import { useFieldUI } from '@kit/components/sn-form/contexts/FieldUIContext'
 import { useInlineTern } from '@kit/components/sn-ui/sn-script-editor/hooks/useTernInline'
 import { useFullScreen } from '@kit/components/sn-ui/sn-script-editor/hooks/useFullScreen'
+import { esLintDefaultConfig } from '@kit/components/sn-ui/sn-script-editor/hooks/useEsLint'
 import { Lock, Wand2, Minimize2, SearchCode, MessageSquareCode, Maximize2 } from 'lucide-react'
 import { SnScriptEditor, SnScriptEditorHandle } from '@kit/components/sn-ui/sn-script-editor/sn-script-editor'
 
@@ -28,30 +31,38 @@ const typeToLang: Record<string, LanguageSupport> = {
 
 export function SnFieldScript({ table, field, rhfField, adornmentRef, onChange }: SnFieldScriptProps) {
   const { readonly } = useFieldUI()
+  const { formConfig } = useFormLifecycle()
   const { isMaximized, toggleMax } = useFullScreen()
+
   const editorRef = useRef<SnScriptEditorHandle | null>(null)
   const [snDefs, setSnDefs] = useState<unknown | null>(null)
 
   useEffect(() => {
+    if (field.type == 'html_template' || field.type == 'css') return
+
     const controller = new AbortController()
 
     const loadSnDefs = async () => {
-      const snCompletionSet = await getAutocompleteData(table, field.name, controller)
-      setSnDefs(snCompletionSet)
+      try {
+        const snCompletionSet = await getAutocompleteData(table, field.name, controller)
+        setSnDefs(snCompletionSet)
+      } catch (e) {
+        if (isAxiosError(e) && e.code === 'ERR_CANCELED') return
+        console.error('Error loading autocomplete data', e)
+      }
     }
 
     loadSnDefs()
     return () => controller.abort()
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const { completionSource: tern, signatureExt } = useInlineTern({
+  const { completionSources, signatureExt } = useInlineTern({
     serviceNowDefs: snDefs,
     fileName: `${field.name}.js`,
   })
 
-  console.log('TERGN SOURCE', tern)
-
+  //Toolbar actions
   const Icons = useMemo(
     () => (
       <div className="flex items-center gap-3">
@@ -81,6 +92,11 @@ export function SnFieldScript({ table, field, rhfField, adornmentRef, onChange }
   // Maximized mode styles and behavior
   const editorHeight = isMaximized ? 'calc(100vh)' : undefined
   const wrapperClasses = isMaximized ? 'fixed inset-0 z-[1000] bg-background/95' : 'w-full'
+  const esLint = {
+    enabled: field.type === 'script',
+    debounceMs: 200,
+    config: formConfig.es_lint || esLintDefaultConfig,
+  }
 
   return (
     <>
@@ -93,9 +109,10 @@ export function SnFieldScript({ table, field, rhfField, adornmentRef, onChange }
           readonly={readonly}
           height={editorHeight}
           signatureExt={signatureExt}
-          autocompleteType="override"
+          completionSources={completionSources}
           onBlur={onChange}
-          completionSource={tern}
+          onToggleMax={toggleMax}
+          esLint={esLint}
         />
         {isMaximized && (
           <button

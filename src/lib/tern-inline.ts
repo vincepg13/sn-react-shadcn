@@ -1,7 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/**
- * GPT Generated for tern server because I really couldnt be asked to figure it out myself
- */
 import tern from 'tern'
 import 'tern/plugin/doc_comment'
 import ecma from 'tern/defs/ecmascript.json'
@@ -30,6 +27,17 @@ function formatSignature(sig: string, activeIndex: number) {
   return `${parts.join(', ')}${ret ? ` → ${ret}` : ''}`
 }
 
+// names from SN defs we consider "globals/ctors"
+function topLevelNamesFromDefs(defs: any): Set<string> {
+  const s = new Set<string>()
+  if (!defs || typeof defs !== 'object') return s
+  for (const k of Object.keys(defs)) {
+    if (k.startsWith('!')) continue
+    s.add(k)
+  }
+  return s
+}
+
 /* ------------------------ signature tooltip ext -------------------------- */
 
 const setSig = StateEffect.define<Tooltip | null>()
@@ -45,35 +53,30 @@ const sigField = StateField.define<Tooltip | null>({
 })
 
 function ternSignatureHelpExt(server: any, fileName: string) {
-  // Helper: find the position of the char just before '(' that opened this ArgList
+  // Helper: find end-of-callee position just before '(' of ArgList
   function calleeEndBeforeParen(doc: any, argListFrom: number) {
-    // `argListFrom` is at '('
     let i = argListFrom - 1
-    // Skip spaces/newlines before '('
-    while (i >= 0) {
-      const ch = doc.sliceString(i, i + 1)
-      if (/\s/.test(ch)) i--
-      else break
-    }
-    // Now i is last non-space before '(' (end of callee: e.g. 'gr.addQuery')
-    return Math.max(0, i + 1) // Tern wants the "end" position (1-past-last)
+    while (i >= 0 && /\s/.test(doc.sliceString(i, i + 1))) i--
+    return Math.max(0, i + 1)
   }
 
   return [
     sigField,
-    EditorView.updateListener.of(async (update) => {
+    EditorView.updateListener.of(async update => {
       if (!update.selectionSet && !update.docChanged) return
-
       const view = update.view
       const state = view.state
       const pos = state.selection.main.head
 
-      // Are we inside an argument list?
+      // detect ArgList
       const tree = syntaxTree(state)
       let node: any = tree.resolveInner(pos, -1)
       let argList: any = null
       while (node) {
-        if (node.name === 'ArgList') { argList = node; break }
+        if (node.name === 'ArgList') {
+          argList = node
+          break
+        }
         node = node.parent
       }
       if (!argList) {
@@ -81,34 +84,27 @@ function ternSignatureHelpExt(server: any, fileName: string) {
         return
       }
 
-      // Active param index = commas since '(' up to the cursor
-      const open = argList.from // should be at '('
+      const open = argList.from
       const between = state.doc.sliceString(open + 1, Math.max(open + 1, pos))
       const activeIndex = between.split(',').length - 1
 
-      // Ask Tern for the callee’s type (cursor at end of callee, not inside args)
-      const ternEndPosChar = calleeEndBeforeParen(state.doc, open)
-      const ternEnd = toLineCh(state.doc, ternEndPosChar)
-
-      // Sync file
+      // sync file
       const text = state.doc.toString()
-      try { server.delFile(fileName) } catch { /* empty */ }
+      try {
+        server.delFile(fileName)
+      } catch { /* empty */ }
       server.addFile(fileName, text)
 
-      // Prefer function type
+      // ask type at callee end (not inside args)
+      const ternEnd = toLineCh(state.doc, calleeEndBeforeParen(state.doc, open))
       let resp: any
-      await new Promise<void>((resolve) => {
+      await new Promise<void>(resolve => {
         server.request(
-          {
-            query: {
-              type: 'type',
-              file: fileName,
-              end: ternEnd,
-              lineCharPositions: true,
-              preferFunction: true,
-            },
-          },
-          (_err: any, r: any) => { resp = r; resolve() }
+          { query: { type: 'type', file: fileName, end: ternEnd, lineCharPositions: true, preferFunction: true } },
+          (_err: any, r: any) => {
+            resp = r
+            resolve()
+          }
         )
       })
 
@@ -134,16 +130,13 @@ function ternSignatureHelpExt(server: any, fileName: string) {
   ]
 }
 
-
 /* ----------------------------- main API --------------------------------- */
 
-/**
- * Builds an inline Tern server once and returns:
- *  - completionSource: minimal list (names only), but still Tern-powered
- *  - signatureExt: CM6 extension showing a tooltip when inside call parens
- */
-export function createInlineTern(serviceNowDefs: any, fileName = 'file.js'): {
-  completionSource: CompletionSource,
+export function createInlineTern(
+  serviceNowDefs: any,
+  fileName = 'file.js'
+): {
+  sources: CompletionSource[]
   signatureExt: any[]
 } {
   const server = new (tern as any).Server({
@@ -152,17 +145,13 @@ export function createInlineTern(serviceNowDefs: any, fileName = 'file.js'): {
     plugins: { doc_comment: true },
   })
 
-  const completionSource: CompletionSource = (ctx: any) => {
-    // If there’s a word use it; if not (e.g. right after '.'), still run Tern
-    const word = ctx.matchBefore(/\w+/)
-    const from = word ? word.from : ctx.pos
+  const snGlobals = topLevelNamesFromDefs(serviceNowDefs)
 
-    // Don’t pop on empty unless explicit or after '.'
-    const prev = ctx.pos > 0 ? ctx.state.doc.sliceString(ctx.pos - 1, ctx.pos) : ''
-    if (!ctx.explicit && !word && prev !== '.') return null
-
+  function runTernCompletions(ctx: any): any[] {
     const text = ctx.state.doc.toString()
-    try { server.delFile(fileName) } catch { /* empty */ }
+    try {
+      server.delFile(fileName)
+    } catch { /* empty */ }
     server.addFile(fileName, text)
 
     let result: any = null
@@ -182,31 +171,67 @@ export function createInlineTern(serviceNowDefs: any, fileName = 'file.js'): {
           guess: true,
         },
       },
-      (_err: any, resp: any) => { result = resp }
+      (_err: any, resp: any) => {
+        result = resp
+      }
     )
+    return result?.completions || []
+  }
 
-    const options = (result?.completions || []).map((c: any) => {
+  // 1) Only AFTER DOT: members (methods/properties). Vars are excluded (CM handles them).
+  const memberSource: CompletionSource = (ctx: any) => {
+    const word = ctx.matchBefore(/\w+/)
+    const from = word ? word.from : ctx.pos
+    const beforeIdx = (word ? from : ctx.pos) - 1
+    const memberCtx = beforeIdx >= 0 && ctx.state.doc.sliceString(beforeIdx, beforeIdx + 1) === '.'
+    if (!memberCtx) return null
+
+    const opts = runTernCompletions(ctx).map((c: any) => {
       const isFn = typeof c.type === 'string' && c.type.startsWith('fn(')
+      const isProp = !!c.isProperty
       return {
         label: c.name,
-        type: c.isProperty ? 'property' : (isFn ? 'function' : 'variable'),
-        // minimal list: insert fnName(${1}) or just name
+        type: isProp ? 'property' : isFn ? 'function' : 'variable',
         apply: isFn ? (snippet?.(`${c.name}(\${1})`) ?? `${c.name}()`) : c.name,
       }
     })
 
-    if (!options.length) return null
-    return { from, to: ctx.pos, options, filter: false }
+    if (!opts.length) return null
+    return { from, to: ctx.pos, options: opts, filter: false }
+  }
+
+  // 2) TOP-LEVEL constructors/globals from SN defs only (no locals → no dupes)
+  const globalsSource: CompletionSource = (ctx: any) => {
+    const word = ctx.matchBefore(/\w+/)
+    if (!word && !ctx.explicit) return null // don’t pop everywhere
+    const from = word ? word.from : ctx.pos
+
+    // Not in member context
+    const beforeIdx = (word ? from : ctx.pos) - 1
+    const memberCtx = beforeIdx >= 0 && ctx.state.doc.sliceString(beforeIdx, beforeIdx + 1) === '.'
+    if (memberCtx) return null
+
+    // Ask Tern and keep only symbols that belong to SN top-level defs
+    const opts = runTernCompletions(ctx)
+      .filter((c: any) => snGlobals.has(c.name)) // ← key to avoid locals/ECMA vars
+      .map((c: any) => {
+        const isFn = typeof c.type === 'string' && c.type.startsWith('fn(')
+        return {
+          label: c.name,
+          type: isFn ? 'function' : 'variable',
+          apply: isFn ? (snippet?.(`${c.name}(\${1})`) ?? `${c.name}()`) : c.name,
+        }
+      })
+
+    if (!opts.length) return null
+    return { from, to: ctx.pos, options: opts, filter: false }
   }
 
   const signatureExt = ternSignatureHelpExt(server, fileName)
-  return { completionSource, signatureExt }
+  return { sources: [memberSource, globalsSource], signatureExt }
 }
 
-/**
- * Backwards-compat: only the completion source (no signature help).
- * (Matches your previous function name.)
- */
+/** For backward-compat if you still need just one source */
 export function createInlineTernCompletionSource(serviceNowDefs: any, fileName = 'file.js') {
-  return createInlineTern(serviceNowDefs, fileName).completionSource
+  return createInlineTern(serviceNowDefs, fileName).sources[0]
 }

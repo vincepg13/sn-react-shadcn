@@ -1,7 +1,8 @@
+// useTernInline.ts
 import { useEffect, useState } from 'react'
-import { Extension } from '@codemirror/state'
-import { createInlineTern } from '../../../../lib/tern-inline'
 import type { CompletionSource } from '@codemirror/autocomplete'
+import { createInlineTern } from '../../../../lib/tern-inline'
+import { Extension } from '@codemirror/state'
 
 export function useInlineTern({
   serviceNowDefs,
@@ -10,22 +11,22 @@ export function useInlineTern({
   serviceNowDefs: unknown | null
   fileName?: string
 }) {
-  const [completionSource, setCompletionSource] = useState<CompletionSource>()
+  const [completionSources, setCompletionSources] = useState<CompletionSource[]>([])
   const [signatureExt, setSignatureExt] = useState<Extension[]>([])
   const [ready, setReady] = useState(false)
 
   useEffect(() => {
     if (!serviceNowDefs) {
-      setCompletionSource(undefined)
+      setCompletionSources([])
       setSignatureExt([])
       setReady(false)
       return
     }
-    const { completionSource, signatureExt } = createInlineTern(serviceNowDefs, fileName)
-    setCompletionSource(() => completionSource)
+    const { sources, signatureExt } = createInlineTern(serviceNowDefs, fileName)
+    setCompletionSources(sources) // ← two sources: members + globals
     setSignatureExt(signatureExt)
     setReady(true)
   }, [serviceNowDefs, fileName])
 
-  return { completionSource, signatureExt, ready }
+  return { completionSources, signatureExt, ready }
 }

@@ -1,10 +1,12 @@
-import { EditorView } from '@codemirror/view'
+import { EditorView, keymap } from '@codemirror/view'
 import { openSearchPanel } from '@codemirror/search'
 import { Options as PrettierOptions } from 'prettier'
 import { LanguageSupport } from '@codemirror/language'
-import { autocompletion } from '@codemirror/autocomplete'
+import { useEsLint } from './hooks/useEsLint'
+import { buildAutocomplete } from '@kit/utils/script-editor'
 import { usePrettierFormatter } from './hooks/usePrettierFormat'
-import { toggleLineComment, toggleBlockComment } from '@codemirror/commands'
+import { indentationMarkers } from '@replit/codemirror-indentation-markers'
+import { toggleBlockComment, toggleLineComment } from '@codemirror/commands'
 import { startCompletion, type CompletionSource } from '@codemirror/autocomplete'
 import { useState, useEffect, useRef, forwardRef, useImperativeHandle, useMemo } from 'react'
 import CodeMirror, { Extension, Prec, ReactCodeMirrorProps, ReactCodeMirrorRef } from '@uiw/react-codemirror'
@@ -18,7 +20,9 @@ interface SnScriptEditorProps {
   prettierOptions?: PrettierOptions
   signatureExt?: Extension[]
   autocompleteType?: 'default' | 'override'
-  completionSource?: CompletionSource
+  completionSources?: CompletionSource[]
+  esLint?: Parameters<typeof useEsLint>[0]
+  onToggleMax?: () => void
   onBlur?: (value: string) => void
   onFormat?: (result: { changed: boolean; error?: string }) => void
 }
@@ -39,9 +43,11 @@ export const SnScriptEditor = forwardRef<SnScriptEditorHandle, SnScriptEditorPro
     prettierOptions,
     signatureExt,
     autocompleteType = 'default',
-    completionSource,
+    completionSources,
+    esLint,
     onBlur,
     onFormat,
+    onToggleMax,
   },
   ref
 ) {
@@ -49,6 +55,10 @@ export const SnScriptEditor = forwardRef<SnScriptEditorHandle, SnScriptEditorPro
   const [value, setValue] = useState(content)
   const editorRef = useRef<ReactCodeMirrorRef | null>(null)
 
+  // Setup ESLint
+  const { extensions: lintExts } = useEsLint(esLint)
+
+  // Setup Prettier formatter
   const { formatNow, formatKeymap } = usePrettierFormatter(
     readonly,
     inputLang,
@@ -58,18 +68,18 @@ export const SnScriptEditor = forwardRef<SnScriptEditorHandle, SnScriptEditorPro
     onFormat
   )
 
+  // Dynamically bind editor content
   useEffect(() => {
     if (editorRef.current?.view) {
       const currentValue = editorRef.current.view.state.doc.toString()
       if (currentValue !== content) {
-        editorRef.current.view.dispatch({
-          changes: { from: 0, to: currentValue.length, insert: content ?? '' },
-        })
+        editorRef.current.view.dispatch({ changes: { from: 0, to: currentValue.length, insert: content ?? '' } })
         setValue(content ?? '')
       }
     }
   }, [content])
 
+  // Expose editor methods to parent
   useImperativeHandle(
     ref,
     () => ({
@@ -88,33 +98,65 @@ export const SnScriptEditor = forwardRef<SnScriptEditorHandle, SnScriptEditorPro
     [formatNow]
   )
 
-  const extraAutocomplete = useMemo<Extension | undefined>(() => {
-    if (autocompleteType === 'default') {
-      return completionSource ? Prec.high(lang.language.data.of({ autocomplete: completionSource })) : undefined
-    } else {
-      return autocompletion(
-        completionSource ? { activateOnTyping: true, override: [completionSource] } : { activateOnTyping: true }
-      )
-    }
-  }, [autocompleteType, completionSource, lang.language.data])
+  // Build autocomplete extensions
+  const autocompleteExt = useMemo<Extension | Extension[]>(
+    () => buildAutocomplete(lang, completionSources, autocompleteType),
+    [lang, completionSources, autocompleteType]
+  )
 
+  // Trigger completion after "."
   const dotTrigger = Prec.high(
     EditorView.updateListener.of(u => {
       if (!u.docChanged) return
       const head = u.state.selection.main.head
-      if (head > 0 && u.state.doc.sliceString(head - 1, head) === '.') {
-        startCompletion(u.view)
-      }
+      if (head > 0 && u.state.doc.sliceString(head - 1, head) === '.') startCompletion(u.view)
     })
   )
 
-  const extra = useMemo(() => {
-    const arr: Extension[] = []
-    if (completionSource) arr.push(Prec.high(lang.language.data.of({ autocomplete: completionSource })))
-    if (signatureExt?.length) arr.push(...signatureExt)
-    return arr
-  }, [lang, completionSource, signatureExt])
+  // Build cursor in bracket based extensions for methods
+  const extra = useMemo<Extension[]>(() => (signatureExt?.length ? [...signatureExt] : []), [signatureExt])
 
+  //Full screen
+  const fullscreenKeymap = useMemo(
+    () =>
+      Prec.highest(
+        keymap.of([
+          {
+            key: 'Mod-m',
+            run: () => {
+              onToggleMax?.()
+              return true
+            },
+          },
+          {
+            key: 'Escape',
+            run: () => {
+              onToggleMax?.()
+              return true
+            },
+          },
+        ])
+      ),
+    [onToggleMax]
+  )
+
+  // Combine all extensions
+  const extensions: Extension[] = [
+    lang,
+    formatKeymap,
+    EditorView.lineWrapping,
+    dotTrigger,
+    fullscreenKeymap,
+    indentationMarkers({
+      markerType: 'codeOnly',
+      thickness: 2,
+    }),
+    ...extra,
+    ...(lintExts ? (Array.isArray(lintExts) ? lintExts : [lintExts]) : []),
+    ...(Array.isArray(autocompleteExt) ? autocompleteExt : [autocompleteExt]),
+  ]
+
+  // Send it all into CodeMirror
   return (
     <CodeMirror
       ref={editorRef}
@@ -125,14 +167,7 @@ export const SnScriptEditor = forwardRef<SnScriptEditorHandle, SnScriptEditorPro
       readOnly={readonly}
       onChange={setValue}
       onBlur={() => onBlur?.(value || '')}
-      extensions={[
-        lang,
-        formatKeymap,
-        EditorView.lineWrapping,
-        dotTrigger,
-        ...extra,
-        ...(extraAutocomplete ? [extraAutocomplete] : []),
-      ]}
+      extensions={extensions}
       className="w-full [&_.cm-content[aria-readonly='true']]:cursor-not-allowed"
     />
   )

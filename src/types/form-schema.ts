@@ -218,6 +218,7 @@ const _formConfig = z.object({
   scope: z.string(),
   glide_user: _GlideUserSchema,
   prettier: z.custom<PrettierOptions>(),
+  es_lint: z.record(z.any()).optional(),
   security: z.object({
     canWrite: z.boolean(),
     canRead: z.boolean(),
