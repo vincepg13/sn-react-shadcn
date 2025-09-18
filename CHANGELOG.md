@@ -1,4 +1,9 @@
 #Change Log
+## [V1.6.0]
+- Added a new standalone component SnScriptEditor which is a CodeMirror V6 script editor designed specifically to work with ServiceNow scripts
+- Integrated SnScriptEditor into SnForm via the internal SnFieldScript component. This allows the following field types to be displayed: html_template, css, script
+- Fixed a bug on SnDataTable that was causing cancellation errors to surface into the component
+
 ## [V1.5.5]
 Updates to SnForm:
 - Added support for onSubmit client scripts
