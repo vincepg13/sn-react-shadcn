@@ -1,6 +1,7 @@
 {
   "name": "sn-shadcn-kit",
-  "version": "1.5.5",
+  "version": "1.5.6",
+  "type": "module",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
@@ -51,6 +52,10 @@
     "./loader": {
       "types": "./dist/loader.d.ts",
       "import": "./dist/loader.js"
+    },
+    "./standalone": {
+      "types": "./dist/standalone.d.ts",
+      "import": "./dist/standalone.js"
     }
   },
   "peerDependencies": {
