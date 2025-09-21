@@ -1,8 +1,8 @@
-import { ChevronDown, ChevronUp } from 'lucide-react'
-import { forwardRef, RefObject, useCallback, useEffect, useState, useRef } from 'react'
-import { NumericFormat, NumericFormatProps } from 'react-number-format'
-import { Button } from '../../ui/button'
 import { Input } from '../../ui/input'
+import { Button } from '../../ui/button'
+import { ChevronDown, ChevronUp } from 'lucide-react'
+import { NumericFormat, NumericFormatProps } from 'react-number-format'
+import { forwardRef, RefObject, useCallback, useEffect, useState, useRef } from 'react'
 
 interface NumberInputProps extends Omit<NumericFormatProps, 'value' | 'onValueChange'> {
   stepper?: number
@@ -96,7 +96,7 @@ export const SnFieldNumeric = forwardRef<HTMLInputElement, NumberInputProps>(
     }
 
     return (
-      <div className="flex items-center">
+      <div className={`flex items-center ${readonly ? 'cursor-not-allowed' : ''}`}>
         <NumericFormat
           value={value}
           onValueChange={handleChange}

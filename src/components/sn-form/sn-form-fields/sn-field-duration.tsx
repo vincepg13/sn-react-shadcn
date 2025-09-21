@@ -1,6 +1,7 @@
 import { ComboInput } from '@kit/components/ui/combo-input'
 import { SnFieldBaseProps } from '@kit/types/form-schema'
 import { useEffect, useState } from 'react'
+import { useFieldUI } from '../contexts/FieldUIContext'
 
 const EPOCH_DATE = new Date('1970-01-01T00:00:00Z')
 
@@ -25,6 +26,7 @@ export function SnFieldDuration({ field, rhfField, onChange }: SnFieldDurProps) 
 }
 
 export function SnFieldDurationCore({ field, fVal, size = 'default', onChange }: SnFieldDurCoreProps) {
+  const { readonly } = useFieldUI()
   const [splits, setSplits] = useState(['', '', '', ''])
 
   useEffect(() => {
@@ -99,14 +101,15 @@ export function SnFieldDurationCore({ field, fVal, size = 'default', onChange }:
 
     if (i === 0) inputClasses += ` rounded-sm mr-1 text-end ${startCellPadder}`
     if (i === 1) inputClasses += ` rounded-none rounded-l-sm ${startCellPadder}`
-    if (i === 2) inputClasses += ` rounded-none border-l-0 border-r-0 focus-within:border-l focus-within:border-r ${endCellPadder}`
+    if (i === 2)
+      inputClasses += ` rounded-none border-l-0 border-r-0 focus-within:border-l focus-within:border-r ${endCellPadder}`
     if (i === 3) inputClasses += ` rounded-none rounded-r-sm ${endCellPadder}`
 
     return inputClasses
   }
 
   return (
-    <div className="flex">
+    <div className={`flex ${readonly ? 'cursor-not-allowed' : ''}`}>
       {splits.map((val, i) => (
         <div key={i} className="flex items-center gap-1">
           <ComboInput
@@ -114,7 +117,7 @@ export function SnFieldDurationCore({ field, fVal, size = 'default', onChange }:
             min={0}
             value={val}
             required={field.mandatory}
-            disabled={field.readonly}
+            disabled={readonly}
             onChange={e => handleChange(i, e.target.value)}
             className={getInputClasses(i)}
             innerClass="text-center"

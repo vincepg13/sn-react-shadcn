@@ -1,7 +1,7 @@
-import { RHFField } from "../../../types/form-schema"
-import { Input } from "../../../components/ui/input"
-import { useFieldUI } from "../contexts/FieldUIContext"
-import { memo } from "react"
+import { RHFField } from '../../../types/form-schema'
+import { Input } from '../../../components/ui/input'
+import { useFieldUI } from '../contexts/FieldUIContext'
+import { memo } from 'react'
 
 interface SnFieldInputProps {
   rhfField: RHFField
@@ -10,7 +10,12 @@ interface SnFieldInputProps {
   type?: string
 }
 
-export const SnFieldInput = memo(function SnFieldInput({ rhfField, onChange, onFocus, type="text" }: SnFieldInputProps) {
+export const SnFieldInput = memo(function SnFieldInput({
+  rhfField,
+  onChange,
+  onFocus,
+  type = 'text',
+}: SnFieldInputProps) {
   const { readonly } = useFieldUI()
   let dv = String(rhfField.value ?? '')
 
@@ -19,14 +24,16 @@ export const SnFieldInput = memo(function SnFieldInput({ rhfField, onChange, onF
   }
 
   return (
-    <Input
-      {...rhfField}
-      value={dv}
-      onFocus={onFocus}
-      onBlur={(e) => onChange(e.target.value)}
-      disabled={!!readonly}
-      className="w-full"
-      type={type}
-    />
+    <div className={`${readonly ? 'cursor-not-allowed' : ''}`}>
+      <Input
+        {...rhfField}
+        value={dv}
+        onFocus={onFocus}
+        onBlur={e => onChange(e.target.value)}
+        disabled={!!readonly}
+        className="w-full"
+        type={type}
+      />
+    </div>
   )
 })

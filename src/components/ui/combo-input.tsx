@@ -46,6 +46,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           {...props}
           className={cn(
             'w-full bg-transparent outline-none focus-visible:outline-none',
+            props.disabled && 'opacity-50 cursor-not-allowed',
             {
               'pl-2': !!startContent,
               'pr-2': !!endContent,

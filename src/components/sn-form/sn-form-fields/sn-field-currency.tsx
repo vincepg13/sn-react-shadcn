@@ -25,6 +25,7 @@ export function SnFieldCurrency({ field, readonly, allowNull, onChange }: SnFiel
   const [currencyValue, setCurrencyValue] = useState<number|undefined>(field.currencyValue ? +field.currencyValue : nullValue)
 
   const handleChange = (code: string, value: number|undefined) => {
+    if (!code) return
     setCurrency(code)
     setCurrencyValue(value)
     onChange(code + ';' + value)
