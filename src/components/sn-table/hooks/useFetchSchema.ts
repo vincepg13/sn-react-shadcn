@@ -2,8 +2,9 @@ import { useEffect } from 'react'
 import { isAxiosError } from 'axios'
 import { getColumnViaFields } from '../columns'
 import { ColumnDef } from '@tanstack/react-table'
-import { SnRow, SnRowItem } from '../../../types/table-schema'
 import { getTableSchema } from '../../../utils/table-api'
+import { SnRow, SnRowItem } from '../../../types/table-schema'
+
 
 export function useFetchSchema({
   table,

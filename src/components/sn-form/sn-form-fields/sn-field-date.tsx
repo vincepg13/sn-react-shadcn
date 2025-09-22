@@ -11,12 +11,10 @@ import { useState, ChangeEvent } from 'react'
 import { XCircle } from 'lucide-react'
 import { useFormLifecycle } from '../contexts/SnFormLifecycleContext'
 
-
 export function SnFieldDate({ field, rhfField, onChange }: SnFieldBaseProps<string> & { field: SnFieldSchema }) {
   const { readonly } = useFieldUI()
   const { formConfig } = useFormLifecycle()
   const isDateTime = field.type === 'glide_date_time'
-  
 
   const rawValue = rhfField.value
   const maybeDate =
@@ -45,7 +43,8 @@ export function SnFieldDate({ field, rhfField, onChange }: SnFieldBaseProps<stri
       date.setSeconds(Number(ss))
     }
 
-    let formatted = '', displayFormat = ''
+    let formatted = '',
+      displayFormat = ''
     if (isDateTime) {
       formatted = format(date, 'yyyy-MM-dd HH:mm:ss')
       displayFormat = format(date, formConfig.date_format + ' HH:mm:ss')
@@ -75,42 +74,48 @@ export function SnFieldDate({ field, rhfField, onChange }: SnFieldBaseProps<stri
   }
 
   return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          disabled={readonly}
-          className={cn('w-full justify-start text-left font-normal', !selectedDate && 'text-muted-foreground')}
-        >
-          <CalendarIcon className="mr-2 h-4 w-4" />
-          {selectedDate ? format(selectedDate, isDateTime ? 'PPP p' : 'PPP') : <span>Pick a date</span>}
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-auto p-4 space-y-3" align="start">
-        <Calendar mode="single" selected={selectedDate} onSelect={handleDateChange} className="p-0" initialFocus />
-        {isDateTime && (
-          <input
-            type="time"
-            step="60"
-            value={selectedTime.slice(0, 5)} // show HH:mm only
-            onChange={handleTimeChange}
-            className="w-full border rounded px-2 py-1 text-sm"
-          />
-        )}
-        {rhfField.value && (
+    <div className={`${readonly ? 'cursor-not-allowed' : ''}`}>
+      <Popover>
+        <PopoverTrigger asChild>
           <Button
             variant="outline"
-            size="sm"
-            className="w-full text-center justify-center items-center"
-            onClick={() => {
-              onChange('')
-              setSelectedTime('00:00:00')
-            }}
+            disabled={readonly}
+            className={cn(
+              'w-full justify-start text-left font-normal',
+              readonly && 'cursor-not-allowed',
+              !selectedDate && 'text-muted-foreground'
+            )}
           >
-            <XCircle className="text-red-500 size-5" />
+            <CalendarIcon className="mr-2 h-4 w-4" />
+            {selectedDate ? format(selectedDate, isDateTime ? 'PPP p' : 'PPP') : <span>Pick a date</span>}
           </Button>
-        )}
-      </PopoverContent>
-    </Popover>
+        </PopoverTrigger>
+        <PopoverContent className="w-auto p-4 space-y-3" align="start">
+          <Calendar mode="single" selected={selectedDate} onSelect={handleDateChange} className="p-0" initialFocus />
+          {isDateTime && (
+            <input
+              type="time"
+              step="60"
+              value={selectedTime.slice(0, 5)} // show HH:mm only
+              onChange={handleTimeChange}
+              className="w-full border rounded px-2 py-1 text-sm"
+            />
+          )}
+          {rhfField.value && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full text-center justify-center items-center"
+              onClick={() => {
+                onChange('')
+                setSelectedTime('00:00:00')
+              }}
+            >
+              <XCircle className="text-red-500 size-5" />
+            </Button>
+          )}
+        </PopoverContent>
+      </Popover>
+    </div>
   )
 }

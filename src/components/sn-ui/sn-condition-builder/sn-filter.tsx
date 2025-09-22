@@ -9,7 +9,7 @@ type FilterProps = {
   table: string
   encodedQuery?: string
   initialOpenState?: 'open' | 'closed'
-  onQueryBuilt: (encoded: string) => void
+  onQueryBuilt?: (encoded: string) => void
 }
 
 export function SnFilter({ table, encodedQuery, initialOpenState, onQueryBuilt }: FilterProps) {
@@ -40,7 +40,7 @@ export function SnFilter({ table, encodedQuery, initialOpenState, onQueryBuilt }
   const handleQueryBuilt = (encoded: string) => {
     setDisplayLoading(true)
     localQuery.current = encoded
-    onQueryBuilt(encoded)
+    onQueryBuilt?.(encoded)
     if (showBuilder) setShowBuilder(false)
   }
 

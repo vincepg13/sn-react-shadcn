@@ -196,7 +196,7 @@ function renderFieldComponent(
     case 'decimal':
       return (
         <SnFieldNumeric
-          readOnly={readonly}
+          readonly={readonly}
           value={rhfField.value as number}
           onValueChange={value => handleChange(value ?? '')}
           onFocus={handleFocus}

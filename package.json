@@ -1,6 +1,7 @@
 {
   "name": "sn-shadcn-kit",
-  "version": "1.6.0",
+  "version": "2.0.0",
+  "type": "module",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
@@ -22,7 +23,7 @@
   },
   "homepage": "https://github.com/vincepg13/sn-react-shadcn#readme",
   "scripts": {
-    "build": "tsup src/index.ts --dts --format esm,cjs --out-dir dist --external react,react-dom",
+    "build": "tsup",
     "dev": "vite",
     "preview": "vite preview",
     "prepublishOnly": "npm run build"
@@ -30,8 +31,31 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.mjs",
-      "require": "./dist/index.js"
+      "import": "./dist/index.js"
+    },
+    "./amb": {
+      "types": "./dist/amb.d.ts",
+      "import": "./dist/amb.js"
+    },
+    "./form": {
+      "types": "./dist/form.d.ts",
+      "import": "./dist/form.js"
+    },
+    "./table": {
+      "types": "./dist/table.d.ts",
+      "import": "./dist/table.js"
+    },
+    "./user": {
+      "types": "./dist/user.d.ts",
+      "import": "./dist/user.js"
+    },
+    "./loader": {
+      "types": "./dist/loader.d.ts",
+      "import": "./dist/loader.js"
+    },
+    "./standalone": {
+      "types": "./dist/standalone.d.ts",
+      "import": "./dist/standalone.js"
     }
   },
   "peerDependencies": {
