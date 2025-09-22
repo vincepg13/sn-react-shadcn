@@ -1,12 +1,6 @@
 import { SnAttachment } from '@kit/types/attachment-schema'
 import { getAxiosInstance } from './axios-client'
 
-declare global {
-  interface Window {
-    g_ck?: string
-  }
-}
-
 export async function getAttachments(
   table: string,
   guid: string,
