@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { SnFieldNumeric } from './SnFieldNumeric'
+import { SnFieldNumeric } from './sn-field-numeric'
 import { RHFField, SnCurrencyField } from '@kit/types/form-schema'
 import {
   Select,

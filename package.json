@@ -53,6 +53,10 @@
       "types": "./dist/loader.d.ts",
       "import": "./dist/loader.js"
     },
+    "./script": {
+      "types": "./dist/script.d.ts",
+      "import": "./dist/script.js"
+    },
     "./standalone": {
       "types": "./dist/standalone.d.ts",
       "import": "./dist/standalone.js"
@@ -121,6 +125,7 @@
     "dompurify": "^3.2.5",
     "eslint-linter-browserify": "^9.35.0",
     "espree": "^10.4.0",
+    "globals": "^16.0.0",
     "lodash.isequal": "^4.5.0",
     "lowlight": "^3.3.0",
     "lucide-react": "^0.488.0",
@@ -151,7 +156,6 @@
     "@vitejs/plugin-react-swc": "^3.0.0",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.20",
-    "globals": "^16.0.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "tsup": "^8.4.0",

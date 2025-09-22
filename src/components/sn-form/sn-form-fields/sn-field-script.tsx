@@ -1,10 +1,6 @@
 import { isAxiosError } from 'axios'
 import { createPortal } from 'react-dom'
-import { css } from '@codemirror/lang-css'
-import { html } from '@codemirror/lang-html'
 import { atomone } from '@uiw/codemirror-theme-atomone'
-import { javascript } from '@codemirror/lang-javascript'
-import { LanguageSupport } from '@codemirror/language'
 import { getAutocompleteData } from '@kit/utils/script-editor'
 import { SnSimpleTooltip } from '@kit/components/sn-ui/sn-tooltip'
 import { useFormLifecycle } from '../contexts/SnFormLifecycleContext'
@@ -23,10 +19,10 @@ interface SnFieldScriptProps extends Omit<SnFieldBaseProps<string>, 'field'> {
   adornmentRef?: RefObject<HTMLElement | null>
 }
 
-const typeToLang: Record<string, LanguageSupport> = {
-  script: javascript(),
-  html_template: html(),
-  css: css(),
+const typeToLang: Record<string, 'javascript' | 'html' | 'css'> = {
+  script: 'javascript',
+  html_template: 'html',
+  css: 'css',
 }
 
 export function SnFieldScript({ table, field, rhfField, adornmentRef, onChange }: SnFieldScriptProps) {
@@ -92,18 +88,31 @@ export function SnFieldScript({ table, field, rhfField, adornmentRef, onChange }
   // Maximized mode styles and behavior
   const editorHeight = isMaximized ? 'calc(100vh)' : undefined
   const wrapperClasses = isMaximized ? 'fixed inset-0 z-[1000] bg-background/95' : 'w-full'
+  // const esLint = {
+  //   enabled: field.type === 'script',
+  //   debounceMs: 200,
+  //   config: formConfig.es_lint || esLintDefaultConfig,
+  // }
+
+  // B) minimal, known-good config
   const esLint = {
     enabled: field.type === 'script',
     debounceMs: 200,
-    config: formConfig.es_lint || esLintDefaultConfig,
+    config: {
+      // ESLint 8-style
+      rules: { semi: ['warn', 'always'], 'no-unused-vars': ['warn', { args: 'none' }] },
+      languageOptions: { parserOptions: { ecmaVersion: 'latest', sourceType: 'script' } },
+    },
   }
+
+  console.log('SN SCRIPT FIELD UNUSED', formConfig, esLintDefaultConfig)
 
   return (
     <>
       <div className={wrapperClasses}>
         <SnScriptEditor
           ref={editorRef}
-          lang={typeToLang[field.type]}
+          language={typeToLang[field.type]}
           content={String(rhfField.value ?? '')}
           theme={atomone}
           readonly={readonly}

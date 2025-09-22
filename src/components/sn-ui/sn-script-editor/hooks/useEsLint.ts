@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import globals from 'globals'
+import {browser} from 'globals'
 import * as espree from 'espree'
 import type { Extension } from '@codemirror/state'
 import { useEffect, useMemo, useState } from 'react'
@@ -19,7 +19,7 @@ function getEs5Config(rules: Record<string, unknown>) {
       parser: espree,
       ecmaVersion: 5,
       sourceType: 'script',
-      globals: { ...globals.browser },
+      globals: { ...browser },
     },
     rules,
   }
@@ -27,7 +27,7 @@ function getEs5Config(rules: Record<string, unknown>) {
 
 export const esLintDefaultConfig = {
   rules: { semi: ['warn', 'always'], 'no-unused-vars': ['warn', { args: 'none' }] },
-  languageOptions: { globals: { ...globals.browser }, parserOptions: { ecmaVersion: 2025, sourceType: 'script' } },
+  languageOptions: { globals: { ...browser }, parserOptions: { ecmaVersion: "latest", sourceType: 'script' } },
 }
 
 export function useEsLint(opts: UseEsLintOptions = { enabled: false }): {

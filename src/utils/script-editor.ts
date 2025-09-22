@@ -12,7 +12,7 @@ export async function getAutocompleteData(table: string, field: string, controll
 }
 
 // De-duplicate completion results (by label, type, detail).
-export function dedupe(result: CompletionResult | null): CompletionResult | null {
+function dedupe(result: CompletionResult | null): CompletionResult | null {
   if (!result || !result.options?.length) return result
   const seen = new Set<string>()
   const options = []
@@ -27,7 +27,7 @@ export function dedupe(result: CompletionResult | null): CompletionResult | null
 }
 
 // Wrap a completion source to de-duplicate its results.
-export const wrapSource =
+const wrapSource =
   (src: CompletionSource): CompletionSource =>
   ctx => {
     const r = src(ctx)
@@ -45,7 +45,7 @@ function mergeResults(results: (CompletionResult | null)[], pos: number): Comple
 }
 
 // Merge many sources into one (keeps earlier sources’ items if duplicates).
-export function mergeSources(sources: CompletionSource[]): CompletionSource {
+function mergeSources(sources: CompletionSource[]): CompletionSource {
   const wrapped = sources.map(wrapSource) // each is independently deduped
   return ctx => {
     const outs = wrapped.map(s => s(ctx))

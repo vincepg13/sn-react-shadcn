@@ -1,7 +1,9 @@
+import { css } from '@codemirror/lang-css'
+import { html } from '@codemirror/lang-html'
+import { javascript } from '@codemirror/lang-javascript'
 import { EditorView, keymap } from '@codemirror/view'
 import { openSearchPanel } from '@codemirror/search'
 import { Options as PrettierOptions } from 'prettier'
-import { LanguageSupport } from '@codemirror/language'
 import { useEsLint } from './hooks/useEsLint'
 import { buildAutocomplete } from '@kit/utils/script-editor'
 import { usePrettierFormatter } from './hooks/usePrettierFormat'
@@ -12,7 +14,7 @@ import { useState, useEffect, useRef, forwardRef, useImperativeHandle, useMemo }
 import CodeMirror, { Extension, Prec, ReactCodeMirrorProps, ReactCodeMirrorRef } from '@uiw/react-codemirror'
 
 interface SnScriptEditorProps {
-  lang: LanguageSupport
+  language?: 'javascript' | 'html' | 'css'
   height?: string
   content?: string
   readonly?: boolean
@@ -27,6 +29,19 @@ interface SnScriptEditorProps {
   onFormat?: (result: { changed: boolean; error?: string }) => void
 }
 
+function getLanguageSupport(lang: string) {
+  switch (lang) {
+    case 'javascript':
+      return javascript()
+    case 'html':
+      return html()
+    case 'css':
+      return css()
+    default:
+      return javascript()
+  }
+}
+
 export interface SnScriptEditorHandle {
   openSearch: () => void
   toggleComment: (block?: boolean) => void
@@ -35,9 +50,9 @@ export interface SnScriptEditorHandle {
 
 export const SnScriptEditor = forwardRef<SnScriptEditorHandle, SnScriptEditorProps>(function SnScriptEditor(
   {
+    language,
     height = '400px',
     theme = 'dark',
-    lang,
     content,
     readonly = false,
     prettierOptions,
@@ -51,9 +66,13 @@ export const SnScriptEditor = forwardRef<SnScriptEditorHandle, SnScriptEditorPro
   },
   ref
 ) {
-  const inputLang = lang.language.name
+  const inputLang = language || 'javascript'
+  const lang = getLanguageSupport(language || 'javascript')
   const [value, setValue] = useState(content)
   const editorRef = useRef<ReactCodeMirrorRef | null>(null)
+
+  // console.log("LANG", lang)
+  // return <div>hi</div>
 
   // Setup ESLint
   const { extensions: lintExts } = useEsLint(esLint)
