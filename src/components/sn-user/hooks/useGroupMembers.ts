@@ -3,9 +3,7 @@ import { useEffect, useState } from 'react'
 import { getTableRows } from '../../../utils/table-api'
 import { SnRow } from '../../../types/table-schema'
 import { SnGroup } from '../../../types/user-schema'
-import { getAxiosInstance } from '../../../utils/axios-client'
-
-const axios = getAxiosInstance()
+import { isAxiosError } from 'axios'
 
 export function useGroupMembers(
   guid: string,
@@ -50,7 +48,7 @@ export function useGroupMembers(
 
         setTotal(+res.headers['x-total-count']! || 0)
       } catch (e) {
-        if (axios.isAxiosError(e) && e.code === 'ERR_CANCELED') return
+        if (isAxiosError(e) && e.code === 'ERR_CANCELED') return
         console.error('Error loading members', e)
         setMembers([])
       }
