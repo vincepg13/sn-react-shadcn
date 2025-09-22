@@ -123,8 +123,7 @@
     "date-fns": "^4.1.0",
     "date-fns-tz": "^3.2.0",
     "dompurify": "^3.2.5",
-    "eslint-linter-browserify": "^9.35.0",
-    "espree": "^10.4.0",
+    "eslint-linter-browserify": "8.57.0",
     "globals": "^16.0.0",
     "lodash.isequal": "^4.5.0",
     "lowlight": "^3.3.0",
@@ -163,6 +162,7 @@
     "vite": "^6.0.0"
   },
   "overrides": {
+    "eslint-linter-browserify": "8.57.0",
     "shadcn-dropzone": {
       "react": "^19.0.0",
       "react-dom": "^19.0.0"

@@ -1,8 +1,8 @@
 import { isAxiosError } from 'axios'
 import { createPortal } from 'react-dom'
+import { Minimize2 } from 'lucide-react'
 import { atomone } from '@uiw/codemirror-theme-atomone'
 import { getAutocompleteData } from '@kit/utils/script-editor'
-import { SnSimpleTooltip } from '@kit/components/sn-ui/sn-tooltip'
 import { useFormLifecycle } from '../contexts/SnFormLifecycleContext'
 import { RefObject, useEffect, useMemo, useRef, useState } from 'react'
 import { SnFieldBaseProps, SnFieldSchema } from '@kit/types/form-schema'
@@ -10,8 +10,8 @@ import { useFieldUI } from '@kit/components/sn-form/contexts/FieldUIContext'
 import { useInlineTern } from '@kit/components/sn-ui/sn-script-editor/hooks/useTernInline'
 import { useFullScreen } from '@kit/components/sn-ui/sn-script-editor/hooks/useFullScreen'
 import { esLintDefaultConfig } from '@kit/components/sn-ui/sn-script-editor/hooks/useEsLint'
-import { Lock, Wand2, Minimize2, SearchCode, MessageSquareCode, Maximize2 } from 'lucide-react'
-import { SnScriptEditor, SnScriptEditorHandle } from '@kit/components/sn-ui/sn-script-editor/sn-script-editor'
+import { SnCodeMirror, SnCodeMirrorHandle } from '@kit/components/sn-ui/sn-script-editor/sn-code-mirror'
+import { SnScriptToolbar } from '@kit/components/sn-ui/sn-script-editor/sn-script-toolbar'
 
 interface SnFieldScriptProps extends Omit<SnFieldBaseProps<string>, 'field'> {
   field: SnFieldSchema
@@ -30,7 +30,7 @@ export function SnFieldScript({ table, field, rhfField, adornmentRef, onChange }
   const { formConfig } = useFormLifecycle()
   const { isMaximized, toggleMax } = useFullScreen()
 
-  const editorRef = useRef<SnScriptEditorHandle | null>(null)
+  const editorRef = useRef<SnCodeMirrorHandle | null>(null)
   const [snDefs, setSnDefs] = useState<unknown | null>(null)
 
   useEffect(() => {
@@ -60,57 +60,23 @@ export function SnFieldScript({ table, field, rhfField, adornmentRef, onChange }
 
   //Toolbar actions
   const Icons = useMemo(
-    () => (
-      <div className="flex items-center gap-3">
-        <button type="button" className="hover:opacity-80" onClick={() => editorRef.current?.openSearch()}>
-          <SnSimpleTooltip trigger={<SearchCode size={18} />} content="Search (Ctrl + F)" />
-        </button>
-        {readonly ? (
-          <SnSimpleTooltip trigger={<Lock size={18} />} content="Readonly field" />
-        ) : (
-          <>
-            <button type="button" className="hover:opacity-80" onClick={() => editorRef.current?.toggleComment()}>
-              <SnSimpleTooltip trigger={<MessageSquareCode size={18} />} content="Comment (Ctrl + /)" />
-            </button>
-            <button type="button" className="hover:opacity-80" onClick={() => editorRef.current?.format()}>
-              <SnSimpleTooltip trigger={<Wand2 size={18} />} content="Format (Shift + Alt + F)" />
-            </button>
-          </>
-        )}
-        <button type="button" className="hover:opacity-80" onClick={toggleMax}>
-          <SnSimpleTooltip trigger={<Maximize2 size={18} />} content="Full screen (Ctrl + M)" />
-        </button>
-      </div>
-    ),
+    () => <SnScriptToolbar readonly={readonly} toggleMax={toggleMax} editorRef={editorRef} />,
     [readonly, toggleMax]
   )
 
   // Maximized mode styles and behavior
   const editorHeight = isMaximized ? 'calc(100vh)' : undefined
   const wrapperClasses = isMaximized ? 'fixed inset-0 z-[1000] bg-background/95' : 'w-full'
-  // const esLint = {
-  //   enabled: field.type === 'script',
-  //   debounceMs: 200,
-  //   config: formConfig.es_lint || esLintDefaultConfig,
-  // }
-
-  // B) minimal, known-good config
   const esLint = {
     enabled: field.type === 'script',
     debounceMs: 200,
-    config: {
-      // ESLint 8-style
-      rules: { semi: ['warn', 'always'], 'no-unused-vars': ['warn', { args: 'none' }] },
-      languageOptions: { parserOptions: { ecmaVersion: 'latest', sourceType: 'script' } },
-    },
+    config: formConfig.es_lint || esLintDefaultConfig,
   }
-
-  console.log('SN SCRIPT FIELD UNUSED', formConfig, esLintDefaultConfig)
 
   return (
     <>
       <div className={wrapperClasses}>
-        <SnScriptEditor
+        <SnCodeMirror
           ref={editorRef}
           language={typeToLang[field.type]}
           content={String(rhfField.value ?? '')}
