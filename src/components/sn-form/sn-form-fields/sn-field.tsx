@@ -8,7 +8,7 @@ import { SnFieldCurrency } from './sn-field-currency'
 import { SnFieldHtml } from './sn-field-html'
 import { SnFieldFieldList } from './sn-field-field-list'
 import { SnFieldMedia } from './sn-media/sn-field-media'
-import { SnFieldNumeric } from './SnFieldNumeric'
+import { SnFieldNumeric } from './sn-field-numeric'
 import { SnFieldTextarea } from './sn-field-textarea'
 import { SnFieldCheckbox } from './sn-field-checkbox'
 import { SnFieldTableName } from './sn-field-table'
@@ -21,6 +21,7 @@ import { useUiPoliciesContext } from '../contexts/SnUiPolicyContext'
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '../../ui/form'
 import { SnFieldSchema, RHFField, FieldUIState, SnFieldPrimitive, SnCurrencyField } from '../../../types/form-schema'
 import { SnFieldDuration } from './sn-field-duration'
+import { SnFieldScript } from './sn-field-script'
 
 interface SnFieldProps {
   field: SnFieldSchema
@@ -37,6 +38,7 @@ function SnFieldComponent({ field, fieldUIState, guid, table, displayValues }: S
   const { runUiPoliciesForField } = useUiPoliciesContext()
 
   const oldValueRef = useRef<SnFieldPrimitive>(field.value)
+  const formLabelRightRef = useRef<HTMLDivElement | null>(null)
 
   const fieldUI = useEffectiveFieldState({
     field,
@@ -83,7 +85,8 @@ function SnFieldComponent({ field, fieldUIState, guid, table, displayValues }: S
             handleSelect,
             handleFocus,
             getValues(),
-            watch
+            watch,
+            formLabelRightRef
           )
 
           if (!input) return <></>
@@ -91,11 +94,12 @@ function SnFieldComponent({ field, fieldUIState, guid, table, displayValues }: S
           return (
             <FormItem className="mb-4">
               {field.type !== 'boolean' && (
-                <FormLabel>
+                <FormLabel className="flex items-center justify-between">
                   <span>
                     {field.label}{' '}
                     {fieldUI.mandatory && <span className={rhfField.value ? 'text-grey-500' : 'text-red-500'}>*</span>}
                   </span>
+                  <div ref={formLabelRightRef} />
                 </FormLabel>
               )}
               <FormControl>{input}</FormControl>
@@ -118,7 +122,8 @@ function renderFieldComponent(
   handleSelect: (value: SnFieldPrimitive, display?: string) => void,
   handleFocus: () => void,
   formValues: Record<string, string>,
-  watch: ReturnType<typeof useFormContext>['watch']
+  watch: ReturnType<typeof useFormContext>['watch'],
+  adornmentRef: RefObject<HTMLDivElement | null>
 ): ReactNode {
   const depField = field.dependentField || ''
   const depValue = depField ? watch(depField) : undefined
@@ -127,9 +132,6 @@ function renderFieldComponent(
   // - File Attachment
   // - User Roles
   // - Field List
-  // - Condition Builder
-  // - Activity Formatter / Journals
-  // - CodeMirror / Script Editing
 
   switch (field.type) {
     case 'email':
@@ -193,7 +195,7 @@ function renderFieldComponent(
     case 'decimal':
       return (
         <SnFieldNumeric
-          readOnly={readonly}
+          readonly={readonly}
           value={rhfField.value as number}
           onValueChange={value => handleChange(value ?? '')}
           onFocus={handleFocus}
@@ -208,6 +210,19 @@ function renderFieldComponent(
       return <SnFieldHtml rhfField={rhfField} onChange={handleChange} />
     case 'field_name':
       return <SnFieldFieldList field={field} rhfField={rhfField} onChange={handleChange} dependentValue={depValue} />
+    case 'css':
+    case 'script':
+    case 'script_plain':
+    case 'html_template':
+      return (
+        <SnFieldScript
+          table={table}
+          field={field}
+          rhfField={rhfField}
+          adornmentRef={adornmentRef}
+          onChange={handleChange}
+        />
+      )
     case 'video':
     case 'user_image': {
       const extension = field.type === 'user_image' ? '.iix' : '.vvx'

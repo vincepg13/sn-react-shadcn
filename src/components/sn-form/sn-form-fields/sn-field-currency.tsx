@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { SnFieldNumeric } from './SnFieldNumeric'
+import { SnFieldNumeric } from './sn-field-numeric'
 import { RHFField, SnCurrencyField } from '@kit/types/form-schema'
 import {
   Select,
@@ -25,6 +25,7 @@ export function SnFieldCurrency({ field, readonly, allowNull, onChange }: SnFiel
   const [currencyValue, setCurrencyValue] = useState<number|undefined>(field.currencyValue ? +field.currencyValue : nullValue)
 
   const handleChange = (code: string, value: number|undefined) => {
+    if (!code) return
     setCurrency(code)
     setCurrencyValue(value)
     onChange(code + ';' + value)

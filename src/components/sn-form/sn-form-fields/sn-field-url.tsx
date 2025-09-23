@@ -10,7 +10,7 @@ export function SnFieldUrl({ rhfField, onChange }: SnFieldBaseProps<string>) {
   const [locked, setLocked] = useState(!!rhfField.value)
 
   return (
-    <div className="flex w-full justify-between items-center space-x-2">
+    <div className={`flex w-full justify-between items-center space-x-2 ${readonly ? 'cursor-not-allowed' : ''}`}>
       {locked && (
         <a href={rhfField.value + ''} className="text-blue-600" style={{ wordBreak: 'break-all' }}>
           {rhfField.value}{' '}
@@ -26,9 +26,11 @@ export function SnFieldUrl({ rhfField, onChange }: SnFieldBaseProps<string>) {
           className="w-full"
         />
       )}
-      <Button type="button" variant="outline" size="icon" onClick={() => setLocked(!locked)}>
-        {locked ? <LockKeyholeOpen /> : <LockKeyhole />}
-      </Button>
+      {!readonly && (
+        <Button type="button" variant="outline" size="icon" onClick={() => setLocked(!locked)}>
+          {locked ? <LockKeyholeOpen /> : <LockKeyhole />}
+        </Button>
+      )}
     </div>
   )
 }

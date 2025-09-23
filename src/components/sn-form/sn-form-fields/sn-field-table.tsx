@@ -1,17 +1,19 @@
 import { cn } from '@kit/lib/utils'
-import { Check, ChevronsUpDown } from 'lucide-react'
+import { useMemo, useRef, useState } from 'react'
 import { Button } from '@kit/components/ui/button'
+import { Check, ChevronsUpDown } from 'lucide-react'
+import { useFieldUI } from '../contexts/FieldUIContext'
+import { useVirtualizer } from '@tanstack/react-virtual'
+import { SnFieldBaseProps, SnFieldSchema } from '@kit/types/form-schema'
 import { Popover, PopoverContent, PopoverTrigger } from '@kit/components/ui/popover'
 import { Command, CommandEmpty, CommandInput, CommandItem } from '@kit/components/ui/command'
-import { SnFieldBaseProps, SnFieldSchema } from '@kit/types/form-schema'
-import { useMemo, useRef, useState } from 'react'
-import { useVirtualizer } from '@tanstack/react-virtual'
 
 interface SnFieldTableProps extends Omit<SnFieldBaseProps<string>, 'field'> {
   field: SnFieldSchema
 }
 
 export function SnFieldTableName({ field, rhfField, onChange }: SnFieldTableProps) {
+  const { readonly } = useFieldUI()
   const [open, setOpen] = useState(false)
   const [search, setSearch] = useState('')
   const selected = field.choices!.find(c => c.value === rhfField.value)
@@ -33,7 +35,7 @@ export function SnFieldTableName({ field, rhfField, onChange }: SnFieldTableProp
     getScrollElement: () => parentRef.current,
     estimateSize: () => 50,
     overscan: 10,
-  }) 
+  })
 
   return (
     <Popover
@@ -49,12 +51,19 @@ export function SnFieldTableName({ field, rhfField, onChange }: SnFieldTableProp
       }}
     >
       <PopoverTrigger asChild>
-        <Button variant="outline" role="combobox" aria-expanded={open} className="w-full overflow-hidden justify-between" ref={triggerRef}>
+        <Button
+          variant="outline"
+          role="combobox"
+          disabled={readonly}
+          aria-expanded={open}
+          className="w-full overflow-hidden justify-between"
+          ref={triggerRef}
+        >
           <span className="overflow-hidden">{selected ? selected.label : 'Select table...'}</span>
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-full p-0"  style={{ width: triggerRef.current?.offsetWidth }}>
+      <PopoverContent className="w-full p-0" style={{ width: triggerRef.current?.offsetWidth }}>
         <Command shouldFilter={false} className="w-full">
           <CommandInput placeholder="Search table..." className="h-9" value={search} onValueChange={setSearch} />
           <CommandEmpty>No table found.</CommandEmpty>
@@ -92,7 +101,7 @@ export function SnFieldTableName({ field, rhfField, onChange }: SnFieldTableProp
                       <div className="px-3 text-sm flex flex-col items-start whitespace-normal">
                         <span className="font-medium truncate">{choice.label.split('[')[0]}</span>
                         <span className="text-xs text-muted-foreground truncate">[{choice.value}]</span>
-                        </div>
+                      </div>
                       <Check
                         className={cn('ml-auto h-4 w-4', rhfField.value === choice.value ? 'opacity-100' : 'opacity-0')}
                       />

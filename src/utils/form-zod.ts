@@ -3,10 +3,18 @@ import { z, ZodTypeAny } from 'zod'
 
 export function mapFieldToZod(field: SnFieldSchema): ZodTypeAny {
   let base: ZodTypeAny
-  const allowEmpty = field.sys_readonly || !field.mandatory 
+  const allowEmpty = field.sys_readonly || !field.mandatory
 
   switch (field.type) {
     case 'glide_list':
+      base = z.union([z.string(), z.array(z.string())])
+      if (!allowEmpty) {
+        base = base.refine(val => (Array.isArray(val) ? val.length > 0 : val.trim() !== ''), {
+          message: 'A selection is required',
+        })
+      }
+      break
+
     case 'reference':
       base = z.string()
       if (!allowEmpty) {
@@ -56,12 +64,11 @@ export function mapFieldToZod(field: SnFieldSchema): ZodTypeAny {
     case 'currency':
       base = z.string().refine(
         val => {
-          // if (allowEmpty && val === '') return true
           if (val.includes('undefined')) return false
 
           const parts = val.split(';')
           if (parts.length !== 2) return false
-          
+
           const [code, value] = parts
           return /^[A-Z]{3}$/.test(code) && !isNaN(Number(value))
         },
@@ -81,8 +88,6 @@ export function mapFieldToZod(field: SnFieldSchema): ZodTypeAny {
         base = (base as z.ZodString).min(1, '')
       }
       break
-    // default:
-    // base = z.any()
   }
 
   return allowEmpty ? base.optional() : base

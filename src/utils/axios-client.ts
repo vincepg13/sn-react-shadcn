@@ -1,8 +1,17 @@
 import axios, { AxiosInstance } from 'axios';
 import type { GlideAjaxConfig } from '../types/client-scripts';
 
-let axiosInstance: AxiosInstance = axios;
+declare global {
+  interface Window {
+    g_ck?: string
+  }
+}
+
 let glideAjaxConfig: GlideAjaxConfig = {};
+let axiosInstance = axios.create({ withCredentials: true });
+if (window.g_ck) {
+  axiosInstance.defaults.headers["X-UserToken"] = window.g_ck;
+}
 
 export function setAxiosInstance(instance: AxiosInstance, options?: { glideAjax?: GlideAjaxConfig }) {
   axiosInstance = instance;

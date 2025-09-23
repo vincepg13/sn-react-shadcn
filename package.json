@@ -1,6 +1,7 @@
 {
   "name": "sn-shadcn-kit",
-  "version": "1.5.5",
+  "version": "2.0.0",
+  "type": "module",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
@@ -22,7 +23,7 @@
   },
   "homepage": "https://github.com/vincepg13/sn-react-shadcn#readme",
   "scripts": {
-    "build": "tsup src/index.ts --dts --format esm,cjs --out-dir dist --external react,react-dom",
+    "build": "tsup",
     "dev": "vite",
     "preview": "vite preview",
     "prepublishOnly": "npm run build"
@@ -30,8 +31,35 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.mjs",
-      "require": "./dist/index.js"
+      "import": "./dist/index.js"
+    },
+    "./amb": {
+      "types": "./dist/amb.d.ts",
+      "import": "./dist/amb.js"
+    },
+    "./form": {
+      "types": "./dist/form.d.ts",
+      "import": "./dist/form.js"
+    },
+    "./table": {
+      "types": "./dist/table.d.ts",
+      "import": "./dist/table.js"
+    },
+    "./user": {
+      "types": "./dist/user.d.ts",
+      "import": "./dist/user.js"
+    },
+    "./skeleton": {
+      "types": "./dist/skeleton.d.ts",
+      "import": "./dist/skeleton.js"
+    },
+    "./script": {
+      "types": "./dist/script.d.ts",
+      "import": "./dist/script.js"
+    },
+    "./standalone": {
+      "types": "./dist/standalone.d.ts",
+      "import": "./dist/standalone.js"
     }
   },
   "peerDependencies": {
@@ -42,6 +70,14 @@
     "tailwindcss": "^3.0.0 || ^4.0.0"
   },
   "dependencies": {
+    "@codemirror/commands": "^6.8.1",
+    "@codemirror/lang-html": "^6.4.10",
+    "@codemirror/lang-javascript": "^6.2.4",
+    "@codemirror/lang-markdown": "^6.3.4",
+    "@codemirror/language": "^6.11.3",
+    "@codemirror/search": "^6.5.11",
+    "@codemirror/state": "^6.5.2",
+    "@codemirror/view": "^6.38.2",
     "@hookform/resolvers": "^5.0.1",
     "@radix-ui/react-avatar": "^1.1.10",
     "@radix-ui/react-checkbox": "^1.2.3",
@@ -59,6 +95,7 @@
     "@radix-ui/react-toggle-group": "^1.1.9",
     "@radix-ui/react-tooltip": "^1.2.6",
     "@radix-ui/react-use-is-hydrated": "^0.1.0",
+    "@replit/codemirror-indentation-markers": "^6.5.3",
     "@tanstack/react-pacer": "^0.8.0",
     "@tanstack/react-virtual": "^3.13.8",
     "@tiptap/extension-code-block-lowlight": "^2.12.0",
@@ -74,6 +111,11 @@
     "@tiptap/pm": "^2.12.0",
     "@tiptap/react": "^2.12.0",
     "@tiptap/starter-kit": "^2.12.0",
+    "@uiw/codemirror-theme-atomone": "^4.25.1",
+    "@uiw/react-codemirror": "^4.25.1",
+    "acorn": "^8.15.0",
+    "acorn-loose": "^8.5.2",
+    "acorn-walk": "^8.3.4",
     "amb-client-js": "^20.0.3",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.0.0",
@@ -81,10 +123,13 @@
     "date-fns": "^4.1.0",
     "date-fns-tz": "^3.2.0",
     "dompurify": "^3.2.5",
+    "eslint-linter-browserify": "8.57.0",
+    "globals": "^16.0.0",
     "lodash.isequal": "^4.5.0",
     "lowlight": "^3.3.0",
     "lucide-react": "^0.488.0",
     "next-themes": "^0.4.6",
+    "prettier": "^3.6.2",
     "react-day-picker": "^9.6.7",
     "react-hook-form": "^7.56.1",
     "react-medium-image-zoom": "^5.2.14",
@@ -92,22 +137,24 @@
     "shadcn-dropzone": "^0.2.1",
     "sonner": "^2.0.3",
     "tailwind-merge": "^3.2.0",
+    "tern": "^0.24.3",
     "uuid": "^11.1.0",
     "zod": "^3.24.3"
   },
   "devDependencies": {
     "@eslint/js": "^9.25.1",
     "@tanstack/eslint-plugin-query": "^5.73.3",
+    "@types/espree": "^10.1.0",
     "@types/lodash.isequal": "^4.5.8",
     "@types/node": "^22.15.3",
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",
+    "@types/tern": "^0.23.9",
     "@typescript-eslint/eslint-plugin": "^8.31.0",
     "@typescript-eslint/parser": "^8.31.0",
     "@vitejs/plugin-react-swc": "^3.0.0",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.20",
-    "globals": "^16.0.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "tsup": "^8.4.0",
@@ -115,6 +162,7 @@
     "vite": "^6.0.0"
   },
   "overrides": {
+    "eslint-linter-browserify": "8.57.0",
     "shadcn-dropzone": {
       "react": "^19.0.0",
       "react-dom": "^19.0.0"

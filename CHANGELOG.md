@@ -1,4 +1,23 @@
-#Change Log
+# Change Log
+
+## [V2.0.0] 
+- Added a new standalone component SnScriptEditor which is a CodeMirror V6 script editor designed specifically to work with ServiceNow scripts
+- Integrated SnScriptEditor into SnForm via the internal SnFieldScript component. This allows the following field types to be displayed: html_template, css, script, script_plain
+- Bug fixes across table and form components
+
+### BREAKING CHANGES
+
+ Moved from a singular import from sn-shadcn-kit, to multiple export paths based on feature. E.g. to use the table widget previously you would use:
+
+```ts
+import SnTable from "sn-shadcn-kit"
+```
+
+However you now should use:
+```ts
+import SnTable from "sn-shadcn-kit/table"
+```
+
 ## [V1.5.5]
 Updates to SnForm:
 - Added support for onSubmit client scripts

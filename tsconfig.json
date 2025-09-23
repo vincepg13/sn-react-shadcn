@@ -1,7 +1,10 @@
 {
   "compilerOptions": {
     "target": "ES6",
-    "lib": ["dom", "es2018"],
+    "lib": [
+      "dom",
+      "es2018"
+    ],
     "module": "ESNext",
     "jsx": "react-jsx",
     "declaration": true,
@@ -11,9 +14,14 @@
     "outDir": "dist",
     "moduleResolution": "Node",
     "baseUrl": ".",
+    "resolveJsonModule": true,
     "paths": {
-      "@kit/*": ["./src/*"]
+      "@kit/*": [
+        "./src/*"
+      ]
     }
   },
-  "include": ["src"]
+  "include": [
+    "src"
+  ]
 }

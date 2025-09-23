@@ -1,6 +1,6 @@
 import { Input } from '@kit/components/ui/input'
 import { useEffect, useState } from 'react'
-import { SnFieldNumeric } from '@kit/components/sn-form/sn-form-fields/SnFieldNumeric'
+import { SnFieldNumeric } from '@kit/components/sn-form/sn-form-fields/sn-field-numeric'
 
 type SnValueInputProps = {
   value: string
