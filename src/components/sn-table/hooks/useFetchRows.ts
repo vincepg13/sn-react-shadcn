@@ -3,9 +3,7 @@ import { getTableRows } from '../../../utils/table-api'
 import { getSortedQuery } from '../../../utils/table-helper'
 import { SnRow } from '../../../types/table-schema'
 import { SortingState } from '@tanstack/react-table'
-import { getAxiosInstance } from './../../../utils/axios-client'
-
-const axios = getAxiosInstance()
+import { isAxiosError } from 'axios'
 
 export function useFetchRows({
   table,
@@ -57,7 +55,7 @@ export function useFetchRows({
         setPageCount(Math.ceil(total / pageSize))
         setRowsLoaded(true)
       } catch (error) {
-        if (axios.isAxiosError(error) && error.code === 'ERR_CANCELED') return
+        if (isAxiosError(error) && error.code === 'ERR_CANCELED') return
         console.error('Failed to fetch table rows:', error)
         setRows([])
         setPageCount(0)

@@ -10,7 +10,7 @@ import { useInlineTern } from '@kit/components/sn-ui/sn-script-editor/hooks/useT
 import { useFullScreen } from '@kit/components/sn-ui/sn-script-editor/hooks/useFullScreen'
 import { esLintDefaultConfig } from '@kit/components/sn-ui/sn-script-editor/hooks/useEsLint'
 
-type SnScriptFieldType = 'script' | 'html_template' | 'css'
+type SnScriptFieldType = 'script' | 'script_plain' | 'html_template' | 'css'
 type CodeMirrorLanguage = 'javascript' | 'html' | 'css'
 
 interface SnFieldScriptProps {
@@ -25,6 +25,7 @@ interface SnFieldScriptProps {
 
 const typeToLang: Record<SnScriptFieldType, CodeMirrorLanguage> = {
   script: 'javascript',
+  script_plain: 'javascript',
   html_template: 'html',
   css: 'css',
 }

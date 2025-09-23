@@ -1,8 +1,9 @@
 import { cn } from '@kit/lib/utils'
 import { Button } from '@kit/components/ui/button'
-import { Check, ChevronsUpDown } from 'lucide-react'
 import { getFieldList } from '@kit/utils/form-api'
 import { useEffect, useRef, useState } from 'react'
+import { Check, ChevronsUpDown } from 'lucide-react'
+import { useFieldUI } from '../contexts/FieldUIContext'
 import { SnFieldBaseProps, SnFieldSchema } from '@kit/types/form-schema'
 import { Popover, PopoverContent, PopoverTrigger } from '@kit/components/ui/popover'
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@kit/components/ui/command'
@@ -14,6 +15,7 @@ interface SnFieldfListProps extends Omit<SnFieldBaseProps<string>, 'field'> {
 
 export function SnFieldFieldList({ rhfField, field, dependentValue, onChange }: SnFieldfListProps) {
   const mounted = useRef(false)
+  const { readonly } = useFieldUI()
   const [open, setOpen] = useState(false)
   const [fieldList, setFieldList] = useState(Array.isArray(field.choices) ? field.choices || [] : [])
 
@@ -40,7 +42,7 @@ export function SnFieldFieldList({ rhfField, field, dependentValue, onChange }: 
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button variant="outline" role="combobox" aria-expanded={open} className="w-full justify-between">
+        <Button disabled={readonly} variant="outline" role="combobox" aria-expanded={open} className="w-full justify-between">
           {rhfField.value ? fieldList.find(fName => fName.name === rhfField.value)?.label : 'Select field...'}
           <ChevronsUpDown className="opacity-50" />
         </Button>

@@ -1,4 +1,4 @@
-//Skeletons and Loaders
+// Skeletons and Loaders
 export { SnFormSkeleton } from '../components/sn-form/sn-form-skeleton'
 export { SnActivitySkeleton } from '../components/sn-ui/sn-activity/sn-activity-skeleton'
 export { SnConditionSkeleton } from '../components/sn-ui/sn-condition-builder/sn-condition-skeleton'

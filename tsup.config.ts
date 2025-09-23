@@ -10,7 +10,7 @@ export default defineConfig({
     form: 'src/exports/form.index.ts',
     table: 'src/exports/table.index.ts',
     user: 'src/exports/user.index.ts',
-    loader: 'src/exports/loader.index.ts',
+    skeleton: 'src/exports/skeleton.index.ts',
     script: 'src/exports/script.index.ts',
     standalone: 'src/exports/standalone.index.ts',
   },

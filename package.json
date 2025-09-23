@@ -49,9 +49,9 @@
       "types": "./dist/user.d.ts",
       "import": "./dist/user.js"
     },
-    "./loader": {
-      "types": "./dist/loader.d.ts",
-      "import": "./dist/loader.js"
+    "./skeleton": {
+      "types": "./dist/skeleton.d.ts",
+      "import": "./dist/skeleton.js"
     },
     "./script": {
       "types": "./dist/script.d.ts",

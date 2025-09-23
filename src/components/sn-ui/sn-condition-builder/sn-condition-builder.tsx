@@ -14,20 +14,44 @@ type BuilderProps = {
   emitQueryDisplay?: (display: SnConditionDisplayArray | null) => void
 }
 
+function extractOrder(query: string) {
+  const match = query.match(/(ORDERBY(?:DESC)?[A-Za-z0-9_]+)(?=$|\^)/)
+  return match ? match[1] : null
+}
+
+function getBuilderQuery(query?: string) {
+  let builderQuery = query || ''
+
+  if (query) {
+    const order = extractOrder(query)
+    if (order) {
+      builderQuery = builderQuery.replace(order, '')
+      builderQuery = builderQuery.endsWith('^') ? builderQuery.slice(0, -1) : builderQuery
+      builderQuery = builderQuery.startsWith('^') ? builderQuery.slice(1) : builderQuery
+    }
+  }
+
+  console.log('BQ', builderQuery)
+  return builderQuery
+}
+
 export type SnConditionHandle = {
   adjustModel: (gIndex: number, cIndex: number) => void
 }
 
 export const SnConditionBuilderRef = forwardRef<SnConditionHandle, BuilderProps>(
   ({ table, encodedQuery, emitQueryDisplay, onQueryBuilt }: BuilderProps, ref) => {
+    const builderQuery = getBuilderQuery(encodedQuery)
     const [error, setError] = useState<string>('')
     const [loaded, setLoaded] = useState(false)
     useEffect(() => setLoaded(false), [table, encodedQuery])
 
     const emitDisplay = !!emitQueryDisplay
     const columns = useFieldMetadata(table, setError)
-    const { queryModel, queryDisplay, queryParser } = useParsedQuery(table, encodedQuery || '', emitDisplay, setError)
+    const { queryModel, queryDisplay, queryParser } = useParsedQuery(table, builderQuery || '', emitDisplay, setError)
     useEffect(() => setLoaded(!!columns && !!queryModel), [columns, queryModel])
+
+    console.log('QM', queryModel)
 
     const conditionRef = useRef<SnConditionHandle>(null)
     useImperativeHandle(ref, () => ({

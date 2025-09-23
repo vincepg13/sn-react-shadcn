@@ -21,6 +21,7 @@ interface SnFieldScriptProps extends Omit<SnFieldBaseProps<string>, 'field'> {
 
 const typeToLang: Record<string, 'javascript' | 'html' | 'css'> = {
   script: 'javascript',
+  script_plain: 'javascript',
   html_template: 'html',
   css: 'css',
 }

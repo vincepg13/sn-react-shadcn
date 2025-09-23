@@ -132,7 +132,6 @@ function renderFieldComponent(
   // - File Attachment
   // - User Roles
   // - Field List
-  // - CodeMirror / Script Editing
 
   switch (field.type) {
     case 'email':
@@ -211,10 +210,19 @@ function renderFieldComponent(
       return <SnFieldHtml rhfField={rhfField} onChange={handleChange} />
     case 'field_name':
       return <SnFieldFieldList field={field} rhfField={rhfField} onChange={handleChange} dependentValue={depValue} />
-    case 'script':
     case 'css':
+    case 'script':
+    case 'script_plain':
     case 'html_template':
-      return <SnFieldScript table={table} field={field} rhfField={rhfField} adornmentRef={adornmentRef} onChange={handleChange} />
+      return (
+        <SnFieldScript
+          table={table}
+          field={field}
+          rhfField={rhfField}
+          adornmentRef={adornmentRef}
+          onChange={handleChange}
+        />
+      )
     case 'video':
     case 'user_image': {
       const extension = field.type === 'user_image' ? '.iix' : '.vvx'
