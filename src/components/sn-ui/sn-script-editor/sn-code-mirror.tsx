@@ -11,7 +11,7 @@ import { usePrettierFormatter } from './hooks/usePrettierFormat'
 import { indentationMarkers } from '@replit/codemirror-indentation-markers'
 import { toggleBlockComment, toggleLineComment } from '@codemirror/commands'
 import { startCompletion, type CompletionSource } from '@codemirror/autocomplete'
-import { useState, useEffect, useRef, forwardRef, useImperativeHandle, useMemo } from 'react'
+import { useState, useEffect, useRef, forwardRef, useImperativeHandle, useMemo, useCallback } from 'react'
 import CodeMirror, { Extension, Prec, ReactCodeMirrorProps, ReactCodeMirrorRef } from '@uiw/react-codemirror'
 
 interface SnCodeMirrorProps {
@@ -117,9 +117,13 @@ export const SnCodeMirror = forwardRef<SnCodeMirrorHandle, SnCodeMirrorProps>(fu
     }
   }, [content])
 
-  const handleChange = (val: string) => {
+  const triggerChange = useDebouncedCallback((val: string) => {
     setValue(val)
+  }, 300)
+
+  const handleChange = (val: string) => {
     onChange?.(val)
+    triggerChange(val)
   }
 
   // Expose editor methods to parent
@@ -227,3 +231,31 @@ export const SnCodeMirror = forwardRef<SnCodeMirrorHandle, SnCodeMirrorProps>(fu
     />
   )
 })
+
+function useDebouncedCallback<T extends (...args: never[]) => void>(callback: T, delay: number): T {
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const debouncedCallback = useCallback(
+    (...args: Parameters<T>) => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current)
+      }
+
+      timeoutRef.current = setTimeout(() => {
+        callback(...args)
+      }, delay)
+    },
+    [callback, delay]
+  )
+
+  //Clear on unmount
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current)
+      }
+    }
+  }, [])
+
+  return debouncedCallback as T
+}
