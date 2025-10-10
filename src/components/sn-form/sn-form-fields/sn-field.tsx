@@ -150,7 +150,7 @@ function renderFieldComponent(
       if (field.type == 'journal_input' || (field.max_length && field.max_length >= 200)) {
         return <SnFieldTextarea field={field} rhfField={rhfField} onChange={handleChange} onFocus={handleFocus} />
       }
-      return <SnFieldInput rhfField={rhfField} onChange={handleChange} onFocus={handleFocus} />
+      return <SnFieldInput rhfField={rhfField} maxLength={field.max_length} onChange={handleChange} onFocus={handleFocus} />
     case 'choice':
       return <SnFieldChoice field={field} rhfField={rhfField} onChange={handleSelect} />
     case 'boolean':
@@ -211,7 +211,9 @@ function renderFieldComponent(
     case 'field_name':
       return <SnFieldFieldList field={field} rhfField={rhfField} onChange={handleChange} dependentValue={depValue} />
     case 'css':
+    case 'json':
     case 'script':
+    case 'properties':
     case 'script_plain':
     case 'html_template':
       return (

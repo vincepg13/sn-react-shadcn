@@ -30,6 +30,16 @@ const rowItem = z.object({
   label: z.string().optional(),
 })
 
+const rowItemNullable = z.object({
+  display_value: z.string().nullable(),
+  value: z.string().nullable(),
+  label: z.string().optional(),
+})
+
+export const rowSchemaNullable = z.record(rowItemNullable)
+export type SnCell = z.infer<typeof rowItemNullable>
+export type SnRowNullable = z.infer<typeof rowSchemaNullable>
+
 export const rowSchema = z.record(rowItem)
 export type SnRowItem = z.infer<typeof rowItem>
 export type SnRow = z.infer<typeof rowSchema>

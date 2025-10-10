@@ -1,26 +1,34 @@
+import { cn } from '@kit/lib/utils'
 import { isAxiosError } from 'axios'
 import { Minimize2 } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
 import { SnScriptToolbar } from './sn-script-toolbar'
 import { atomone } from '@uiw/codemirror-theme-atomone'
 import { ESLintConfigAny } from '@kit/types/es-lint-types'
 import { getAutocompleteData } from '@kit/utils/script-editor'
+import { ReactNode, useEffect, useRef, useState } from 'react'
 import { SnCodeMirror, SnCodeMirrorHandle } from './sn-code-mirror'
 import { useInlineTern } from '@kit/components/sn-ui/sn-script-editor/hooks/useTernInline'
 import { useFullScreen } from '@kit/components/sn-ui/sn-script-editor/hooks/useFullScreen'
 import { esLintDefaultConfig } from '@kit/components/sn-ui/sn-script-editor/hooks/useEsLint'
 
-type SnScriptFieldType = 'script' | 'script_plain' | 'html_template' | 'css'
-type CodeMirrorLanguage = 'javascript' | 'html' | 'css'
+type SnScriptFieldType = 'script' | 'script_plain' | 'html_template' | 'css' | 'json' | 'properties'
+type CodeMirrorLanguage = 'javascript' | 'html' | 'css' | 'json'
 
 interface SnFieldScriptProps {
   snType: SnScriptFieldType
   table: string
   fieldName: string
+  height?: string
   content?: string
   readonly?: boolean
   esLintConfig?: ESLintConfigAny
+  customToolbar?: ReactNode | null
+  parentClasses?: string
+  cmContainerClasses?: string
+  lineWrapping?: boolean
+  onBlur?: (value: string) => void
   onChange?: (value: string) => void
+  onReady?: (handle: SnCodeMirrorHandle) => void
 }
 
 const typeToLang: Record<SnScriptFieldType, CodeMirrorLanguage> = {
@@ -28,20 +36,34 @@ const typeToLang: Record<SnScriptFieldType, CodeMirrorLanguage> = {
   script_plain: 'javascript',
   html_template: 'html',
   css: 'css',
+  json: 'json',
+  properties: 'css',
 }
 
 export function SnScriptEditor({
   snType,
   table,
   fieldName,
+  height,
   readonly,
   esLintConfig,
   content,
+  lineWrapping,
+  customToolbar,
+  parentClasses,
+  cmContainerClasses,
   onChange,
+  onReady,
+  onBlur,
 }: SnFieldScriptProps) {
+  const lang = typeToLang[snType]
   const { isMaximized, toggleMax } = useFullScreen()
   const editorRef = useRef<SnCodeMirrorHandle | null>(null)
   const [snDefs, setSnDefs] = useState<unknown | null>(null)
+
+  useEffect(() => {
+    if (editorRef.current) onReady?.(editorRef.current)
+  }, [onReady])
 
   useEffect(() => {
     if (snType === 'html_template' || snType === 'css') return
@@ -69,32 +91,41 @@ export function SnScriptEditor({
   })
 
   // Maximized mode styles and behavior
-  const editorHeight = isMaximized ? 'calc(100vh)' : undefined
-  const wrapperClasses = isMaximized ? 'fixed inset-0 z-[1000] bg-background/95' : 'w-full'
+  const editorHeight = isMaximized ? 'calc(100vh)' : height
+  const wrapperClasses = isMaximized ? 'fixed inset-0 z-[1000] bg-background/95' : cn('w-full', cmContainerClasses)
+
   const esLint = {
-    enabled: true,
+    enabled: lang === 'javascript',
     debounceMs: 200,
     config: esLintConfig || esLintDefaultConfig,
   }
 
   return (
-    <div className="flex flex-col gap-2">
-      <div className="flex w-full justify-end">
-        <SnScriptToolbar readonly={readonly} toggleMax={toggleMax} editorRef={editorRef} />
-      </div>
+    <div className={cn('flex flex-col gap-2', parentClasses)}>
+      {customToolbar === null && null}
+      {!!customToolbar && customToolbar}
+      {customToolbar === undefined && (
+        <div className="flex w-full justify-end">
+          <SnScriptToolbar readonly={readonly} toggleMax={toggleMax} editorRef={editorRef} />
+        </div>
+      )}
+
       <div className={wrapperClasses}>
         <SnCodeMirror
           ref={editorRef}
-          language={typeToLang[snType]}
+          language={lang}
           content={String(content ?? '')}
           theme={atomone}
           readonly={readonly}
           height={editorHeight}
           signatureExt={signatureExt}
           completionSources={completionSources}
-          onBlur={onChange}
-          onToggleMax={toggleMax}
+          lineWrapping={lineWrapping}
           esLint={esLint}
+          isMaximized={isMaximized}
+          onBlur={onBlur}
+          onChange={onChange}
+          onToggleMax={toggleMax}
         />
         {isMaximized && (
           <button

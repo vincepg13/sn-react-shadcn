@@ -6,17 +6,12 @@ import { useFormLifecycle } from '../../sn-form/contexts/SnFormLifecycleContext'
 
 interface SnFormActionsProps {
   table: string
-  attachments: SnAttachment[]
+  attachments: SnAttachment[] | null
   attachmentGuid: string
   setAttachments: (attachments: SnAttachment[]) => void
 }
 
-export function SnFormActions({
-  table,
-  attachments,
-  attachmentGuid,
-  setAttachments,
-}: SnFormActionsProps) {
+export function SnFormActions({ table, attachments, attachmentGuid, setAttachments }: SnFormActionsProps) {
   const { formConfig } = useFormLifecycle()
   const { handleUiAction, uiActions, loadingActionId } = useUiActions()
 
@@ -25,15 +20,17 @@ export function SnFormActions({
 
   return (
     <div className="mt-6 flex justify-center flex-wrap gap-2">
-      <SnAttachments
-        table={table}
-        guid={attachmentGuid}
-        canWrite={canWrite}
-        canDelete={canDelete}
-        baseUrl={formConfig.base_url}
-        attachments={attachments}
-        setAttachments={setAttachments}
-      />
+      {!!attachments && (
+        <SnAttachments
+          table={table}
+          guid={attachmentGuid}
+          canWrite={canWrite}
+          canDelete={canDelete}
+          baseUrl={formConfig.base_url}
+          attachments={attachments}
+          setAttachments={setAttachments}
+        />
+      )}
       {uiActions
         .filter(a => a.is_button)
         .map(action => (

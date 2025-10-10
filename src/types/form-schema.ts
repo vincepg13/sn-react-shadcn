@@ -63,6 +63,12 @@ const _policyCondition = z.object({
   value: z.string(),
   newquery: z.boolean(),
   type: z.string(),
+  dotWalkedValue: z.string().optional(),
+})
+
+const _policyScript = z.object({
+  name: z.string(),
+  script: z.string(),
 })
 
 const _policy = z.object({
@@ -70,10 +76,14 @@ const _policy = z.object({
   sys_id: z.string(),
   reverse: z.boolean(),
   onload: z.boolean(),
+  is_run_scripts: z.boolean(),
+  script_true: _policyScript.optional(),
+  script_false: _policyScript.optional(),
   conditions: z.array(_policyCondition),
   actions: z.array(_policyAction),
 })
 
+export type SnPolicyScript = z.infer<typeof _policyScript>
 export type SnPolicyAction = z.infer<typeof _policyAction>
 export type SnPolicyCondition = z.infer<typeof _policyCondition>
 export type SnPolicy = z.infer<typeof _policy>

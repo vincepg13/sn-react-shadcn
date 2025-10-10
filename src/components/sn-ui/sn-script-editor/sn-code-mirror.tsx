@@ -1,5 +1,6 @@
 import { css } from '@codemirror/lang-css'
 import { html } from '@codemirror/lang-html'
+import { json } from '@codemirror/lang-json'
 import { javascript } from '@codemirror/lang-javascript'
 import { EditorView, keymap } from '@codemirror/view'
 import { openSearchPanel } from '@codemirror/search'
@@ -14,7 +15,7 @@ import { useState, useEffect, useRef, forwardRef, useImperativeHandle, useMemo }
 import CodeMirror, { Extension, Prec, ReactCodeMirrorProps, ReactCodeMirrorRef } from '@uiw/react-codemirror'
 
 interface SnCodeMirrorProps {
-  language?: 'javascript' | 'html' | 'css'
+  language?: 'javascript' | 'html' | 'css' | 'json'
   height?: string
   content?: string
   readonly?: boolean
@@ -24,7 +25,10 @@ interface SnCodeMirrorProps {
   autocompleteType?: 'default' | 'override'
   completionSources?: CompletionSource[]
   esLint?: Parameters<typeof useEsLint>[0]
-  onToggleMax?: () => void
+  lineWrapping?: boolean
+  isMaximized?: boolean
+  onToggleMax: () => void
+  onChange?: (value: string) => void
   onBlur?: (value: string) => void
   onFormat?: (result: { changed: boolean; error?: string }) => void
 }
@@ -37,6 +41,8 @@ function getLanguageSupport(lang: string) {
       return html()
     case 'css':
       return css()
+    case 'json':
+      return json()
     default:
       return javascript()
   }
@@ -44,6 +50,9 @@ function getLanguageSupport(lang: string) {
 
 export interface SnCodeMirrorHandle {
   openSearch: () => void
+  getValue: () => string
+  setValue: (next: string) => void
+  toggleMax: () => void
   toggleComment: (block?: boolean) => void
   format: () => Promise<{ changed: boolean; error?: string }>
 }
@@ -60,7 +69,10 @@ export const SnCodeMirror = forwardRef<SnCodeMirrorHandle, SnCodeMirrorProps>(fu
     autocompleteType = 'default',
     completionSources,
     esLint,
+    lineWrapping = true,
+    isMaximized,
     onBlur,
+    onChange,
     onFormat,
     onToggleMax,
   },
@@ -69,7 +81,17 @@ export const SnCodeMirror = forwardRef<SnCodeMirrorHandle, SnCodeMirrorProps>(fu
   const inputLang = language || 'javascript'
   const lang = getLanguageSupport(language || 'javascript')
   const [value, setValue] = useState(content)
+
   const editorRef = useRef<ReactCodeMirrorRef | null>(null)
+  const valueRef = useRef(value)
+  useEffect(() => {
+    valueRef.current = value
+  }, [value])
+
+  useEffect(() => {
+    if (content === undefined) return
+    setValue(content)
+  }, [content])
 
   // Setup ESLint
   const { extensions: lintExts } = useEsLint(esLint)
@@ -95,11 +117,19 @@ export const SnCodeMirror = forwardRef<SnCodeMirrorHandle, SnCodeMirrorProps>(fu
     }
   }, [content])
 
+  const handleChange = (val: string) => {
+    setValue(val)
+    onChange?.(val)
+  }
+
   // Expose editor methods to parent
   useImperativeHandle(
     ref,
     () => ({
       format: formatNow,
+      toggleMax: onToggleMax,
+      getValue: () => valueRef.current ?? '',
+      setValue: (next: string) => setValue(next),
       openSearch: () => {
         const view = editorRef.current?.view
         if (view) openSearchPanel(view)
@@ -111,7 +141,7 @@ export const SnCodeMirror = forwardRef<SnCodeMirrorHandle, SnCodeMirrorProps>(fu
         else toggleLineComment({ state: view.state, dispatch: view.dispatch })
       },
     }),
-    [formatNow]
+    [formatNow, onToggleMax]
   )
 
   // Build autocomplete extensions
@@ -147,20 +177,22 @@ export const SnCodeMirror = forwardRef<SnCodeMirrorHandle, SnCodeMirrorProps>(fu
           {
             key: 'Escape',
             run: () => {
-              onToggleMax?.()
-              return true
+              if (isMaximized) {
+                onToggleMax?.()
+                return true
+              }
+              return false
             },
           },
         ])
       ),
-    [onToggleMax]
+    [isMaximized, onToggleMax]
   )
 
   // Combine all extensions
   const extensions: Extension[] = [
     lang,
     formatKeymap,
-    EditorView.lineWrapping,
     dotTrigger,
     fullscreenKeymap,
     indentationMarkers({
@@ -168,9 +200,16 @@ export const SnCodeMirror = forwardRef<SnCodeMirrorHandle, SnCodeMirrorProps>(fu
       thickness: 2,
     }),
     ...extra,
-    ...(lintExts ? (Array.isArray(lintExts) ? lintExts : [lintExts]) : []),
     ...(Array.isArray(autocompleteExt) ? autocompleteExt : [autocompleteExt]),
   ]
+
+  if (lineWrapping !== false) {
+    extensions.push(EditorView.lineWrapping)
+  }
+
+  if (esLint?.enabled) {
+    extensions.push(...(lintExts ? (Array.isArray(lintExts) ? lintExts : [lintExts]) : []))
+  }
 
   // Send it all into CodeMirror
   return (
@@ -181,7 +220,7 @@ export const SnCodeMirror = forwardRef<SnCodeMirrorHandle, SnCodeMirrorProps>(fu
       height={height}
       theme={theme}
       readOnly={readonly}
-      onChange={setValue}
+      onChange={handleChange}
       onBlur={() => onBlur?.(value || '')}
       extensions={extensions}
       className="w-full [&_.cm-content[aria-readonly='true']]:cursor-not-allowed"

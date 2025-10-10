@@ -20,4 +20,4 @@ export { SnDataTableSkeleton, SnDataTableSkeletonError } from '../components/sn-
 
 //Types
 export type { ColumnDef, Updater, SortingState } from '@tanstack/react-table'
-export type { SnRow, SnRowItem, SnApiResponse, SnColSchema } from '../types/table-schema'
+export type { SnRow, SnRowItem, SnRowNullable, SnCell, SnApiResponse, SnColSchema } from '../types/table-schema'

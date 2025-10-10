@@ -82,7 +82,7 @@ export function mapFieldToZod(field: SnFieldSchema): ZodTypeAny {
     default:
       base = z.string()
       if (field.max_length && base instanceof z.ZodString) {
-        base = base.max(field.max_length)
+        if (field.max_length < 255) base = base.max(field.max_length)
       }
       if (!allowEmpty) {
         base = (base as z.ZodString).min(1, '')

@@ -19,13 +19,14 @@
   const view = request.queryParams.view || '';
 
   if (!table || !guid) {
-    return sendError('400', 'Table and id must be provided');
+    return sendError('400', 'Table and id must be provided.');
   }
 
-  var grTarget = new GlideRecordSecure(table);
-  if (guid != -1 && !grTarget.get(guid)) {
-    return sendError('400', 'Record was either not found or you are not authorised to view it.');
-  }
+  var grTarget = new GlideRecord(table);
+  if (guid == -1 && grTarget.canCreate())
+    return sendError('400', 'You do not have access to create a record of this type');
+  if (guid != -1 && !grTarget.get(guid)) return sendError('400', 'Record not found.');
+  if (guid != -1 && !grTarget.canRead()) return sendError('400', 'You are not authorised to view this record.');
 
   const instanceURI = gs.getProperty('glide.servlet.uri');
   const formData = new global.GlideSPScriptable().getForm(table, guid, qry, view);
@@ -38,6 +39,7 @@
 
   formData.attachments = getAttachments(table, guid, instanceURI);
   modifyFields(formData._fields, formData.activity);
+  modifyPolicies(formData.policy, grTarget);
 
   formData.react_config = {
     user: gs.getUserID(),
@@ -52,7 +54,7 @@
       tabWidth: 4,
       printWidth: 120,
     },
-    es_lint: getLinting(grTarget, guid),
+    es_lint: getLinting(grTarget, table, guid),
   };
 
   response.setStatus(200);
@@ -196,27 +198,37 @@
     };
   }
 
-  function getEsMode(gr, guid) {
+  function getEsMode(gr, table, guid) {
     let jsVersion = () => {
-      if (guid == -1) {
-        const scope = gs.getCurrentApplicationId();
-        if (scope == 'global') return 5;
+      let scope = gr.sys_scope;
 
-        var grScope = new GlideRecord('sys_scope');
-        if (grScope.get(scope)) {
-          const esMode = grScope.getValue('js_level');
-          return esMode == 'es_latest' ? 'latest' : 5;
-        }
-      }
-
-      const scope = gr.sys_scope;
+      //First try to get scope via target record
       if (scope) {
         const esMode = scope.js_level.getValue();
         return esMode == 'es_latest' ? 'latest' : 5;
       }
-      return 5;
-    };
 
+      //Next try to get scope via table
+      const grDb = new GlideRecord('sys_db_object');
+      if (grDb.get('name', table)) {
+        scope = grDb.sys_scope;
+        if (scope.toString() != 'global') {
+          const ecma = grDb.get('name', table) ? scope.js_level.toString() : '5';
+          return ecma == 'es_latest' ? 'latest' : 5;
+        }
+      }
+
+      //Lastly get scope via users current application
+      scope = gs.getCurrentApplicationId();
+      if (scope == 'global') return 5;
+
+      const grScope = new GlideRecord('sys_scope');
+      if (grScope.get(scope)) {
+        const esMode = grScope.getValue('js_level');
+        return esMode == 'es_latest' ? 'latest' : 5;
+      }
+    };
+    
     const jsv = jsVersion();
     if (guid == -1 || jsv == 'latest') return jsv;
 
@@ -228,10 +240,17 @@
     return grEsLatest.next() ? 'latest' : jsv;
   }
 
-  function getLinting(gr, guid) {
-    let jsVersion = getEsMode(gr, guid);
+  function getLinting(gr, table, guid) {
+    let jsVersion = getEsMode(gr, table, guid);
 
     return {
+      env: {
+        browser: true,
+      },
+      parserOptions: {
+        ecmaVersion: jsVersion,
+        sourceType: 'script',
+      },
       rules: {
         semi: ['warn', 'always'],
         'no-unused-vars': [
@@ -241,12 +260,24 @@
           },
         ],
       },
-      languageOptions: {
-        parserOptions: {
-          ecmaVersion: jsVersion,
-          sourceType: 'script',
-        },
-      },
     };
+  }
+
+  function modifyPolicies(policies, gr) {
+    for (const p of policies) {
+      for (const c of p.conditions) {
+        if (c.reference_fields) {
+          c.dotWalkedValue = dotwalkElement(gr, c.field);
+        }
+      }
+    }
+  }
+
+  function dotwalkElement(gr, fields) {
+    var fieldList = fields.split('.');
+    fieldList.forEach(function (f) {
+      gr = gr[f];
+    });
+    return gr.toString();
   }
 })(request, response);

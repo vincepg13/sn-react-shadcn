@@ -2,19 +2,22 @@ import { RHFField } from '../../../types/form-schema'
 import { Input } from '../../../components/ui/input'
 import { useFieldUI } from '../contexts/FieldUIContext'
 import { memo } from 'react'
+import { _maxLength } from 'zod/v4/core'
 
 interface SnFieldInputProps {
   rhfField: RHFField
   onChange: (val: string) => void
   onFocus: () => void
   type?: string
+  maxLength?: number
 }
 
 export const SnFieldInput = memo(function SnFieldInput({
   rhfField,
+  maxLength,
+  type = 'text',
   onChange,
   onFocus,
-  type = 'text',
 }: SnFieldInputProps) {
   const { readonly } = useFieldUI()
   let dv = String(rhfField.value ?? '')
@@ -33,6 +36,7 @@ export const SnFieldInput = memo(function SnFieldInput({
         disabled={!!readonly}
         className="w-full"
         type={type}
+        maxLength={maxLength}
       />
     </div>
   )

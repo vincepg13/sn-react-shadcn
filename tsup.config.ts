@@ -6,6 +6,7 @@ const externals = [...Object.keys(pkg.dependencies ?? {}), ...Object.keys(pkg.pe
 export default defineConfig({
   entry: {
     index: 'src/index.ts',
+    type: 'src/exports/type.index.ts',
     amb: 'src/exports/amb.index.ts',
     form: 'src/exports/form.index.ts',
     table: 'src/exports/table.index.ts',

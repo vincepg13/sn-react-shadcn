@@ -1,6 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { evaluateCondition } from '../utils/predicate-evaluator'
-import { FieldUIState, SnFieldsSchema, SnFormConfig, SnPolicy, SnPolicyCondition } from '@kit/types/form-schema'
+import {
+  FieldUIState,
+  SnFieldsSchema,
+  SnFormConfig,
+  SnPolicy,
+  SnPolicyCondition,
+  SnPolicyScript,
+} from '@kit/types/form-schema'
 
 function groupConditions(conditions: SnPolicyCondition[]): SnPolicyCondition[][] {
   const groups: SnPolicyCondition[][] = []
@@ -50,11 +57,16 @@ export function evaluateAndApplyPolicy(
   form: any,
   formFields: SnFieldsSchema,
   policy: SnPolicy,
+  executePolicyScript: (script?: SnPolicyScript) => any,
   updateFieldUI: (field: string, updates: Partial<FieldUIState>) => void,
   formConfig: SnFormConfig
 ) {
   const formData = form.getValues()
   const result = evaluatePolicy(policy, formData, formFields, formConfig)
+
+  if (policy.is_run_scripts) {
+    const _run = result ? executePolicyScript(policy.script_true) : executePolicyScript(policy.script_false)
+  }
 
   policy.actions.forEach(action => {
     const { name: field, visible, mandatory, disabled } = action

@@ -25,6 +25,9 @@ interface RecordPickerProps {
   query?: string
   pageSize?: number
   placeholder?: string
+  clearable?: boolean
+  editable?: boolean
+  portalContainer?: HTMLElement | null
 }
 
 export function SnRecordPicker({
@@ -37,6 +40,9 @@ export function SnRecordPicker({
   pageSize = 20,
   placeholder = '-- Select a Record --',
   multiple = false,
+  editable = true,
+  clearable = true,
+  portalContainer = null,
 }: RecordPickerProps) {
   const [open, setOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
@@ -108,6 +114,7 @@ export function SnRecordPicker({
             <Button
               variant="outline"
               role="combobox"
+              disabled={!editable}
               aria-expanded={open}
               className="w-full min-w-[200px] justify-between pr-8"
             >
@@ -152,7 +159,7 @@ export function SnRecordPicker({
           </PopoverTrigger>
         )}
 
-        {selectedRecords.length > 0 && (
+        {clearable && selectedRecords.length > 0 && (
           <X
             className={cn(
               'absolute top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground cursor-pointer',
@@ -163,7 +170,7 @@ export function SnRecordPicker({
         )}
       </div>
 
-      <PopoverContent className="w-full max-w-[500px] p-0">
+      <PopoverContent container={portalContainer} className="w-full max-w-[500px] p-0">
         <Command shouldFilter={false}>
           <div className="relative">
             <CommandInput

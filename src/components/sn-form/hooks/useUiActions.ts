@@ -3,6 +3,8 @@ import { FieldErrors, UseFormReturn } from 'react-hook-form'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { buildSubmissionPayload, triggerNativeUIAction } from '@kit/utils/form-client'
 import { SnUiAction, SnFieldsSchema, SnUiResponse, UiActionHandler } from '@kit/types/form-schema'
+import { toast } from 'sonner'
+import { htmlToReact } from '@kit/utils/html-parser'
 
 type Callback = () => void | Promise<void>
 
@@ -84,6 +86,15 @@ export function useUiActions<TFormValues extends Record<string, any> = Record<st
 
         const uiRes = uiResponse.result as SnUiResponse
         if (uiRes?.isActionAborted) return
+
+        if (uiRes.$$uiNotification) {
+          uiRes.$$uiNotification.forEach((msg) => {
+            if (msg.type === 'error') toast.error(htmlToReact(msg.message))
+            if (msg.type === 'success') toast.success(htmlToReact(msg.message))
+            if (msg.type === 'info') toast.info(htmlToReact(msg.message))
+            else toast(htmlToReact(msg.message))
+          })
+        }
 
         if (snInsert && uiRes?.isInsert) return snInsert(uiRes.sys_id)
         snSubmit(uiRes.sys_id)

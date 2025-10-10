@@ -13,6 +13,7 @@ interface SnFormProps {
   table: string
   guid: string
   apis: SnFormApis
+  enableAttachments?: boolean
   snInsert?(guid: string): void
   snSubmit?(guid: string): void
 }
@@ -26,7 +27,7 @@ function unionClientScripts(scripts: Record<string, SnClientScript[]>) {
   }, [] as SnClientScript[])
 }
 
-export function SnFormWrapper({ apis, table, guid, snInsert, snSubmit }: SnFormProps) {
+export function SnFormWrapper({ apis, table, guid, enableAttachments = true, snInsert, snSubmit }: SnFormProps) {
   const fetchIdRef = useRef(0)
   const [view, setView] = useState('')
   const [subCount, setSubCount] = useState(0)
@@ -40,7 +41,7 @@ export function SnFormWrapper({ apis, table, guid, snInsert, snSubmit }: SnFormP
   const [uiPolicies, setUiPolicies] = useState<SnPolicy[]>([])
   const [sections, setSections] = useState<SnSection[]>([])
   const [activity, setActivity] = useState<SnActivity | undefined>(undefined)
-  const [attachments, setAttachments] = useState<SnAttachment[]>([])
+  const [attachments, setAttachments] = useState<SnAttachment[] | null>(null)
   const [attachmentGuid, setAttachmentGuid] = useState<string>(guid)
   const [scratchpad, setScratchpad] = useState<Record<string, unknown>>({})
 
@@ -67,10 +68,11 @@ export function SnFormWrapper({ apis, table, guid, snInsert, snSubmit }: SnFormP
           setUiPolicies(form.policy || [])
           setSections(form._sections || [])
           setActivity(form.activity)
-          setAttachments(form.attachments || [])
           setAttachmentGuid(form._attachmentGUID || guid)
           setView(form.view || '')
           setScratchpad(form.g_scratchpad || {})
+
+          if (enableAttachments) setAttachments(form.attachments || [])
         }
       } catch (error: unknown) {
         if (axios.isAxiosError(error)) {
@@ -101,7 +103,7 @@ export function SnFormWrapper({ apis, table, guid, snInsert, snSubmit }: SnFormP
     return () => {
       controller.abort()
     }
-  }, [apis.formData, table, guid, subCount])
+  }, [apis.formData, table, guid, subCount, enableAttachments])
 
   if (loading)
     return (

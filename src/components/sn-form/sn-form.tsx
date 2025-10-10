@@ -30,6 +30,7 @@ import {
   SnSection,
   SnUiAction,
 } from '@kit/types/form-schema'
+import { useScriptRunner } from './hooks/useScriptRunner'
 
 interface SnFormProps {
   table: string
@@ -43,7 +44,7 @@ interface SnFormProps {
   uiPolicies: SnPolicy[]
   sections: SnSection[]
   apis: SnFormApis
-  attachments: SnAttachment[]
+  attachments: SnAttachment[] | null
   messages: Record<string, string>
   scratchpad: Record<string, unknown>
   activity?: SnActivity
@@ -100,10 +101,7 @@ export function SnForm({
     uiActions,
   })
 
-  const { runClientScriptsForFieldChange, runOnSubmitClientScripts } = useClientScripts({
-    form,
-    clientScripts: clientScripts || [],
-    formFields,
+  const { executeClientScript, executePolicyScript } = useScriptRunner({
     gForm,
     scratchpad,
     messages,
@@ -111,11 +109,19 @@ export function SnForm({
     glideUser: formConfig.glide_user,
   })
 
+  const { runClientScriptsForFieldChange, runOnSubmitClientScripts } = useClientScripts({
+    form,
+    clientScripts: clientScripts || [],
+    formFields,
+    executeClientScript,
+  })
+
   const { runUiPolicies, runUiPoliciesForField } = useUiPolicies({
     form,
     formFields,
     uiPolicies,
     updateFieldUI,
+    executePolicyScript,
     formConfig,
   })
 

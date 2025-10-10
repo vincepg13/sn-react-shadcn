@@ -13,7 +13,8 @@ type UseEsLintOptions = {
   showGutter?: boolean
 }
 
-// --- ESLint 8 default config (legacy shape) ---
+/* ---------------- ESLint 8 default config (legacy shape) ---------------- */
+
 export const esLintDefaultConfig: ESLintV8LegacyConfig = {
   env: { browser: true },
   parserOptions: { ecmaVersion: 'latest', sourceType: 'script' },
@@ -21,7 +22,8 @@ export const esLintDefaultConfig: ESLintV8LegacyConfig = {
   rules: { semi: ['warn', 'always'], 'no-unused-vars': ['warn', { args: 'none' }] },
 }
 
-// shallow-ish deep merge good enough for config objects
+/* ----------------------- small deep merge for config -------------------- */
+
 function deepMerge<T>(a: T, b: Partial<T>): T {
   if (!b) return a
   const out: any = Array.isArray(a) ? [...(a as any)] : { ...(a as any) }
@@ -37,14 +39,13 @@ function deepMerge<T>(a: T, b: Partial<T>): T {
 }
 
 /**
- * Normalize any provided config(s) into a single ESLint 8 (legacy) config object.
- * - Maps flat-config fields (languageOptions.globals/parserOptions, sourceType/ecmaVersion) to v8 shape.
- * - Collapses arrays into one merged object.
+ * Normalize provided config(s) into a single ESLint 8 (legacy) config object.
+ * Maps flat-config fields (languageOptions.*) to v8 shape and merges with defaults.
  */
 function normalizeToV8Config(input: ESLintConfigAny | ESLintConfigAny[] | undefined): any {
   const configs = (Array.isArray(input) ? input : input ? [input] : []) as any[]
 
-  const mapped = configs.map((cfg) => {
+  const mapped = configs.map(cfg => {
     if (!cfg || typeof cfg !== 'object') return {}
     const c = { ...cfg }
 
@@ -64,7 +65,6 @@ function normalizeToV8Config(input: ESLintConfigAny | ESLintConfigAny[] | undefi
         c.globals = { ...(c.globals || {}), ...lo.globals }
       }
       if (lo.parser && !c.parser) c.parser = lo.parser
-
       delete c.languageOptions
     }
 
@@ -76,11 +76,10 @@ function normalizeToV8Config(input: ESLintConfigAny | ESLintConfigAny[] | undefi
     return c
   })
 
-  // Merge all provided configs into defaults (first), then user overrides
   const mergedUser = mapped.reduce((acc, cfg) => deepMerge(acc, cfg), {} as any)
   const base = { ...esLintDefaultConfig }
 
-  // Special case: if user explicitly requests ES5, adapt parserOptions/env
+  // Special case: ES5 requested
   const ecma = mergedUser?.parserOptions?.ecmaVersion
   if (ecma === 5) {
     base.parserOptions = { ecmaVersion: 5, sourceType: 'script' }
@@ -90,9 +89,95 @@ function normalizeToV8Config(input: ESLintConfigAny | ESLintConfigAny[] | undefi
   return deepMerge(base, mergedUser)
 }
 
-export function useEsLint(
-  opts: UseEsLintOptions = { enabled: false }
-): { extensions: Extension[]; ready: boolean; error: string | null } {
+/* -------------------- ServiceNow wrapper + patching -------------------- */
+
+type WrapResult = { code: string; insertLine: number | null; colDelta: number }
+
+/**
+ * If the file starts with an anonymous top-level function (ServiceNow-style),
+ * prefix it with "void " so it's parsed as an expression statement.
+ * No EOF changes -> same line count; only first-line columns shift by +5.
+ */
+function wrapForServiceNow(src: string): WrapResult {
+  // Skip BOM + leading whitespace/comments
+  const leadRe = /^(?:\uFEFF|\s|\/\*[\s\S]*?\*\/|\/\/[^\n]*\n)*/
+  const m = src.match(leadRe)
+  const start = m ? m[0].length : 0
+
+  const head = src.slice(start)
+  const isAnonTopFn = /^(?:async\s+)?function\*?\s*\(/.test(head)
+
+  if (!isAnonTopFn) return { code: src, insertLine: null, colDelta: 0 }
+
+  // 1-based line number where we insert "void "
+  const insertLine = src.slice(0, start).split('\n').length
+  const wrapped = src.slice(0, start) + 'void ' + src.slice(start)
+
+  return { code: wrapped, insertLine, colDelta: 5 } // "void " length
+}
+
+function adjustMessagePos<T>(
+  msg: T & { line?: number; column?: number; endLine?: number; endColumn?: number },
+  insertLine: number | null,
+  colDelta: number
+) {
+  if (insertLine == null || !colDelta) return msg
+  const clone: any = { ...msg }
+
+  if (clone.line === insertLine && typeof clone.column === 'number') {
+    clone.column = Math.max(1, clone.column - colDelta)
+  }
+  if (clone.endLine === insertLine && typeof clone.endColumn === 'number') {
+    clone.endColumn = Math.max(1, clone.endColumn - colDelta)
+  }
+  return clone as T
+}
+
+/** Filter out ONLY the bogus semicolon warning produced by the wrapper. */
+function isWrapperSemiFalsePositive(msg: any, lastLine: number, insertLine: number | null, colDelta: number) {
+  if (!insertLine || !colDelta) return false
+  if (msg?.ruleId !== 'semi') return false
+  const text = String(msg?.message || '').toLowerCase()
+  if (!text.includes('missing semicolon')) return false
+  // Points to the end of the last line of the (unwrapped) file
+  return msg.line === lastLine || msg.endLine === lastLine
+}
+
+function patchLinterForServiceNow(linter: any) {
+  const origVerify = linter.verify?.bind(linter)
+  const origVerifyAndFix = linter.verifyAndFix?.bind(linter)
+
+  if (origVerify) {
+    linter.verify = (code: string, config: any, filename?: string) => {
+      const { code: wrapped, insertLine, colDelta } = wrapForServiceNow(code)
+      const lastLine = code.split('\n').length
+      const out = origVerify(wrapped, config, filename) || []
+      const mapped = out.map((m: any) => adjustMessagePos(m, insertLine, colDelta))
+      return mapped.filter((m: any) => !isWrapperSemiFalsePositive(m, lastLine, insertLine, colDelta))
+    }
+  }
+
+  if (origVerifyAndFix) {
+    linter.verifyAndFix = (code: string, config: any, options?: any) => {
+      const { code: wrapped, insertLine, colDelta } = wrapForServiceNow(code)
+      const lastLine = code.split('\n').length
+      const res = origVerifyAndFix(wrapped, config, options)
+      res.messages = (res.messages || [])
+        .map((m: any) => adjustMessagePos(m, insertLine, colDelta))
+        .filter((m: any) => !isWrapperSemiFalsePositive(m, lastLine, insertLine, colDelta))
+      res.output = code // keep original text
+      return res
+    }
+  }
+}
+
+/* ------------------------------- Hook ---------------------------------- */
+
+export function useEsLint(opts: UseEsLintOptions = { enabled: false }): {
+  extensions: Extension[]
+  ready: boolean
+  error: string | null
+} {
   const [ready, setReady] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [extensions, setExtensions] = useState<Extension[]>([])
@@ -107,14 +192,16 @@ export function useEsLint(
     setExtensions([])
 
     if (!enabled) return
-
     ;(async () => {
       try {
         const mod = await import('eslint-linter-browserify')
         const LinterCtor = (mod as any).Linter
         if (!LinterCtor) throw new Error('Failed to load ESLint Linter')
 
-        const lintSource = cmEsLint(new LinterCtor(), v8ConfigObject)
+        const l = new LinterCtor()
+        patchLinterForServiceNow(l) // enable ServiceNow anonymous top-level function support
+
+        const lintSource = cmEsLint(l, v8ConfigObject)
 
         const exts: Extension[] = [linter(lintSource, { delay: Math.max(0, debounceMs ?? 0) })]
         if (showGutter) exts.unshift(lintGutter())

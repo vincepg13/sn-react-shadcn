@@ -1,6 +1,6 @@
 // hooks/useUiPolicies.ts
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { SnFormConfig, SnPolicy, SnPolicyCondition } from './../../../types/form-schema'
+import { SnFormConfig, SnPolicy, SnPolicyCondition, SnPolicyScript } from './../../../types/form-schema'
 import { useCallback, useEffect, useMemo } from 'react'
 import { FieldUIState, SnFieldsSchema } from '@kit/types/form-schema'
 import { evaluateAndApplyPolicy } from '../../../utils/form-policy'
@@ -9,13 +9,19 @@ interface UseUiPoliciesOptions {
   form: any
   formFields: SnFieldsSchema | null
   uiPolicies: SnPolicy[]
+  executePolicyScript: (script: SnPolicyScript) => any
   updateFieldUI: (field: string, updates: Partial<FieldUIState>) => void
   formConfig: SnFormConfig | null
 }
 
-export function useUiPolicies({ form, formFields, uiPolicies, updateFieldUI, formConfig }: UseUiPoliciesOptions) {
-  // const [uiPolicies, setUiPolicies] = useState<SnPolicy[]>([])
-
+export function useUiPolicies({
+  form,
+  formFields,
+  uiPolicies,
+  updateFieldUI,
+  executePolicyScript,
+  formConfig,
+}: UseUiPoliciesOptions) {
   const policyIndex = useMemo(() => {
     const map = new Map<string, SnPolicy[]>()
 
@@ -34,9 +40,10 @@ export function useUiPolicies({ form, formFields, uiPolicies, updateFieldUI, for
     if (!formConfig || !formFields) return
 
     for (const policy of uiPolicies) {
-      if (policy.onload) evaluateAndApplyPolicy(form, formFields, policy, updateFieldUI, formConfig)
+      if (policy.onload)
+        evaluateAndApplyPolicy(form, formFields, policy, executePolicyScript, updateFieldUI, formConfig)
     }
-  }, [uiPolicies, form, formFields, updateFieldUI, formConfig])
+  }, [formConfig, formFields, uiPolicies, form, executePolicyScript, updateFieldUI])
 
   const runUiPoliciesForField = useCallback(
     (fieldName: string) => {
@@ -44,10 +51,10 @@ export function useUiPolicies({ form, formFields, uiPolicies, updateFieldUI, for
 
       const relatedPolicies = policyIndex.get(fieldName) || []
       for (const policy of relatedPolicies) {
-        evaluateAndApplyPolicy(form, formFields, policy, updateFieldUI, formConfig)
+        evaluateAndApplyPolicy(form, formFields, policy, executePolicyScript, updateFieldUI, formConfig)
       }
     },
-    [policyIndex, form, formFields, updateFieldUI, formConfig]
+    [formConfig, formFields, policyIndex, form, executePolicyScript, updateFieldUI]
   )
 
   useEffect(() => {

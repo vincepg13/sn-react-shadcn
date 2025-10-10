@@ -5,6 +5,7 @@ import { GlideAjax } from './glide-ajax'
 import { parseAjaxGlideRecord } from '@kit/utils/xml-parser'
 import { computeEffectiveFieldState, formatSectionName } from '@kit/utils/form-client'
 import { FieldUIState, SnFieldsSchema, SnSection, SnUiAction, UiActionHandler } from '../types/form-schema'
+import { htmlToReact } from '@kit/utils/html-parser'
 
 const refCache = new Map<string, any>()
 let _actionName = ''
@@ -110,10 +111,19 @@ export function createGFormBridge(opts: GFormBridgeOptions) {
     },
     getDisplayValue: (field: string) => getDisplayValues()[field] ?? '',
 
-    setValue: (fieldName: string, value: any) => {
-      setValue(fieldName, value, { shouldDirty: true, shouldTouch: true, shouldValidate: false })
-      const handlers = fieldChangeHandlers.current
-      if (handlers?.[fieldName]) handlers[fieldName](value)
+    setValue: (fieldName: string, value: any, displayValue: any) => {
+      // setTimeout(() => {
+        if (displayValue) {
+          const localField = getFormFields()[fieldName]
+          if (localField) {
+            localField.displayValue = String(displayValue)
+          }
+        }
+
+        setValue(fieldName, value, { shouldDirty: true, shouldTouch: true, shouldValidate: true })
+        const handlers = fieldChangeHandlers.current
+        if (handlers?.[fieldName]) handlers[fieldName](value)
+      // }, 0)
     },
     clearValue: (field: string) => base.setValue(field, ''),
 
@@ -138,8 +148,8 @@ export function createGFormBridge(opts: GFormBridgeOptions) {
 
     // UI Action Operations
     getActionName: () => _actionName,
-    save: () => clientSubmit("sysverb_update_and_stay"),
-    submit: () => clientSubmit("sysverb_update"),
+    save: (action?: string) => clientSubmit(action || 'sysverb_update_and_stay'),
+    submit: (action?: string) => clientSubmit(action || 'sysverb_update'),
 
     // UI State updates
     setDisabled: (field: string) => updateFieldUI(field, { readonly: true }),
@@ -186,10 +196,12 @@ export function createGFormBridge(opts: GFormBridgeOptions) {
 
     // Messaging
     addErrorMessage: (message: string) => {
-      toast.error(message, { duration: 20000 })
+      if (!message) return
+      toast.error(message, { duration: 10000 })
     },
     addInfoMessage: (message: string) => {
-      toast.info(message, { duration: 5000 })
+      if (!message) return
+      toast.info(htmlToReact(message))
     },
 
     // Data fetching helpers

@@ -144,7 +144,7 @@ Supported currently:
 
 - **Fields**: Most(but not every) field types are supported. If the form encounters an unmapped field type it will be hidden.
 - **Form Layout**: Form will render in the layout provided by ServiceNow which includes tabbed sections and their respective columns.
-- **UI Policies**: None-scripted UI Policies using the standard mandatory/visible/readonly options. The set and clear value options are currently unsupported.
+- **UI Policies**: Scripted UI Policies as well as using the standard mandatory/visible/readonly options. The set and clear value options are currently unsupported.
 - **Client Scripts**: All will attempt to execute. Any unmapped g_form methods will send a warning to the console but still attempt to process the rest of the client script. Any failures will terminate the current client script and proceed to the next.
 
 ### `<SnFormWrapper />` && `<SnForm />`

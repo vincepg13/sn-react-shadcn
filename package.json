@@ -1,6 +1,6 @@
 {
   "name": "sn-shadcn-kit",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "type": "module",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
@@ -37,6 +37,10 @@
       "types": "./dist/amb.d.ts",
       "import": "./dist/amb.js"
     },
+    "./types": {
+      "types": "./dist/type.d.ts",
+      "import": "./dist/type.js"
+    },
     "./form": {
       "types": "./dist/form.d.ts",
       "import": "./dist/form.js"
@@ -67,12 +71,14 @@
     "axios": "^1.8.4",
     "react": "^18.0.0 || ^19.0.0",
     "react-dom": "^18.0.0 || ^19.0.0",
+    "sonner": "^2.0.3",
     "tailwindcss": "^3.0.0 || ^4.0.0"
   },
   "dependencies": {
     "@codemirror/commands": "^6.8.1",
     "@codemirror/lang-html": "^6.4.10",
     "@codemirror/lang-javascript": "^6.2.4",
+    "@codemirror/lang-json": "^6.0.2",
     "@codemirror/lang-markdown": "^6.3.4",
     "@codemirror/language": "^6.11.3",
     "@codemirror/search": "^6.5.11",
@@ -81,11 +87,11 @@
     "@hookform/resolvers": "^5.0.1",
     "@radix-ui/react-avatar": "^1.1.10",
     "@radix-ui/react-checkbox": "^1.2.3",
-    "@radix-ui/react-dialog": "^1.1.14",
+    "@radix-ui/react-dialog": "^1.1.15",
     "@radix-ui/react-dropdown-menu": "^2.1.12",
     "@radix-ui/react-icons": "^1.3.0",
     "@radix-ui/react-label": "^2.1.4",
-    "@radix-ui/react-popover": "^1.1.11",
+    "@radix-ui/react-popover": "^1.1.15",
     "@radix-ui/react-select": "^2.2.2",
     "@radix-ui/react-separator": "^1.1.4",
     "@radix-ui/react-slot": "^1.2.3",
@@ -125,6 +131,7 @@
     "dompurify": "^3.2.5",
     "eslint-linter-browserify": "8.57.0",
     "globals": "^16.0.0",
+    "html-react-parser": "^5.2.6",
     "lodash.isequal": "^4.5.0",
     "lowlight": "^3.3.0",
     "lucide-react": "^0.488.0",
@@ -135,7 +142,6 @@
     "react-medium-image-zoom": "^5.2.14",
     "react-number-format": "^5.4.4",
     "shadcn-dropzone": "^0.2.1",
-    "sonner": "^2.0.3",
     "tailwind-merge": "^3.2.0",
     "tern": "^0.24.3",
     "uuid": "^11.1.0",
@@ -162,24 +168,7 @@
     "vite": "^6.0.0"
   },
   "overrides": {
-    "eslint-linter-browserify": "8.57.0",
     "shadcn-dropzone": {
-      "react": "^19.0.0",
-      "react-dom": "^19.0.0"
-    },
-    "@radix-ui/react-avatar": {
-      "react": "^19.0.0",
-      "react-dom": "^19.0.0"
-    },
-    "@radix-ui/react-popover": {
-      "react": "^19.0.0",
-      "react-dom": "^19.0.0"
-    },
-    "@radix-ui/react-tooltip": {
-      "react": "^19.0.0",
-      "react-dom": "^19.0.0"
-    },
-    "@floating-ui/react-dom": {
       "react": "^19.0.0",
       "react-dom": "^19.0.0"
     }

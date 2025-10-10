@@ -31,7 +31,6 @@ function getBuilderQuery(query?: string) {
     }
   }
 
-  console.log('BQ', builderQuery)
   return builderQuery
 }
 
@@ -50,8 +49,6 @@ export const SnConditionBuilderRef = forwardRef<SnConditionHandle, BuilderProps>
     const columns = useFieldMetadata(table, setError)
     const { queryModel, queryDisplay, queryParser } = useParsedQuery(table, builderQuery || '', emitDisplay, setError)
     useEffect(() => setLoaded(!!columns && !!queryModel), [columns, queryModel])
-
-    console.log('QM', queryModel)
 
     const conditionRef = useRef<SnConditionHandle>(null)
     useImperativeHandle(ref, () => ({

@@ -19,11 +19,13 @@ interface SnFieldScriptProps extends Omit<SnFieldBaseProps<string>, 'field'> {
   adornmentRef?: RefObject<HTMLElement | null>
 }
 
-const typeToLang: Record<string, 'javascript' | 'html' | 'css'> = {
+const typeToLang: Record<string, 'javascript' | 'html' | 'css' | 'json'> = {
   script: 'javascript',
   script_plain: 'javascript',
   html_template: 'html',
   css: 'css',
+  json: 'json',
+  properties: 'css'
 }
 
 export function SnFieldScript({ table, field, rhfField, adornmentRef, onChange }: SnFieldScriptProps) {
@@ -67,9 +69,9 @@ export function SnFieldScript({ table, field, rhfField, adornmentRef, onChange }
 
   // Maximized mode styles and behavior
   const editorHeight = isMaximized ? 'calc(100vh)' : undefined
-  const wrapperClasses = isMaximized ? 'fixed inset-0 z-[1000] bg-background/95' : 'w-full'
+  const wrapperClasses = isMaximized ? 'fixed inset-0 z-[1000] bg-background/95' : 'w-full overflow-x-auto'
   const esLint = {
-    enabled: field.type === 'script',
+    enabled: field.type.startsWith('script'),
     debounceMs: 200,
     config: formConfig.es_lint || esLintDefaultConfig,
   }
@@ -89,6 +91,7 @@ export function SnFieldScript({ table, field, rhfField, adornmentRef, onChange }
           onBlur={onChange}
           onToggleMax={toggleMax}
           esLint={esLint}
+          lineWrapping={false}
         />
         {isMaximized && (
           <button

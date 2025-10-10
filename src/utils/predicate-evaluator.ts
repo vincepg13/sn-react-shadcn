@@ -68,12 +68,14 @@ function evalBetween(fieldVal: string, condVal: string, type: string, dateFormat
 export function evaluateCondition(
   cond: SnPolicyCondition,
   formData: Record<string, string>,
-  formConfig: SnFormConfig
+  formConfig: SnFormConfig,
 ): boolean {
-  const fieldVal = formData[cond.field]
+  
+  const fieldVal = cond.dotWalkedValue || formData[cond.field]
   const condVal = cond.value
   const fieldType = fieldTypeMap[cond.type] || 'string'
   const dateFormat = formConfig.date_format + ' HH:mm:ss'
+
 
   switch (cond.oper) {
     case '=':

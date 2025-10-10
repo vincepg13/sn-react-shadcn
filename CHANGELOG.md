@@ -1,5 +1,10 @@
 # Change Log
 
+## [V2.0.1]
+- SnForm bug fixes
+- Enabled support for scripted UI Policies
+- Updates to the script editing engine for better linting and formatting. Enabled support for JSON field types.
+
 ## [V2.0.0] 
 - Added a new standalone component SnScriptEditor which is a CodeMirror V6 script editor designed specifically to work with ServiceNow scripts
 - Integrated SnScriptEditor into SnForm via the internal SnFieldScript component. This allows the following field types to be displayed: html_template, css, script, script_plain

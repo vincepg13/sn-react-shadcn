@@ -6,7 +6,7 @@ import { SnCodeMirrorHandle } from './sn-code-mirror'
 interface SnScriptToolbarProps {
   readonly?: boolean
   editorRef: RefObject<SnCodeMirrorHandle | null>
-  toggleMax: () => void
+  toggleMax?: () => void
 }
 
 export function SnScriptToolbar({ readonly, toggleMax, editorRef }: SnScriptToolbarProps) {
@@ -27,9 +27,11 @@ export function SnScriptToolbar({ readonly, toggleMax, editorRef }: SnScriptTool
           </button>
         </>
       )}
-      <button type="button" className="hover:opacity-80" onClick={toggleMax}>
-        <SnSimpleTooltip trigger={<Maximize2 size={18} />} content="Full screen (Ctrl + M)" />
-      </button>
+      {toggleMax && (
+        <button type="button" className="hover:opacity-80" onClick={toggleMax}>
+          <SnSimpleTooltip trigger={<Maximize2 size={18} />} content="Full screen (Ctrl + M)" />
+        </button>
+      )}
     </div>
   )
 }
