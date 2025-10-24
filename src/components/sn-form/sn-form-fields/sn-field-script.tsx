@@ -1,8 +1,8 @@
 import { isAxiosError } from 'axios'
 import { createPortal } from 'react-dom'
 import { Minimize2 } from 'lucide-react'
-import { atomone } from '@uiw/codemirror-theme-atomone'
-import { getAutocompleteData } from '@kit/utils/script-editor'
+import { CodeMirrorLanguage } from '@kit/types/script-types'
+import { getAutocompleteData, getTheme } from '@kit/utils/script-editor'
 import { useFormLifecycle } from '../contexts/SnFormLifecycleContext'
 import { RefObject, useEffect, useMemo, useRef, useState } from 'react'
 import { SnFieldBaseProps, SnFieldSchema } from '@kit/types/form-schema'
@@ -19,7 +19,7 @@ interface SnFieldScriptProps extends Omit<SnFieldBaseProps<string>, 'field'> {
   adornmentRef?: RefObject<HTMLElement | null>
 }
 
-const typeToLang: Record<string, 'javascript' | 'html' | 'css' | 'json'> = {
+const typeToLang: Record<string, CodeMirrorLanguage> = {
   script: 'javascript',
   script_plain: 'javascript',
   html_template: 'html',
@@ -83,11 +83,12 @@ export function SnFieldScript({ table, field, rhfField, adornmentRef, onChange }
           ref={editorRef}
           language={typeToLang[field.type]}
           content={String(rhfField.value ?? '')}
-          theme={atomone}
+          theme={getTheme(formConfig.theme)}
           readonly={readonly}
           height={editorHeight}
           signatureExt={signatureExt}
           completionSources={completionSources}
+          prettierOptions={formConfig.prettier}
           onBlur={onChange}
           onToggleMax={toggleMax}
           esLint={esLint}

@@ -1,6 +1,7 @@
 export type RuleLevel = 0 | 1 | 2 | 'off' | 'warn' | 'error'
 export type RuleEntry = RuleLevel | [RuleLevel, ...unknown[]]
 
+export type ESVersion = number | 'latest'
 export type GlobalsMap =
   | Record<string, 'readonly' | 'writable' | boolean>
   | Record<string, 'off' | 'readonly' | 'writable'>

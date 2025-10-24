@@ -2,7 +2,7 @@ import { cn } from '../../lib/utils'
 import { Button } from '../../components/ui/button'
 import { useDebounce } from './hooks/useDebounce'
 import { usePickerData } from './hooks/references/usePickerData'
-import { Check, ChevronsUpDown, X, Loader2 } from 'lucide-react'
+import { Check, ChevronsUpDown, X, Loader2, Dot } from 'lucide-react'
 import { useRef, useState, UIEvent, MouseEvent, useEffect } from 'react'
 import { Popover, PopoverContent, PopoverTrigger } from '../../components/ui/popover'
 import { SnRecordPickerItem as Record } from '../../types/form-schema'
@@ -190,8 +190,19 @@ export function SnRecordPicker({
                 <CommandItem key={record.value} value={record.value} onSelect={() => handleSelect(record.value)}>
                   <div className="flex flex-col gap-1">
                     {record.display_value}
-                    {record.primary && <span className="text-muted-foreground text-sm">{record.primary}</span>}
-                    {record.secondary && <span className="text-muted-foreground text-sm">{record.secondary}</span>}
+                    {/* <div className="flex items-center">
+                      {record.primary && <span className="text-muted-foreground text-sm">{record.primary}</span>}
+                      {record.primary && record.secondary &&<Dot />}
+                      {record.secondary && <span className="text-muted-foreground text-sm">{record.secondary}</span>}
+                    </div> */}
+                    <div className="flex items-center flex-wrap">
+                      {record.displayFields?.map((f, i, arr) => (
+                        <span key={f} className="flex items-center text-muted-foreground text-sm">
+                          <span>{f}</span>
+                          {arr[i + 1] && <Dot />}
+                        </span>
+                      ))}
+                    </div>
                   </div>
                   <Check className={cn('ml-auto', isSelected(record) ? 'opacity-100' : 'opacity-0')} />
                 </CommandItem>

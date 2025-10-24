@@ -1,5 +1,5 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { getTableRows } from '../../../../utils/table-api'
 import { SnRow } from '../../../../types/table-schema'
 import { SnRecordPickerItem as Record } from '../../../../types/form-schema'
@@ -22,6 +22,9 @@ export function usePickerData({ table, fields, query, searchTerm, pageSize, open
   const [hasMore, setHasMore] = useState(true)
   const [page, setPage] = useState(0)
 
+  const controllerRef = useRef(new AbortController())
+  useEffect(() => controllerRef.current.abort(), [])
+
   useEffect(() => {
     if (open) {
       fetchRecords(0, searchTerm, true)
@@ -38,14 +41,15 @@ export function usePickerData({ table, fields, query, searchTerm, pageSize, open
     if (!query.includes('ORDERBY')) queryString += `^ORDERBY${fields[0]}`
 
     try {
-      const controller = new AbortController()
+      controllerRef.current.abort()
+      controllerRef.current = new AbortController()
       const res = await getTableRows(
         table,
         queryString,
         apiFields.join(','),
         pageNumber * pageSize,
         pageSize,
-        controller
+        controllerRef.current
       )
 
       const rows: SnRow[] = res.data.result || []
@@ -56,8 +60,17 @@ export function usePickerData({ table, fields, query, searchTerm, pageSize, open
           display_value: row[fields[0]]?.display_value || row[fields[0]]?.value,
         }
 
+        
         if (fields[1]) record.primary = row[fields[1]]?.display_value
         if (fields[2]) record.secondary = row[fields[2]]?.display_value
+
+        let df = fields.slice(1)
+        if (df.length > 0) {
+          df = df.map(f => row[f].display_value || '').filter(Boolean)
+        }
+
+        record.displayFields = df
+
         return record
       })
 

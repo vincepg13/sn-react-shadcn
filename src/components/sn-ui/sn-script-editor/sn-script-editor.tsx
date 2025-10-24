@@ -1,18 +1,17 @@
+// SnScriptEditor.tsx
 import { cn } from '@kit/lib/utils'
 import { isAxiosError } from 'axios'
 import { Minimize2 } from 'lucide-react'
 import { SnScriptToolbar } from './sn-script-toolbar'
-import { atomone } from '@uiw/codemirror-theme-atomone'
 import { ESLintConfigAny } from '@kit/types/es-lint-types'
-import { getAutocompleteData } from '@kit/utils/script-editor'
+import { getAutocompleteData, getTheme } from '@kit/utils/script-editor'
 import { ReactNode, useEffect, useRef, useState } from 'react'
 import { SnCodeMirror, SnCodeMirrorHandle } from './sn-code-mirror'
 import { useInlineTern } from '@kit/components/sn-ui/sn-script-editor/hooks/useTernInline'
 import { useFullScreen } from '@kit/components/sn-ui/sn-script-editor/hooks/useFullScreen'
 import { esLintDefaultConfig } from '@kit/components/sn-ui/sn-script-editor/hooks/useEsLint'
-
-type SnScriptFieldType = 'script' | 'script_plain' | 'html_template' | 'css' | 'json' | 'properties'
-type CodeMirrorLanguage = 'javascript' | 'html' | 'css' | 'json'
+import { CmThemeValue, CodeMirrorLanguage, SnScriptFieldType } from '@kit/types/script-types'
+import { Options as PrettierOptions } from 'prettier'
 
 interface SnFieldScriptProps {
   snType: SnScriptFieldType
@@ -26,6 +25,8 @@ interface SnFieldScriptProps {
   parentClasses?: string
   cmContainerClasses?: string
   lineWrapping?: boolean
+  theme?: CmThemeValue
+  prettierOptions?: PrettierOptions
   onBlur?: (value: string) => void
   onChange?: (value: string) => void
   onReady?: (handle: SnCodeMirrorHandle) => void
@@ -52,6 +53,8 @@ export function SnScriptEditor({
   customToolbar,
   parentClasses,
   cmContainerClasses,
+  theme = 'dark',
+  prettierOptions,
   onChange,
   onReady,
   onBlur,
@@ -96,7 +99,7 @@ export function SnScriptEditor({
 
   const esLint = {
     enabled: lang === 'javascript',
-    debounceMs: 200,
+    debounceMs: 800, // slightly higher to improve continuous typing perf
     config: esLintConfig || esLintDefaultConfig,
   }
 
@@ -115,7 +118,8 @@ export function SnScriptEditor({
           ref={editorRef}
           language={lang}
           content={String(content ?? '')}
-          theme={atomone}
+          themeId={theme || 'atom'}
+          theme={getTheme(theme)}
           readonly={readonly}
           height={editorHeight}
           signatureExt={signatureExt}
@@ -123,6 +127,7 @@ export function SnScriptEditor({
           lineWrapping={lineWrapping}
           esLint={esLint}
           isMaximized={isMaximized}
+          prettierOptions={prettierOptions}
           onBlur={onBlur}
           onChange={onChange}
           onToggleMax={toggleMax}

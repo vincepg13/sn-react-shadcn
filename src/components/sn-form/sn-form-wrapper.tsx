@@ -1,19 +1,22 @@
 import axios from 'axios'
 import { SnForm } from './sn-form'
-import { useEffect, useRef, useState } from 'react'
 import { AlertCircle } from 'lucide-react'
 import { getFormData } from '@kit/utils/form-api'
-import { SnAttachment } from '@kit/types/attachment-schema'
-import { SnActivity, SnFormApis, SnSection } from '@kit/types/form-schema'
-import { Alert, AlertDescription, AlertTitle } from '../ui/alert'
-import { SnUiAction, SnFieldsSchema, SnFormConfig, SnClientScript, SnPolicy } from '@kit/types/form-schema'
+import { useEffect, useRef, useState } from 'react'
 import { SnFormSkeleton } from './sn-form-skeleton'
+import { mutateEsVersion } from '@kit/utils/script-editor'
+import { ESLintConfigAny } from '@kit/exports/script.index'
+import { SnAttachment } from '@kit/types/attachment-schema'
+import { Alert, AlertDescription, AlertTitle } from '../ui/alert'
+import { SnActivity, SnFormApis, SnSection } from '@kit/types/form-schema'
+import { SnUiAction, SnFieldsSchema, SnFormConfig, SnClientScript, SnPolicy } from '@kit/types/form-schema'
 
 interface SnFormProps {
   table: string
   guid: string
   apis: SnFormApis
   enableAttachments?: boolean
+  esLintConfig?: ESLintConfigAny
   snInsert?(guid: string): void
   snSubmit?(guid: string): void
 }
@@ -27,7 +30,15 @@ function unionClientScripts(scripts: Record<string, SnClientScript[]>) {
   }, [] as SnClientScript[])
 }
 
-export function SnFormWrapper({ apis, table, guid, enableAttachments = true, snInsert, snSubmit }: SnFormProps) {
+export function SnFormWrapper({
+  apis,
+  table,
+  guid,
+  esLintConfig,
+  enableAttachments = true,
+  snInsert,
+  snSubmit,
+}: SnFormProps) {
   const fetchIdRef = useRef(0)
   const [view, setView] = useState('')
   const [subCount, setSubCount] = useState(0)
@@ -60,7 +71,6 @@ export function SnFormWrapper({ apis, table, guid, enableAttachments = true, snI
         if (response.status === 200) {
           console.log('Form data:', response.data)
           const form = response.data.result
-          setFormConfig(form.react_config)
           setUiActions(form._ui_actions)
           setFormFields(form._fields)
           setClientScripts(unionClientScripts(form.client_script))
@@ -73,6 +83,10 @@ export function SnFormWrapper({ apis, table, guid, enableAttachments = true, snI
           setScratchpad(form.g_scratchpad || {})
 
           if (enableAttachments) setAttachments(form.attachments || [])
+
+          const reactConfig = form.react_config as SnFormConfig
+          mutateEsVersion(reactConfig.es_version, esLintConfig)
+          setFormConfig(reactConfig)
         }
       } catch (error: unknown) {
         if (axios.isAxiosError(error)) {
@@ -103,7 +117,7 @@ export function SnFormWrapper({ apis, table, guid, enableAttachments = true, snI
     return () => {
       controller.abort()
     }
-  }, [apis.formData, table, guid, subCount, enableAttachments])
+  }, [apis.formData, table, guid, subCount, enableAttachments, esLintConfig])
 
   if (loading)
     return (

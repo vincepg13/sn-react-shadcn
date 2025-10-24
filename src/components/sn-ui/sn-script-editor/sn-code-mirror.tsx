@@ -1,17 +1,21 @@
 import { css } from '@codemirror/lang-css'
 import { html } from '@codemirror/lang-html'
 import { json } from '@codemirror/lang-json'
-import { javascript } from '@codemirror/lang-javascript'
-import { EditorView, keymap } from '@codemirror/view'
-import { openSearchPanel } from '@codemirror/search'
-import { Options as PrettierOptions } from 'prettier'
+import { tags as t } from '@lezer/highlight'
 import { useEsLint } from './hooks/useEsLint'
-import { buildAutocomplete } from '@kit/utils/script-editor'
+import { lintGutter } from '@codemirror/lint'
+import { openSearchPanel } from '@codemirror/search'
+import { CmThemeValue } from '@kit/types/script-types'
+import { EditorView, keymap } from '@codemirror/view'
+import { Options as PrettierOptions } from 'prettier'
+import { javascript } from '@codemirror/lang-javascript'
+import { boolColorByTheme, buildAutocomplete } from '@kit/utils/script-editor'
 import { usePrettierFormatter } from './hooks/usePrettierFormat'
 import { indentationMarkers } from '@replit/codemirror-indentation-markers'
 import { toggleBlockComment, toggleLineComment } from '@codemirror/commands'
 import { startCompletion, type CompletionSource } from '@codemirror/autocomplete'
-import { useState, useEffect, useRef, forwardRef, useImperativeHandle, useMemo, useCallback } from 'react'
+import { HighlightStyle, syntaxHighlighting, defaultHighlightStyle } from '@codemirror/language'
+import { useEffect, useRef, forwardRef, useImperativeHandle, useMemo, useCallback } from 'react'
 import CodeMirror, { Extension, Prec, ReactCodeMirrorProps, ReactCodeMirrorRef } from '@uiw/react-codemirror'
 
 interface SnCodeMirrorProps {
@@ -20,6 +24,7 @@ interface SnCodeMirrorProps {
   content?: string
   readonly?: boolean
   theme?: ReactCodeMirrorProps['theme']
+  themeId?: CmThemeValue
   prettierOptions?: PrettierOptions
   signatureExt?: Extension[]
   autocompleteType?: 'default' | 'override'
@@ -51,6 +56,7 @@ function getLanguageSupport(lang: string) {
 export interface SnCodeMirrorHandle {
   openSearch: () => void
   getValue: () => string
+  getRawValue: () => string
   setValue: (next: string) => void
   toggleMax: () => void
   toggleComment: (block?: boolean) => void
@@ -62,7 +68,8 @@ export const SnCodeMirror = forwardRef<SnCodeMirrorHandle, SnCodeMirrorProps>(fu
     language,
     height = '400px',
     theme = 'dark',
-    content,
+    themeId,
+    content = '',
     readonly = false,
     prettierOptions,
     signatureExt,
@@ -79,94 +86,116 @@ export const SnCodeMirror = forwardRef<SnCodeMirrorHandle, SnCodeMirrorProps>(fu
   ref
 ) {
   const inputLang = language || 'javascript'
-  const lang = getLanguageSupport(language || 'javascript')
-  const [value, setValue] = useState(content)
+  const lang = getLanguageSupport(inputLang)
 
   const editorRef = useRef<ReactCodeMirrorRef | null>(null)
-  const valueRef = useRef(value)
-  useEffect(() => {
-    valueRef.current = value
-  }, [value])
+  const lastExternalAppliedRef = useRef<string | undefined>(undefined)
+  const lastTypeTimeRef = useRef<number>(0)
+  const didInitApplyRef = useRef(false)
 
-  useEffect(() => {
-    if (content === undefined) return
-    setValue(content)
-  }, [content])
+  const markTyped = useCallback(() => {
+    lastTypeTimeRef.current = performance.now()
+  }, [])
 
-  // Setup ESLint
+  const booleanHighlightExt = useMemo(() => {
+    const color = (themeId && boolColorByTheme[themeId.toLowerCase() as CmThemeValue]) || '#569CD6'
+    const style = HighlightStyle.define([{ tag: t.bool, color }])
+    return Prec.high(syntaxHighlighting(style))
+  }, [themeId])
+
+  const replaceDocSafely = useCallback((next: string) => {
+    const view = editorRef.current?.view
+    if (!view) return
+    const cur = view.state.doc.toString()
+    if (cur === next) return
+    if (view.composing) return
+    if (performance.now() - lastTypeTimeRef.current < 400) return
+    const sel = view.state.selection.main
+    view.dispatch({
+      changes: { from: 0, to: cur.length, insert: next },
+      selection: { anchor: Math.min(next.length, sel.anchor), head: Math.min(next.length, sel.head) },
+      userEvent: 'external',
+    })
+    lastExternalAppliedRef.current = next
+  }, [])
+
+  // Wait until CM view exists, then apply initial content once.
+  useEffect(() => {
+    let cancelled = false
+    const tryInit = () => {
+      if (cancelled) return
+      const view = editorRef.current?.view
+      if (!view) return void requestAnimationFrame(tryInit)
+      if (didInitApplyRef.current) return
+      didInitApplyRef.current = true
+      replaceDocSafely(String(content ?? ''))
+    }
+    requestAnimationFrame(tryInit)
+    return () => {
+      cancelled = true
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Later updates (record switch / external load).
+  useEffect(() => {
+    if (!didInitApplyRef.current) return
+    if (typeof content !== 'string') return
+    if (content === lastExternalAppliedRef.current) return
+    replaceDocSafely(String(content))
+  }, [content, replaceDocSafely])
+
+  // ESLint
   const { extensions: lintExts } = useEsLint(esLint)
+  const lintGutterExts = useMemo(() => {
+    if (!esLint?.enabled) return []
 
-  // Setup Prettier formatter
+    const fixedWidth = EditorView.theme({
+      '.cm-gutter-lint': { width: '1.25rem' },
+      '.cm-gutters': { minWidth: '3.5ch' },
+    })
+
+    return [lintGutter(), fixedWidth]
+  }, [esLint?.enabled])
+
+  // Prettier
   const { formatNow, formatKeymap } = usePrettierFormatter(
     readonly,
     inputLang,
     editorRef,
     prettierOptions,
-    setValue,
+    (val: string) => onChange?.(val),
     onFormat
   )
 
-  // Dynamically bind editor content
-  useEffect(() => {
-    if (editorRef.current?.view) {
-      const currentValue = editorRef.current.view.state.doc.toString()
-      if (currentValue !== content) {
-        editorRef.current.view.dispatch({ changes: { from: 0, to: currentValue.length, insert: content ?? '' } })
-        setValue(content ?? '')
-      }
-    }
-  }, [content])
-
-  const triggerChange = useDebouncedCallback((val: string) => {
-    setValue(val)
-  }, 300)
-
-  const handleChange = (val: string) => {
-    onChange?.(val)
-    triggerChange(val)
-  }
-
-  // Expose editor methods to parent
-  useImperativeHandle(
-    ref,
-    () => ({
-      format: formatNow,
-      toggleMax: onToggleMax,
-      getValue: () => valueRef.current ?? '',
-      setValue: (next: string) => setValue(next),
-      openSearch: () => {
-        const view = editorRef.current?.view
-        if (view) openSearchPanel(view)
-      },
-      toggleComment: (block?: boolean) => {
-        const view = editorRef.current?.view
-        if (!view) return
-        if (block) toggleBlockComment({ state: view.state, dispatch: view.dispatch })
-        else toggleLineComment({ state: view.state, dispatch: view.dispatch })
-      },
-    }),
-    [formatNow, onToggleMax]
-  )
-
-  // Build autocomplete extensions
+  // Autocomplete & helpers
   const autocompleteExt = useMemo<Extension | Extension[]>(
     () => buildAutocomplete(lang, completionSources, autocompleteType),
     [lang, completionSources, autocompleteType]
   )
 
-  // Trigger completion after "."
-  const dotTrigger = Prec.high(
-    EditorView.updateListener.of(u => {
-      if (!u.docChanged) return
-      const head = u.state.selection.main.head
-      if (head > 0 && u.state.doc.sliceString(head - 1, head) === '.') startCompletion(u.view)
-    })
+  const dotTrigger = useMemo(
+    () =>
+      Prec.high(
+        EditorView.updateListener.of(u => {
+          if (!u.docChanged) return
+          const head = u.state.selection.main.head
+          if (head > 0 && u.state.doc.sliceString(head - 1, head) === '.') startCompletion(u.view)
+        })
+      ),
+    []
   )
 
-  // Build cursor in bracket based extensions for methods
+  const updatesExt = useMemo(
+    () =>
+      EditorView.updateListener.of(u => {
+        if (u.docChanged) markTyped()
+      }),
+    [markTyped]
+  )
+
   const extra = useMemo<Extension[]>(() => (signatureExt?.length ? [...signatureExt] : []), [signatureExt])
 
-  //Full screen
   const fullscreenKeymap = useMemo(
     () =>
       Prec.highest(
@@ -193,69 +222,85 @@ export const SnCodeMirror = forwardRef<SnCodeMirrorHandle, SnCodeMirrorProps>(fu
     [isMaximized, onToggleMax]
   )
 
-  // Combine all extensions
   const extensions: Extension[] = [
     lang,
     formatKeymap,
     dotTrigger,
+    updatesExt,
     fullscreenKeymap,
-    indentationMarkers({
-      markerType: 'codeOnly',
-      thickness: 2,
-    }),
+    indentationMarkers({ markerType: 'codeOnly', thickness: 2 }),
+    booleanHighlightExt,
     ...extra,
     ...(Array.isArray(autocompleteExt) ? autocompleteExt : [autocompleteExt]),
+      ...lintGutterExts,
   ]
+  if (lineWrapping !== false) extensions.push(EditorView.lineWrapping)
+  if (esLint?.enabled) extensions.push(...(Array.isArray(lintExts) ? lintExts : [lintExts]))
 
-  if (lineWrapping !== false) {
-    extensions.push(EditorView.lineWrapping)
-  }
+  extensions.push(syntaxHighlighting(defaultHighlightStyle, { fallback: true }))
 
-  if (esLint?.enabled) {
-    extensions.push(...(lintExts ? (Array.isArray(lintExts) ? lintExts : [lintExts]) : []))
-  }
+  // Debounce only the parent write; let CM keep its own buffer
+  const sendChangeDebounced = useDebouncedCallback((val: string) => {
+    onChange?.(val)
+  }, 300)
+  const handleChange = (val: string) => sendChangeDebounced(val)
 
-  // Send it all into CodeMirror
+  useImperativeHandle(
+    ref,
+    () => ({
+      format: formatNow,
+      toggleMax: onToggleMax,
+      getValue: () => editorRef.current?.view?.state.doc.toString() || '',
+      getRawValue: () => editorRef.current?.view?.state.doc.toString() || '',
+      setValue: next => {
+        replaceDocSafely(next)
+        onChange?.(next)
+      },
+      openSearch: () => {
+        const v = editorRef.current?.view
+        if (v) openSearchPanel(v)
+      },
+      toggleComment: block => {
+        const v = editorRef.current?.view
+        if (!v) return
+        if (block) toggleBlockComment({ state: v.state, dispatch: v.dispatch })
+        else toggleLineComment({ state: v.state, dispatch: v.dispatch })
+      },
+    }),
+    [formatNow, onToggleMax, replaceDocSafely, onChange]
+  )
+
   return (
     <CodeMirror
       ref={editorRef}
-      value={value}
+      /* no value => uncontrolled & fast */
       width="100%"
       height={height}
       theme={theme}
       readOnly={readonly}
       onChange={handleChange}
-      onBlur={() => onBlur?.(value || '')}
+      onBlur={() => onBlur?.(editorRef.current?.view?.state.doc.toString() || '')}
       extensions={extensions}
       className="w-full [&_.cm-content[aria-readonly='true']]:cursor-not-allowed"
     />
   )
 })
 
-function useDebouncedCallback<T extends (...args: never[]) => void>(callback: T, delay: number): T {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function useDebouncedCallback<T extends (...args: any[]) => void>(callback: T, delay: number): T {
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-
-  const debouncedCallback = useCallback(
+  const fn = useCallback(
     (...args: Parameters<T>) => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current)
-      }
-
-      timeoutRef.current = setTimeout(() => {
-        callback(...args)
-      }, delay)
+      if (timeoutRef.current) clearTimeout(timeoutRef.current)
+      timeoutRef.current = setTimeout(() => callback(...args), delay)
     },
     [callback, delay]
   )
-
-  //Clear on unmount
-  useEffect(() => {
-    return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current)
-      }
-    }
-  }, [])
-
-  return debouncedCallback as T
+  useEffect(
+    () => () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current)
+    },
+    []
+  )
+  return fn as T
 }

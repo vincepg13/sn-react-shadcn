@@ -1,9 +1,11 @@
 import { boolean, z } from 'zod'
 import { SnRow } from './table-schema'
+import { ESVersion } from './es-lint-types'
 import { _GlideUserSchema } from './client-scripts'
 import { Options as PrettierOptions } from 'prettier'
 import { ControllerRenderProps } from 'react-hook-form'
 import { getAllPredicates } from '@kit/types/predicate-definitions'
+import { CmThemeValue } from './script-types'
 
 //UI Actions
 const _action = z.object({
@@ -95,6 +97,7 @@ const _recordPickerItem = z.object({
   primary: z.string().optional(),
   secondary: z.string().optional(),
   meta: z.custom<SnRow>().optional(),
+  displayFields: z.array(z.string()).optional(),
 })
 
 const _attributes = z.object({
@@ -228,7 +231,9 @@ const _formConfig = z.object({
   scope: z.string(),
   glide_user: _GlideUserSchema,
   prettier: z.custom<PrettierOptions>(),
+  es_version: z.custom<ESVersion>().optional(),
   es_lint: z.record(z.any()).optional(),
+  theme: z.custom<CmThemeValue>().optional(),
   security: z.object({
     canWrite: z.boolean(),
     canRead: z.boolean(),
