@@ -4,6 +4,8 @@ import { json } from '@codemirror/lang-json'
 import { tags as t } from '@lezer/highlight'
 import { useEsLint } from './hooks/useEsLint'
 import { lintGutter } from '@codemirror/lint'
+import { EditorState } from '@codemirror/state'
+import { indentUnit } from '@codemirror/language'
 import { openSearchPanel } from '@codemirror/search'
 import { CmThemeValue } from '@kit/types/script-types'
 import { EditorView, keymap } from '@codemirror/view'
@@ -168,6 +170,9 @@ export const SnCodeMirror = forwardRef<SnCodeMirrorHandle, SnCodeMirrorProps>(fu
     onFormat
   )
 
+  const tabWidth = prettierOptions?.tabWidth ?? 4
+  const indentExt = [indentUnit.of(' '.repeat(tabWidth)), EditorState.tabSize.of(tabWidth)]
+
   // Autocomplete & helpers
   const autocompleteExt = useMemo<Extension | Extension[]>(
     () => buildAutocomplete(lang, completionSources, autocompleteType),
@@ -228,11 +233,12 @@ export const SnCodeMirror = forwardRef<SnCodeMirrorHandle, SnCodeMirrorProps>(fu
     dotTrigger,
     updatesExt,
     fullscreenKeymap,
+    ...indentExt,
     indentationMarkers({ markerType: 'codeOnly', thickness: 2 }),
     booleanHighlightExt,
     ...extra,
     ...(Array.isArray(autocompleteExt) ? autocompleteExt : [autocompleteExt]),
-      ...lintGutterExts,
+    ...lintGutterExts,
   ]
   if (lineWrapping !== false) extensions.push(EditorView.lineWrapping)
   if (esLint?.enabled) extensions.push(...(Array.isArray(lintExts) ? lintExts : [lintExts]))

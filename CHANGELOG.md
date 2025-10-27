@@ -1,4 +1,6 @@
 # Change Log
+## [V2.0.4]
+- matched prettier tabwidth into the indentation lines of the code mirror editor.
 
 ## [V2.0.1]
 - SnForm bug fixes
