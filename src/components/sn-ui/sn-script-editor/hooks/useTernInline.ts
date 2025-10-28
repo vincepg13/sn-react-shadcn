@@ -23,7 +23,7 @@ export function useInlineTern({
       return
     }
     const { sources, signatureExt } = createInlineTern(serviceNowDefs, fileName)
-    setCompletionSources(sources) // ← two sources: members + globals
+    setCompletionSources(sources)
     setSignatureExt(signatureExt)
     setReady(true)
   }, [serviceNowDefs, fileName])

@@ -6,7 +6,7 @@ import ecma from 'tern/defs/ecmascript.json'
 import type { CompletionSource } from '@codemirror/autocomplete'
 import { snippet } from '@codemirror/autocomplete'
 import { syntaxTree } from '@codemirror/language'
-import { StateEffect, StateField } from '@codemirror/state'
+import { EditorState, StateEffect, StateField } from '@codemirror/state'
 import { EditorView, showTooltip, type Tooltip } from '@codemirror/view'
 
 /* ----------------------------- helpers ---------------------------------- */
@@ -60,6 +60,25 @@ function ternSignatureHelpExt(server: any, fileName: string) {
     return Math.max(0, i + 1)
   }
 
+  function isDirectlyInParenArgList(state: EditorState, pos: number, argList: any) {
+    // Walk from the cursor up to ArgList; if we hit a nesting container first, bail.
+    let node: any = syntaxTree(state).resolveInner(pos, -1)
+    while (node && node !== argList) {
+      if (
+        node.name === 'ObjectExpression' ||
+        node.name === 'ArrayExpression' ||
+        node.name === 'ArrowFunction' ||
+        node.name === 'FunctionExpression' ||
+        node.name === 'TemplateString' ||
+        node.name === 'Block'
+      ) {
+        return false
+      }
+      node = node.parent
+    }
+    return true
+  }
+
   return [
     sigField,
     EditorView.updateListener.of(async update => {
@@ -79,7 +98,7 @@ function ternSignatureHelpExt(server: any, fileName: string) {
         }
         node = node.parent
       }
-      if (!argList) {
+      if (!argList || !isDirectlyInParenArgList(state, pos, argList)) {
         view.dispatch({ effects: setSig.of(null) })
         return
       }
@@ -92,7 +111,9 @@ function ternSignatureHelpExt(server: any, fileName: string) {
       const text = state.doc.toString()
       try {
         server.delFile(fileName)
-      } catch { /* empty */ }
+      } catch {
+        /* empty */
+      }
       server.addFile(fileName, text)
 
       // ask type at callee end (not inside args)
@@ -151,7 +172,9 @@ export function createInlineTern(
     const text = ctx.state.doc.toString()
     try {
       server.delFile(fileName)
-    } catch { /* empty */ }
+    } catch {
+      /* empty */
+    }
     server.addFile(fileName, text)
 
     let result: any = null
