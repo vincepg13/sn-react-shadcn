@@ -29,6 +29,7 @@ export function useFetchSchema({
     const loadSchema = async () => {
       try {
         const res = await getTableSchema(table, controller)
+        console.log("Table Schema:", res.data.result)
         setColumns(getColumnViaFields(fields, res.data.result, columnDefinitions))
       } catch (error) {
         if (isAxiosError(error) && error.code === 'ERR_CANCELED') return

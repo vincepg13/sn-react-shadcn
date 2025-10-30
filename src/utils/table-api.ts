@@ -1,7 +1,13 @@
-import { getAxiosInstance } from "./axios-client";
-import { SnRow, SnColSchema, SnListPref, SnListView, SnListViewElement } from "../types/table-schema";
-import { SnApiResponse } from "../types/table-schema";
-
+import { getAxiosInstance } from './axios-client'
+import {
+  SnRow,
+  SnColSchema,
+  SnListPref,
+  SnListView,
+  SnListViewElement,
+  SnPersonalListSchema,
+} from '../types/table-schema'
+import { SnApiResponse } from '../types/table-schema'
 
 export function getViewPreference(
   table: string,
@@ -9,16 +15,16 @@ export function getViewPreference(
   view?: string
 ): Promise<SnApiResponse<SnListPref[]>> {
   if (view !== undefined) {
-    return Promise.resolve({ status: 200, headers: {}, data: { result: [{ value: view }] } });
+    return Promise.resolve({ status: 200, headers: {}, data: { result: [{ value: view }] } })
   } else {
-    const axios = getAxiosInstance();
+    const axios = getAxiosInstance()
     return axios.get(
       `/api/now/table/sys_user_preference?sysparm_query=user=javascript:gs.getUserID()^name=${table}_list.view`,
       {
         signal: controller instanceof AbortController ? controller.signal : controller,
-        validateStatus: (status) => status >= 200 && status < 300,
+        validateStatus: status => status >= 200 && status < 300,
       }
-    );
+    )
   }
 }
 
@@ -27,16 +33,16 @@ export function getListView(
   view: string,
   controller: AbortController | AbortSignal
 ): Promise<SnApiResponse<SnListView[]>> {
-  const axios = getAxiosInstance();
+  const axios = getAxiosInstance()
   return axios.get(
     `
     /api/now/table/sys_ui_list?sysparm_query=name=${table}^view.name=${view}^sys_user=javascript:gs.getUserID()^ORsys_userISEMPTY^parentISEMPTY^ORDERBYDESCsys_user&sysparm_fields=name,sys_id,sys_user&sysparm_exclude_reference_link=true
   `,
     {
       signal: controller instanceof AbortController ? controller.signal : controller,
-      validateStatus: (status) => status >= 200 && status < 300,
+      validateStatus: status => status >= 200 && status < 300,
     }
-  );
+  )
 }
 
 export function getListViewElements(
@@ -44,47 +50,60 @@ export function getListViewElements(
   listViews: SnListView[],
   controller: AbortController | AbortSignal
 ): Promise<SnApiResponse<SnListViewElement[]>> {
-  let fieldsQuery = "";
+  let fieldsQuery = ''
 
   if (!listViews || !listViews.length) {
-    fieldsQuery = `list_id.name=${table}^list_id.parentISEMPTY^list_id.view.name=^list_id.sys_userISEMPTY`;
+    fieldsQuery = `list_id.name=${table}^list_id.parentISEMPTY^list_id.view.name=^list_id.sys_userISEMPTY`
   } else {
-    fieldsQuery = `list_id=${listViews[0].sys_id}`;
+    fieldsQuery = `list_id=${listViews[0].sys_id}`
   }
 
-  const axios = getAxiosInstance();
+  const axios = getAxiosInstance()
   return axios.get(
     `/api/now/table/sys_ui_list_element?sysparm_fields=element,position&sysparm_query=${fieldsQuery}^ORDERBYposition`,
     {
       signal: controller instanceof AbortController ? controller.signal : controller,
-      validateStatus: (status) => status >= 200 && status < 300,
+      validateStatus: status => status >= 200 && status < 300,
     }
-  );
+  )
 }
 
-export function getTableSchema(table: string, controller: AbortController | AbortSignal): Promise<SnApiResponse<SnColSchema[]>> {
-  const axios = getAxiosInstance();
+export function getTableSchema(
+  table: string,
+  controller: AbortController | AbortSignal
+): Promise<SnApiResponse<SnColSchema[]>> {
+  const axios = getAxiosInstance()
   return axios.get(`/api/now/doc/table/schema/${table}`, {
     signal: controller instanceof AbortController ? controller.signal : controller,
-    validateStatus: (status) => status >= 200 && status < 300,
-  });
+    validateStatus: status => status >= 200 && status < 300,
+  })
 }
 
 export function getTableRows(
   table: string,
-  query = "",
+  query = '',
   fields: string,
   offset: number,
   pageSize: number,
   controller: AbortController | AbortSignal
 ): Promise<SnApiResponse<SnRow[]>> {
-  const axios = getAxiosInstance();
+  const axios = getAxiosInstance()
   return axios.get(
     `/api/now/table/${table}?sysparm_query=${query}&sysparm_display_value=all&sysparm_fields=${fields}&sysparm_offset=${offset}&sysparm_limit=${pageSize}`,
     {
       //check if signal is controller or controller.signal
       signal: controller instanceof AbortController ? controller.signal : controller,
-      validateStatus: (status) => status >= 200 && status < 300,
+      validateStatus: status => status >= 200 && status < 300,
     }
-  );
+  )
+}
+
+export async function getPersonalList(endpoint: string, table: string, signal: AbortSignal, view?: string) {
+  const axios = getAxiosInstance()
+  const lm = await axios.get(endpoint, {
+    params: { table, view: view || '' },
+    signal,
+  })
+
+  return SnPersonalListSchema.parse(lm.data.result)
 }

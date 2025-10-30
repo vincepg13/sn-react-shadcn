@@ -8,6 +8,8 @@ export { default as SnTable } from '../components/sn-table/sn-table'
 export { default as SnDataTable } from '../components/sn-table/sn-data-table'
 export { SnSimplePagination } from '../components/sn-table/sn-simple-pagination'
 export { DataTableColumnHeader } from '../components/sn-table/data-table-column-header'
+export { SnPersonalise } from '../components/sn-ui/sn-personalise-list/sn-personalise'
+export { SnPersonaliseList } from '../components/sn-ui/sn-personalise-list/sn-personalise-list'
 //simple list?
 
 //Condition Builder
