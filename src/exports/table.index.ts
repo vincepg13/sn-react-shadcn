@@ -1,4 +1,6 @@
 //API and Utils
+export { fetchSchema } from '../components/sn-table/hooks/useFetchSchema'
+export { fetchFieldsViaView } from '../components/sn-table/hooks/useFetchFields'
 export { resolveUpdater, getColumnLabel, getSortedQuery, getDefaultSortingFromQuery} from '../utils/table-helper'
 export { getViewPreference, getListView, getListViewElements, getTableSchema, getTableRows } from '../utils/table-api'
 

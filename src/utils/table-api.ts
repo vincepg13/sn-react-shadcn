@@ -107,3 +107,16 @@ export async function getPersonalList(endpoint: string, table: string, signal: A
 
   return SnPersonalListSchema.parse(lm.data.result)
 }
+
+export async function setPersonalList(
+  endpoint: string,
+  table: string,
+  view = '',
+  fields: string[] = [],
+  signal: AbortSignal
+) {
+  const axios = getAxiosInstance()
+  const lm = await axios.post(endpoint, { table, view, fields }, { signal })
+
+  return lm.data.result
+}

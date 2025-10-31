@@ -1,33 +1,51 @@
-import { useEffect, useState } from 'react'
-import { getPersonalList } from '@kit/utils/table-api'
-import { SnPersonalList } from '@kit/types/table-schema'
+import { isAxiosError } from 'axios'
+import { useEffect, useRef, useState } from 'react'
 import { SnPersonaliseList } from './sn-personalise-list'
+import { getPersonalList, setPersonalList } from '@kit/utils/table-api'
+import { SnListItem, SnPersonalList } from '@kit/types/table-schema'
 
 type SnPersonaliseProps = {
   lmEndpoint: string
   table: string
   view?: string
+  onChange?: () => void
 }
 
-export function SnPersonalise({ lmEndpoint, table, view }: SnPersonaliseProps) {
-  const [personalList, setPersonalList] = useState<SnPersonalList | null>(null)
+export function SnPersonalise({ lmEndpoint, table, view, onChange }: SnPersonaliseProps) {
+  const key = `${table}|${view || ''}`
+  const controllerRef = useRef(new AbortController())
+  const [listMechanic, setListMechanic] = useState<SnPersonalList | null>(null)
+
+  const saveList = async (items?: SnListItem[]) => {
+    controllerRef.current.abort()
+    controllerRef.current = new AbortController()
+
+    const fields = items?.map(i => i.value)
+    await setPersonalList(lmEndpoint, table, view, fields, controllerRef.current.signal)
+    setListMechanic(prev => ({ ...prev, selected: items || prev?.selected, isUserList: !!items }) as SnPersonalList)
+    onChange?.()
+  }
 
   useEffect(() => {
-    const controller = new AbortController()
+    controllerRef.current.abort()
+    controllerRef.current = new AbortController()
 
     const fetchListMeta = async () => {
-      const meta = await getPersonalList(lmEndpoint, table, controller.signal, view)
-      console.log('Table Schema:', meta)
-      setPersonalList(meta)
+      try {
+        const meta = await getPersonalList(lmEndpoint, table, controllerRef.current.signal, view)
+        setListMechanic(meta)
+      } catch (e) {
+        if (isAxiosError(e) && e.code === 'ERR_CANCELED') return
+        console.error('Error fetching personal list:', e)
+      }
     }
 
     fetchListMeta()
 
-    return () => controller.abort()
+    return () => controllerRef.current.abort()
   }, [lmEndpoint, table, view])
 
-  if (!personalList) return null
+  if (!listMechanic) return null
 
-  return <SnPersonaliseList {...personalList} onSave={items => console.log("SAVE", items)} onReset={() => console.log('Reset')} />
+  return <SnPersonaliseList key={key} {...listMechanic} onSave={saveList} />
 }
-  

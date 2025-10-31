@@ -1,10 +1,12 @@
+import { toast } from 'sonner'
+import { isAxiosError } from 'axios'
 import { CSS } from '@dnd-kit/utilities'
-import { Settings2, Trash2 } from 'lucide-react'
 import { Button } from '@kit/components/ui/button'
 import { SnListItem } from '@kit/types/table-schema'
 import { snapCenterToCursor } from '@dnd-kit/modifiers'
 import { DialogDescription } from '@radix-ui/react-dialog'
-import { CSSProperties, ReactNode, useMemo, useState } from 'react'
+import { GripVertical, Settings2, Trash2 } from 'lucide-react'
+import { CSSProperties, ReactElement, ReactNode, useCallback, useEffect, useMemo, useState } from 'react'
 import { SortableContext, useSortable, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable'
 import {
   Dialog,
@@ -26,21 +28,35 @@ import {
   DragStartEvent,
   DragOverlay,
 } from '@dnd-kit/core'
+import { Spinner } from '@kit/components/minimal-tiptap/components/spinner'
+
 
 type SnPersonaliseListProps = {
   unselected: SnListItem[]
   selected: SnListItem[]
   isUserList: boolean
-  onReset?: () => void
-  onSave?: (selected: SnListItem[]) => void
+  customTrigger?: ReactElement
+  onSave: (selected?: SnListItem[]) => Promise<void>
 }
 
-export function SnPersonaliseList({ unselected, selected, isUserList, onReset, onSave }: SnPersonaliseListProps) {
+export function SnPersonaliseList({
+  unselected,
+  selected,
+  isUserList,
+  customTrigger,
+  onSave,
+}: SnPersonaliseListProps) {
+  const [open, setOpen] = useState(false)
+  const [saving, isSaving] = useState(false)
+  const [activeId, setActiveId] = useState<string | null>(null)
   const [selectedItems, setSelectedItems] = useState<SnListItem[]>(selected)
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }))
+
+  useEffect(() => setSelectedItems(selected), [selected])
 
   // keep a single view of all items for lookups (unchanged)
   const all = useMemo(() => [...selected, ...unselected], [selected, unselected])
-
+  const activeItem = useMemo(() => (activeId ? (all.find(i => i.value === activeId) ?? null) : null), [activeId, all])
   const availableItems = useMemo(() => {
     const sel = new Set(selectedItems.map(i => i.value))
     return all
@@ -49,10 +65,19 @@ export function SnPersonaliseList({ unselected, selected, isUserList, onReset, o
       .sort((a, b) => a.label.localeCompare(b.label, undefined, { sensitivity: 'base' }))
   }, [all, selectedItems])
 
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }))
-
-  const [activeId, setActiveId] = useState<string | null>(null)
-  const activeItem = useMemo(() => (activeId ? (all.find(i => i.value === activeId) ?? null) : null), [activeId, all])
+  // Handle Save/Reset
+  const handleSave = useCallback(async (items?: SnListItem[]) => {
+    try {
+      isSaving(true)
+      await onSave(items)
+      setOpen(false)
+    } catch (e) {
+      if (isAxiosError(e) && e.code === 'ERR_CANCELED') return
+      toast.error('Error saving personal list: ' + e)
+    } finally {
+      isSaving(false)
+    }
+  }, [onSave])
 
   function onDragStart(e: DragStartEvent) {
     setActiveId(String(e.active.id))
@@ -68,7 +93,7 @@ export function SnPersonaliseList({ unselected, selected, isUserList, onReset, o
     const selIds = selectedItems.map(i => i.value)
     const activeInSelected = selIds.includes(active)
 
-    // Reorder within Selected (sortable → sortable)
+    // Reorder within Selected
     if (activeInSelected && selIds.includes(over)) {
       const from = selIds.indexOf(active)
       const to = selIds.indexOf(over)
@@ -76,48 +101,49 @@ export function SnPersonaliseList({ unselected, selected, isUserList, onReset, o
       return
     }
 
-    // Add from All → Selected (draggable → sortable/container)
+    if (activeInSelected && over === 'drop-selected-end') {
+      const from = selIds.indexOf(active)
+      if (from !== -1 && from !== selectedItems.length - 1) {
+        setSelectedItems(prev => arrayMove(prev, from, prev.length - 1))
+      }
+      return
+    }
+
+    // Add from All → Selected
     if (!activeInSelected) {
       const item = availableItems.find(i => i.value === active)
       if (!item) return
 
-      // Dropped over a specific item in Selected → insert before that item
+      // Dropped over a specific item in Selected, insert before that item
       if (selIds.includes(over)) {
         const insertAt = selIds.indexOf(over)
         setSelectedItems(prev => [...prev.slice(0, insertAt), item, ...prev.slice(insertAt)])
         return
       }
 
-      // Dropped over the end sentinel only → append to end
+      // Dropped over the end sentinel only, append to end
       if (over === 'drop-selected-end') {
         setSelectedItems(prev => [...prev, item])
         return
       }
-
-      // If over === 'drop-available' (or anything else) → do nothing
     }
   }
 
-  const resetAll = () => {
-    setSelectedItems(selected)
-    onReset?.()
-  }
-
-  const saveAll = () => onSave?.(selectedItems)
-
   return (
-    <Dialog onOpenChange={console.log}>
+    <Dialog open={open} onOpenChange={setOpen}>
       <form>
         <DialogTrigger asChild>
-          <Button variant="outline">
-            <Settings2 />
-            Personalise
-          </Button>
+          {customTrigger ?? (
+            <Button variant="outline">
+              <Settings2 />
+              Personalise
+            </Button>
+          )}
         </DialogTrigger>
 
         <DialogContent className="sm:max-w-[640px]">
           <DialogHeader>
-            <DialogTitle>Personalize List Columns</DialogTitle>
+            <DialogTitle>Personalise List Columns</DialogTitle>
 
             <DialogDescription className="text-muted-foreground text-sm">
               Here you can personalise your list layout. <br />
@@ -176,13 +202,14 @@ export function SnPersonaliseList({ unselected, selected, isUserList, onReset, o
             </DragOverlay>
           </DndContext>
 
-          <DialogFooter className="gap-2">
+          <DialogFooter className="gap-2 items-center">
+            {saving && <Spinner className="size-6"/>}
             {isUserList && (
-              <Button variant="secondary" onClick={resetAll}>
+              <Button variant="secondary" onClick={() => handleSave()}>
                 Reset to column defaults
               </Button>
             )}
-            <Button onClick={saveAll}>Save</Button>
+            <Button onClick={() => handleSave(selectedItems)}>Save</Button>
           </DialogFooter>
         </DialogContent>
       </form>
@@ -190,7 +217,7 @@ export function SnPersonaliseList({ unselected, selected, isUserList, onReset, o
   )
 }
 
-// Simple droppable panel (no ring) used for "All fields"
+// Simple droppable panel used for "All fields"
 function DroppableBox({ id, title, children }: { id: string; title: string; children: ReactNode }) {
   const { setNodeRef } = useDroppable({ id })
   return (
@@ -230,7 +257,6 @@ function SortableRow({ id, label, onRemove }: { id: string; label: string; onRem
   const style: CSSProperties = {
     transform: CSS.Transform.toString(transform),
     transition,
-    // HIDE the original while dragging so only the overlay is visible
     opacity: isDragging ? 0 : 1,
   }
   return (
@@ -239,15 +265,16 @@ function SortableRow({ id, label, onRemove }: { id: string; label: string; onRem
       style={style}
       {...attributes}
       {...listeners}
-      className="flex items-center justify-between gap-2 rounded-md border bg-background px-2 py-[6.375px] text-sm"
+      className="flex items-center gap-2 rounded-md border bg-background px-2 py-[6.375px] text-sm"
     >
-      <span className="cursor-grab select-none active:cursor-grabbing truncate">{label}</span>
+      <GripVertical className="size-4 text-muted-foreground" />
+      <span className="cursor-grab select-none active:cursor-grabbing truncate flex-1">{label}</span>
       <Button
         size="icon"
         type="button"
         variant="ghost"
         onClick={onRemove}
-        className="size-6 text-red-500 hover:bg-red-100 hover:text-red-600"
+        className="size-6 text-red-500 hover:bg-red-100 hover:text-red-600 ml-auto"
         aria-label={`Remove ${label}`}
       >
         <Trash2 size={10} />
@@ -260,7 +287,6 @@ function DraggableRow({ id, label }: { id: string; label: string }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id })
   const style: CSSProperties = {
     transform: transform ? CSS.Translate.toString(transform) : undefined,
-    // HIDE while dragging; overlay handles the visual
     opacity: isDragging ? 0 : 1,
   }
   return (
