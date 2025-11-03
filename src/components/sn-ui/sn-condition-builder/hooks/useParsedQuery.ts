@@ -56,6 +56,7 @@ export function useParsedQuery(
 
     if (!encodedQuery) return setQueryModel(getEmptyQueryModel())
     const controller = new AbortController()
+
     queryParser(controller, encodedQuery, true, true)
     return () => controller.abort()
   }, [table, encodedQuery, setError, enableDisplay, queryParser])

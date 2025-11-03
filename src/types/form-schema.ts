@@ -105,6 +105,7 @@ const _attributes = z.object({
   ref_ac_order_by: z.string().optional(),
   ref_ac_table: z.string().optional(),
   ref_ac_display_value: z.string().optional(),
+  extended_operators: z.string().optional(),
 })
 
 const _ed = z.object({

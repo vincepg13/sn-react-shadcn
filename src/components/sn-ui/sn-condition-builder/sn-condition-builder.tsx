@@ -1,5 +1,5 @@
 import { AlertCircle } from 'lucide-react'
-import { SnConditions } from './sn-conditions'
+import { SnConditionHandle, SnConditions } from './sn-conditions'
 import { useParsedQuery } from './hooks/useParsedQuery'
 import { useFieldMetadata } from './hooks/useTableMetadata'
 import { SnConditionSkeleton } from './sn-condition-skeleton'
@@ -10,7 +10,10 @@ import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useSta
 type BuilderProps = {
   table: string
   encodedQuery?: string
-  onQueryBuilt: (encoded: string) => void
+  showControls?: boolean
+  extendToChanges?: boolean
+  onQueryBuilt?: (encoded: string) => void
+  onModelChange?: (builtQuery: string) => void
   emitQueryDisplay?: (display: SnConditionDisplayArray | null) => void
 }
 
@@ -34,12 +37,8 @@ function getBuilderQuery(query?: string) {
   return builderQuery
 }
 
-export type SnConditionHandle = {
-  adjustModel: (gIndex: number, cIndex: number) => void
-}
-
 export const SnConditionBuilderRef = forwardRef<SnConditionHandle, BuilderProps>(
-  ({ table, encodedQuery, emitQueryDisplay, onQueryBuilt }: BuilderProps, ref) => {
+  ({ table, encodedQuery, showControls, extendToChanges, emitQueryDisplay, onQueryBuilt, onModelChange }: BuilderProps, ref) => {
     const builderQuery = getBuilderQuery(encodedQuery)
     const [error, setError] = useState<string>('')
     const [loaded, setLoaded] = useState(false)
@@ -55,6 +54,12 @@ export const SnConditionBuilderRef = forwardRef<SnConditionHandle, BuilderProps>
       adjustModel: (gIndex: number, cIndex: number) => {
         conditionRef.current?.adjustModel(gIndex, cIndex)
       },
+      addGroup: () => {
+        conditionRef.current?.addGroup()
+      },
+      clearQuery: () => {
+        conditionRef.current?.clearQuery()
+      },
     }))
 
     useEffect(() => {
@@ -65,7 +70,7 @@ export const SnConditionBuilderRef = forwardRef<SnConditionHandle, BuilderProps>
 
     const handleQueryBuilt = useCallback(
       async (encoded: string) => {
-        onQueryBuilt(encoded)
+        onQueryBuilt?.(encoded)
         if (emitDisplay) await queryParser(new AbortController(), encoded, false, true)
       },
       [emitDisplay, onQueryBuilt, queryParser]
@@ -78,6 +83,9 @@ export const SnConditionBuilderRef = forwardRef<SnConditionHandle, BuilderProps>
           table={table}
           columns={columns}
           queryModel={queryModel}
+          showControls={showControls}
+          extendToChanges={extendToChanges}
+          onModelChange={onModelChange}
           onQueryBuilt={handleQueryBuilt}
         />
       )
@@ -95,14 +103,23 @@ export const SnConditionBuilderRef = forwardRef<SnConditionHandle, BuilderProps>
   }
 )
 
-export function SnConditionBuilder({ table, encodedQuery, onQueryBuilt, emitQueryDisplay }: BuilderProps) {
+export function SnConditionBuilder({
+  table,
+  encodedQuery,
+  showControls,
+  onQueryBuilt,
+  emitQueryDisplay,
+  onModelChange,
+}: BuilderProps) {
   return (
     <div className="flex flex-col gap-4">
       <SnConditionBuilderRef
         table={table}
         encodedQuery={encodedQuery}
+        showControls={showControls}
         emitQueryDisplay={emitQueryDisplay}
         onQueryBuilt={onQueryBuilt}
+        onModelChange={onModelChange}
       />
     </div>
   )

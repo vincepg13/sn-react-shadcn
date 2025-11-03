@@ -22,6 +22,7 @@ import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '../../
 import { SnFieldSchema, RHFField, FieldUIState, SnFieldPrimitive, SnCurrencyField } from '../../../types/form-schema'
 import { SnFieldDuration } from './sn-field-duration'
 import { SnFieldScript } from './sn-field-script'
+import { SnFieldCondition } from './sn-field-condition'
 
 interface SnFieldProps {
   field: SnFieldSchema
@@ -212,6 +213,17 @@ function renderFieldComponent(
       return <SnFieldHtml rhfField={rhfField} onChange={handleChange} />
     case 'field_name':
       return <SnFieldFieldList field={field} rhfField={rhfField} onChange={handleChange} dependentValue={depValue} />
+    case 'conditions':
+      return (
+        <SnFieldCondition
+          field={field}
+          rhfField={rhfField}
+          onFocus={handleFocus}
+          onChange={handleChange}
+          dependentValue={depValue}
+          adornmentRef={adornmentRef}
+        />
+      )
     case 'css':
     case 'xml':
     case 'json':

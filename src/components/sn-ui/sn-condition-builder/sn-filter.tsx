@@ -2,9 +2,10 @@ import { createPortal } from 'react-dom'
 import { Button } from '@kit/components/ui/button'
 import { useRef, useState, ReactNode } from 'react'
 import { mergeOrItems } from '@kit/utils/conditions-api'
+import { SnConditionHandle } from './sn-conditions'
+import { SnConditionBuilderRef } from './sn-condition-builder'
 import { ChevronRight, ListFilter, LoaderCircle } from 'lucide-react'
 import { SnConditionDisplayArray } from '@kit/types/condition-schema'
-import { SnConditionBuilderRef, SnConditionHandle } from './sn-condition-builder'
 
 type FilterProps = {
   table: string

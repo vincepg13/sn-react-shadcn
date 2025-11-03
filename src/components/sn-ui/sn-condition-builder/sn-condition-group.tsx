@@ -1,4 +1,4 @@
-import { useCallback } from 'react'
+import { memo, useCallback } from 'react'
 import { CirclePlus } from 'lucide-react'
 import { ConditionRow } from './sn-condition-row'
 import { Button } from '@kit/components/ui/button'
@@ -14,7 +14,7 @@ type GroupProps = {
   onDelete: (groupId: string, condId: string) => void
 }
 
-export function ConditionGroup({
+export function ConditionGroupComponent({
   group,
   columns,
   onModelChange,
@@ -93,3 +93,5 @@ export function ConditionGroup({
     </div>
   )
 }
+
+export const ConditionGroup = memo(ConditionGroupComponent, (p, n) => p.group === n.group)
