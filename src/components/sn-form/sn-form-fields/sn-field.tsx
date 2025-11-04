@@ -23,6 +23,7 @@ import { SnFieldSchema, RHFField, FieldUIState, SnFieldPrimitive, SnCurrencyFiel
 import { SnFieldDuration } from './sn-field-duration'
 import { SnFieldScript } from './sn-field-script'
 import { SnFieldCondition } from './sn-field-condition'
+import { SnFieldUserRoles } from './sn-field-user-roles'
 
 interface SnFieldProps {
   field: SnFieldSchema
@@ -160,6 +161,18 @@ function renderFieldComponent(
       return <SnFieldCheckbox field={field} rhfField={rhfField} onChange={handleChange} />
     case 'table_name':
       return <SnFieldTableName field={field} rhfField={rhfField} onChange={handleChange} />
+    case 'user_roles':
+      return (
+        <SnFieldUserRoles
+          field={field}
+          table={table}
+          rhfField={rhfField}
+          recordSysId={guid}
+          formValues={formValues}
+          onChange={handleSelect}
+          dependentValue={depValue}
+        />
+      )
     case 'reference':
     case 'document_id':
     case 'glide_list': {
