@@ -9,7 +9,7 @@ interface UseUiPoliciesOptions {
   form: any
   formFields: SnFieldsSchema | null
   uiPolicies: SnPolicy[]
-  executePolicyScript: (script: SnPolicyScript) => any
+  executePolicyScript: (script?: SnPolicyScript) => any
   updateFieldUI: (field: string, updates: Partial<FieldUIState>) => void
   formConfig: SnFormConfig | null
 }

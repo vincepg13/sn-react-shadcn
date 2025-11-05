@@ -1,5 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { postFormAction } from './form-api'
+import { RefObject } from 'react'
+import { SnConditionMap } from '@kit/types/condition-schema'
+import { getDotwalkedValues, postFormAction } from './form-api'
+import { toSafe } from './../components/sn-form/hooks/useDotSafeForm'
 import { FieldUIState, SnFieldSchema, SnFieldsSchema } from '../types/form-schema'
 
 export function formatSectionName(input: string): string {
@@ -26,12 +29,27 @@ export function getDefaultValue(field: SnFieldSchema) {
   }
 }
 
+export function choicesToTableMap(table: string, choices: SnFieldSchema['choices']): Record<string, SnConditionMap> {
+  const reducedToObj = choices!.reduce((acc, choice) => {
+    acc[choice.name!] = {
+      name: choice.name!,
+      label: choice.label,
+      type: choice.type!,
+      reference: choice.reference || '',
+      operators: [],
+    }
+    return acc
+  }, {} as SnConditionMap)
+
+  return { [table]: reducedToObj }
+}
+
 export function buildSubmissionPayload(formFields: SnFieldsSchema, values: Record<string, any>): Record<string, any> {
   const payload = Object.fromEntries(
     Object.entries(formFields).map(([name, field]) => {
       const payloadField = {
         ...field,
-        value: String(values[name] || ''),
+        value: String(values[toSafe(name)] || ''),
       }
 
       if (payloadField.type === 'journal_input' && payloadField.value) {
@@ -81,5 +99,35 @@ export function computeEffectiveFieldState(
     readonly: sysRo ? true : ro && !!(fieldVal || !man),
     mandatory: sysRo ? false : man,
     visible,
+  }
+}
+
+export async function linkRefFieldDotWalks(
+  type: string,
+  name: string,
+  refTable: string,
+  fieldList: string[],
+  newValue: string,
+  setValue: any,
+  displayValues: RefObject<Record<string, string>>,
+  toSafe: (name: string) => string,
+  controllerRef: RefObject<AbortController>
+) {
+  if (type === 'reference') {
+    const walkedFields = fieldList.filter(f => f.startsWith(`${name}.`)).map(f => f.replace(`${name}.`, ''))
+
+    if (walkedFields.length > 0) {
+      controllerRef.current.abort()
+      controllerRef.current = new AbortController()
+
+      const walkedValues = await getDotwalkedValues(refTable, String(newValue), walkedFields, controllerRef.current)
+      if (walkedValues) {
+        Object.entries(walkedValues).forEach(([dotField, valPair]) => {
+          const safeName = toSafe(`${name}.${dotField}`)
+          setValue(safeName, valPair.value)
+          displayValues.current[safeName] = valPair.displayValue
+        })
+      }
+    }
   }
 }

@@ -49,6 +49,8 @@ export function evaluatePolicy(
   _formFields: SnFieldsSchema,
   formConfig: SnFormConfig
 ): boolean {
+  if (policy.conditions.length === 0) return true
+
   const groups = groupConditions(policy.conditions)
   return groups.some(group => evaluateGroup(group, formData, formConfig))
 }

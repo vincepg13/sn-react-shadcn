@@ -106,6 +106,7 @@ const _attributes = z.object({
   ref_ac_table: z.string().optional(),
   ref_ac_display_value: z.string().optional(),
   extended_operators: z.string().optional(),
+  allow_references: z.string().optional(),
 })
 
 const _ed = z.object({
@@ -223,6 +224,7 @@ const _fieldChoiceItem = z.object({
   type: z.string().optional(),
   display: boolean().optional(),
   value: z.string(),
+  reference: z.string().optional(),
 })
 
 const _formConfig = z.object({

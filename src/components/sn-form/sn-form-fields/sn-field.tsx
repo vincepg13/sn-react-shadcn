@@ -12,32 +12,40 @@ import { SnFieldNumeric } from './sn-field-numeric'
 import { SnFieldTextarea } from './sn-field-textarea'
 import { SnFieldCheckbox } from './sn-field-checkbox'
 import { SnFieldTableName } from './sn-field-table'
-import { ReactNode, useRef, useCallback, memo, RefObject } from 'react'
-import { SnFieldReference } from './sn-field-reference'
-import { FieldUIContext } from '../contexts/FieldUIContext'
-import { useEffectiveFieldState } from '../hooks/useFieldUiState'
-import { useClientScripts } from '../contexts/SnClientScriptContext'
-import { useUiPoliciesContext } from '../contexts/SnUiPolicyContext'
-import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '../../ui/form'
-import { SnFieldSchema, RHFField, FieldUIState, SnFieldPrimitive, SnCurrencyField } from '../../../types/form-schema'
 import { SnFieldDuration } from './sn-field-duration'
 import { SnFieldScript } from './sn-field-script'
 import { SnFieldCondition } from './sn-field-condition'
 import { SnFieldUserRoles } from './sn-field-user-roles'
+import { useDotSafeForm } from '../hooks/useDotSafeForm'
+import { SnFieldReference } from './sn-field-reference'
+import { FieldUIContext } from '../contexts/FieldUIContext'
+import { useEffectiveFieldState } from '../hooks/useFieldUiState'
+import { linkRefFieldDotWalks } from '@kit/utils/form-client'
+import { useClientScripts } from '../contexts/SnClientScriptContext'
+import { useUiPoliciesContext } from '../contexts/SnUiPolicyContext'
+import { ReactNode, useRef, useCallback, memo, RefObject, useEffect } from 'react'
+import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '../../ui/form'
+import { SnFieldSchema, RHFField, FieldUIState, SnFieldPrimitive, SnCurrencyField } from '../../../types/form-schema'
 
 interface SnFieldProps {
   field: SnFieldSchema
+  fieldList: string[]
   fieldUIState: Record<string, FieldUIState>
   displayValues: RefObject<Record<string, string>>
-  updateFieldUI: (field: string, updates: Partial<FieldUIState>) => void
   table: string
   guid: string
+  updateFieldUI: (field: string, updates: Partial<FieldUIState>) => void
 }
 
-function SnFieldComponent({ field, fieldUIState, guid, table, displayValues }: SnFieldProps) {
-  const { control, getValues, setValue, watch, trigger } = useFormContext()
+function SnFieldComponent({ field, fieldList, fieldUIState, guid, table, displayValues }: SnFieldProps) {
+  const form = useFormContext() as ReturnType<typeof useDotSafeForm>
+  const { control, getValues, setValue, watch, trigger, toSafe } = form
+
   const { runClientScriptsForFieldChange, fieldChangeHandlers } = useClientScripts()
   const { runUiPoliciesForField } = useUiPoliciesContext()
+
+  const controllerRef = useRef(new AbortController())
+  useEffect(() => () => controllerRef.current.abort(), [])
 
   const oldValueRef = useRef<SnFieldPrimitive>(field.value)
   const formLabelRightRef = useRef<HTMLDivElement | null>(null)
@@ -49,15 +57,38 @@ function SnFieldComponent({ field, fieldUIState, guid, table, displayValues }: S
   })
 
   const handleChange = useCallback(
-    (newValue: SnFieldPrimitive, display?: string) => {
+    async (newValue: SnFieldPrimitive, display?: string) => {
+      // setValue(toRHF(field.name), newValue, { shouldDirty: true, shouldTouch: true })
       setValue(field.name, newValue, { shouldDirty: true, shouldTouch: true })
       runClientScriptsForFieldChange(field.name, oldValueRef.current, newValue, false)
       runUiPoliciesForField(field.name)
-      oldValueRef.current = newValue
 
+      oldValueRef.current = newValue
       displayValues.current[field.name] = display || newValue.toString() || ''
+
+      await linkRefFieldDotWalks(
+        field.type,
+        field.name,
+        field.ed!.reference,
+        fieldList,
+        String(newValue),
+        setValue,
+        displayValues,
+        toSafe,
+        controllerRef
+      )
     },
-    [setValue, field.name, runClientScriptsForFieldChange, runUiPoliciesForField, displayValues]
+    [
+      field.ed,
+      field.name,
+      field.type,
+      fieldList,
+      displayValues,
+      setValue,
+      runClientScriptsForFieldChange,
+      runUiPoliciesForField,
+      toSafe,
+    ]
   )
 
   fieldChangeHandlers[field.name] = handleChange
@@ -67,7 +98,7 @@ function SnFieldComponent({ field, fieldUIState, guid, table, displayValues }: S
   return (
     <FieldUIContext.Provider value={fieldUI}>
       <FormField
-        name={field.name}
+        name={toSafe(field.name)}
         control={control}
         render={({ field: rhfField }) => {
           const handleFocus = () => {}
