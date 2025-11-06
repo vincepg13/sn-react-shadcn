@@ -17,6 +17,7 @@ interface SnFormProps {
   apis: SnFormApis
   enableAttachments?: boolean
   esLintConfig?: ESLintConfigAny
+  snMount?(): void
   snInsert?(guid: string): void
   snSubmit?(guid: string): void
 }
@@ -36,6 +37,7 @@ export function SnFormWrapper({
   guid,
   esLintConfig,
   enableAttachments = true,
+  snMount,
   snInsert,
   snSubmit,
 }: SnFormProps) {
@@ -87,6 +89,7 @@ export function SnFormWrapper({
           const reactConfig = form.react_config as SnFormConfig
           mutateEsVersion(reactConfig.es_version, esLintConfig)
           setFormConfig(reactConfig)
+          snMount?.()
         }
       } catch (error: unknown) {
         if (axios.isAxiosError(error)) {

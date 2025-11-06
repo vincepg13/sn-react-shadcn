@@ -1,3 +1,4 @@
+import { cn } from '@kit/lib/utils'
 import { CommandGroup } from 'cmdk'
 import { Button } from '@kit/components/ui/button'
 import { getTableMetadata } from '@kit/utils/conditions-api'
@@ -12,17 +13,17 @@ interface SnDotwalkChoiceProps {
   label?: string
   baseTable: string
   disabled?: boolean
+  className?: string
   fieldsByTable: Record<string, SnConditionMap>
   setFieldsByTable: Dispatch<SetStateAction<Record<string, SnConditionMap>>>
   onChange: (updated: Partial<SnConditionRow>, table: string) => void
 }
 
-export function SnDotwalkChoice({ label, baseTable, fieldsByTable, disabled, setFieldsByTable, onChange }: SnDotwalkChoiceProps) {
+export function SnDotwalkChoice({ label, baseTable, className, fieldsByTable, disabled, setFieldsByTable, onChange }: SnDotwalkChoiceProps) {
   const [open, setOpen] = useState(false)
   const [search, setSearch] = useState('')
   const [fetchingMeta, setFetchingMeta] = useState(false)
   const [path, setPath] = useState<{ name: string; label: string }[]>([])
-
 
   const currentTable = path.reduce((table, field) => {
     return fieldsByTable[table]?.[field.name]?.reference || table
@@ -87,7 +88,7 @@ export function SnDotwalkChoice({ label, baseTable, fieldsByTable, disabled, set
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button variant="outline" className="w-full justify-start truncate" disabled={disabled}>
+        <Button variant="outline" className={cn('justify-start truncate', className)} disabled={disabled}>
           {label || 'Select field'}
         </Button>
       </PopoverTrigger>

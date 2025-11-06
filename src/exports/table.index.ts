@@ -1,7 +1,7 @@
 //API and Utils
 export { fetchSchema } from '../components/sn-table/hooks/useFetchSchema'
 export { fetchFieldsViaView } from '../components/sn-table/hooks/useFetchFields'
-export { resolveUpdater, getColumnLabel, getSortedQuery, getDefaultSortingFromQuery} from '../utils/table-helper'
+export { resolveUpdater, getColumnLabel, getSortedQuery, getDefaultSortingFromQuery } from '../utils/table-helper'
 export { getViewPreference, getListView, getListViewElements, getTableSchema, getTableRows } from '../utils/table-api'
 
 // Table Components
@@ -15,8 +15,15 @@ export { SnPersonaliseList } from '../components/sn-ui/sn-personalise-list/sn-pe
 //simple list?
 
 //Condition Builder
+export { SnDotwalkChoice } from '../components/sn-ui/sn-dotwalk-choice'
 export { SnFilter } from '../components/sn-ui/sn-condition-builder/sn-filter'
 export { SnConditionBuilder } from '../components/sn-ui/sn-condition-builder/sn-condition-builder'
+export {
+  type SnConditionMap,
+  type SnConditionField,
+  SnConditionMapSchema,
+  SnConditionFieldSchema,
+} from '@kit/types/condition-schema'
 
 //Loaders
 export { SnConditionSkeleton } from '../components/sn-ui/sn-condition-builder/sn-condition-skeleton'

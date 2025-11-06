@@ -14,7 +14,7 @@ export const _GlideUserSchema = z.object({
   firstName: z.string(),
   lastName: z.string(),
   fullName: z.string(),
-  preferences: z.record(z.string()),
+  preferences: z.record(z.string(), z.string()),
   userID: z.string(),
   userName: z.string(),
 })

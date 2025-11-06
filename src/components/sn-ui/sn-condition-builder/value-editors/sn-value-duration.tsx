@@ -1,6 +1,6 @@
-import { SnFieldDurationCore } from '@kit/components/sn-form/sn-form-fields/sn-field-duration'
-import { SnConditionField } from '@kit/types/condition-schema'
 import { useEffect } from 'react'
+import { SnConditionField } from '@kit/types/condition-schema'
+import { SnFieldDurationCore } from '@kit/components/sn-form/sn-form-fields/sn-field-duration'
 
 type DurProps = {
   value: string
@@ -46,7 +46,8 @@ export function SnValueDuration({ value, field, onChange }: DurProps) {
 
   const displayValue = parsedDurationValue === 'NULL' ? EPOCH : parsedDurationValue
 
-  const handleChange = (_val: string, splits?: string[]) => {
+  const handleChange = (_val: string, _display?: string, splits?: string[]) => {
+    console.log('HANDLE DURE CB CHANGE:', _val, _display, splits)
     const formattedValue =
       splits && splits.length == 4
         ? `javascript:gs.getDurationDate('${splits[0]} ${splits[1]}:${splits[2]}:${splits[3]}')`

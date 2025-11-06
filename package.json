@@ -72,7 +72,8 @@
     "react": "^18.0.0 || ^19.0.0",
     "react-dom": "^18.0.0 || ^19.0.0",
     "sonner": "^2.0.3",
-    "tailwindcss": "^3.0.0 || ^4.0.0"
+    "tailwindcss": "^3.0.0 || ^4.0.0",
+    "zod": "^4.1.12"
   },
   "dependencies": {
     "@alisowski/codemirror-theme-androidstudio": "^4.23.11",
@@ -154,8 +155,7 @@
     "shadcn-dropzone": "^0.2.1",
     "tailwind-merge": "^3.2.0",
     "tern": "^0.24.3",
-    "uuid": "^11.1.0",
-    "zod": "^3.24.3"
+    "uuid": "^11.1.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.25.1",
@@ -175,7 +175,8 @@
     "react-dom": "^19.0.0",
     "tsup": "^8.4.0",
     "typescript": "^5.0.0",
-    "vite": "^6.0.0"
+    "vite": "^6.0.0",
+    "zod": "^4.1.12"
   },
   "overrides": {
     "shadcn-dropzone": {

@@ -26,7 +26,7 @@ function ConditionRowComponent({ condition, onDelete, onOr, onChange }: Props) {
   const handleOperatorChange = useCallback(
     (operator: string) => {
       const currentField = fieldsByTable[tableName]?.[conditionField]
-      const fieldOp = currentField?.operators.find(o => o.operator === operator)
+      const fieldOp = currentField?.operators?.find(o => o.operator === operator)
       const label = fieldOp?.label
 
       if (fieldOp?.advancedEditor === lastEditor.current) onChange({ operator, operatorLabel: label })
