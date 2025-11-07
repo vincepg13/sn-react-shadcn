@@ -15,6 +15,7 @@ export function SnConditionField({ condition, fieldsByTable, setFieldsByTable, o
 
   return (
     <SnDotwalkChoice
+      className='w-full'
       label={condition.fieldLabel}
       baseTable={baseTable}
       fieldsByTable={fieldsByTable}
