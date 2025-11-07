@@ -11,19 +11,13 @@ Designed to give ServiceNow developers easy access to react components on the pl
 If you are installing from scratch then install the component and its peer dependencies:
 
 ```bash
-npm install sn-shadcn-kit react react-dom @tanstack/react-table tailwindcss axios
+npm install sn-shadcn-kit axios react react-dom sonner tailwindcss zod @tanstack/react-table
 ```
 
 ---
 
-## ⚠️ V2 Breaking Changes
-
-V2 of this package focuses on improving performance in consuming applications. To achieve this, TypeScript build and bundling options have been updated.
-
-- **All dependencies are now externalized.**
-- **Imports are split by feature path** to promote better tree-shaking and smaller bundle sizes.
-
-Instead of importing everything from `sn-shadcn-kit`, use one of the available subpaths:
+## ⚠️ Import Paths (V2+)
+To keep performance optimal in the hosting application, only import what is being used by the relevant path:
 
 - **`sn-shadcn-kit`** – Root exports for core setup utilities like `setAxiosInstance` / `getAxiosInstance`.
 - **`sn-shadcn-kit/amb`** – Functionality for ServiceNow’s _Asynchronous Message Bus_ (e.g., `useRecordWatch`).
@@ -33,8 +27,6 @@ Instead of importing everything from `sn-shadcn-kit`, use one of the available s
 - **`sn-shadcn-kit/skeleton`** – Placeholder skeletons and loaders.
 - **`sn-shadcn-kit/script`** – Script editor logic, including linting, formatting, and editor integrations.
 - **`sn-shadcn-kit/standalone`** – Lightweight components without heavy dependencies (e.g., attachments, record watchers).
-
-If you are migrating to V2+, please make sure you update necessary imports in your application.
 
 ---
 
@@ -130,7 +122,45 @@ This has more or less the same properties as SnDataTable with the exception that
 - If they have no list view pref for that table, it will display the default view
 - You can pass in the view name of a specific view via the _view_ property
 
-You may also noticed in the screenshot above the table includes a Condition Builder. This is a stand alone component <SnFilter/> which you can read more about in the Generic
+### `<DataTable />`
+
+The final table component available is **DataTable**. Whilst this table takes a bit more setup to use, it gives you full control over the API layer and is a UI only component. This is especially useful when you want to integrate directly with your own asynchronous state managemnt, e.g. when using tanstack query. You can see an example of how to set this up in the [TablePage](https://github.com/vincepg13/sn-shadkit-sdk-demo/blob/main/src/client/routes/TablePage.tsx) route of the demo application.
+
+### `<SnPersonaliseList />`
+
+You can use this component to personalise the list layout of a given table. The type `SnListItem` and is defined as `{value: string, label: string}`
+
+| Prop                      | Type                            | Description                               |
+| ------------------------- | ------------------------------- | ----------------------------------------- |
+| `unselected`              | `SnListItem[]`                  | array of the unselected fields            |
+| `selected`                | `SnListItem[]`                  | array of the selected fields              |
+| `isUserList`              | `boolean`                       | true when the current list view has not been modified by the user |
+| `onSave`                  | `(selected?: SnListItem[]) => Promise<void>` | Callback on save of list view |
+
+This component manifests itself as a button, which when clicked will open a dialog that allows you to drag and drop fields to/from the current view. You can overwrite the style of the button by passing a child to the component which should itself also be a button.
+
+### `<SnPersonalise />`
+
+A wrapper to the above component, *SnPersonalise* deals with fetching and saving the list layouts metadata so that you dont have to.
+
+| Prop                      | Type                      | Description                               |
+| ------------------------- | --------------------------| ----------------------------------------- |
+| `lmEndpoint`              | `string`                  | endpoint path for GET and POST            |
+| `table`                   | `string`                  | ServiceNow table name for list            |
+| `view` **?**              | `string`                  | Specific list view, if not provided default will be used |
+| `onChange` **?**          | `() => void`              | Callback when list view changes after save |
+
+The key to this component is to provide it with an endpoint path that can handle both the GET and POST requests, e.g. something like `/api/<namespace>/react_form/list_mechanic`.
+
+This is the resource path I use for two scripted rest endpoints:
+- a GET with script that can be found in the [listMechanicGet.js](/sn-scripts/listMechanicGet.js)
+- a POST with script that can be found in the [listMechanicGet.js](/sn-scripts/listMechanicPost.js)
+
+Although seperate scripted rest resources, they can share the same resource path since they belong to the same API definition and use different HTTP methods.
+
+![SnPersonalise Demo](/demo/SNPersonaliseDialog.png)
+
+Another component which assists you in interacting with tables is `<SnFilter/>`. a Condition Builder that can be used on forms or tables. You can read more in the Standalone Components section.
 
 ---
 
@@ -164,8 +194,8 @@ To use the form you must provide it with all necessary metadata, I do this via a
 
 ```js
 {
-  formData: '/api/659318/react_form/fd/problem/-1?view=',
-  refDisplay: '/api/659318/react_form/ref_display'
+  formData: '/api/<namespace>/react_form/fd/problem/-1?view=',
+  refDisplay: '/api/<namespace>/react_form/ref_display'
 }
 ```
 

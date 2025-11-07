@@ -1,4 +1,23 @@
 # Change Log
+## [V2.1.0]
+- Moved *sonner* and *zod* from dependencies to peer dependencies
+- Added support for **XML** in the CodeMirror editor. This will allow you to modify the scripts of UI Macros and UI Pages in SnForm
+- Added CSS Color support to the CodeMirror editor. Now when editing css fields you can use an embedded colour picker for colour related variables.
+- Added support for the **Conditions** field type in SnForm. Allowing you to interactively modify conditions using a condition builder on records like Business Rules.
+- Fixed an issue which stopped SnForm from saving when modifying a dotwalked field.
+- Created a new component `SnDotwalkChoice`:
+  - Allows you to dotwalk through reference fields when using a **Field Name** type field
+  - In SnForm this only happens when the attribute *allow_references* is set to true. Like on a UI Policy Action.
+- Created new components `SnPersonalise` and `SnPersonaliseList` which allow you to modify the list view of a table.
+
+### BREAKING CHANGES
+Since sonner and zod have both been moved to peer dependencies, please make sure you install them in your application if you havent already. 
+Sonner should have a minimum version of V2.0.3 and zod should have a minimum version of V4.1.12
+
+```bash
+npm install sonner@^2.0.3 zod@^4.1.2
+```
+
 ## [V2.0.5]
 - matched prettier tabwidth into the indentation lines of the CodeMirror editor.
 - Fixed an issue where autocomplete tooltips were appearing in nested structures inside the CodeMirror editor

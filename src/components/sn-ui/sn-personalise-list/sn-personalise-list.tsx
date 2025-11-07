@@ -6,7 +6,6 @@ import { SnListItem } from '@kit/types/table-schema'
 import { snapCenterToCursor } from '@dnd-kit/modifiers'
 import { DialogDescription } from '@radix-ui/react-dialog'
 import { GripVertical, Settings2, Trash2 } from 'lucide-react'
-import { CSSProperties, ReactElement, ReactNode, useCallback, useEffect, useMemo, useState } from 'react'
 import { SortableContext, useSortable, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable'
 import {
   Dialog,
@@ -16,6 +15,17 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@kit/components/ui/dialog'
+import {
+  Children,
+  CSSProperties,
+  isValidElement,
+  ReactElement,
+  ReactNode,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react'
 import {
   useDraggable,
   DndContext,
@@ -30,22 +40,15 @@ import {
 } from '@dnd-kit/core'
 import { Spinner } from '@kit/components/minimal-tiptap/components/spinner'
 
-
 type SnPersonaliseListProps = {
   unselected: SnListItem[]
   selected: SnListItem[]
   isUserList: boolean
-  customTrigger?: ReactElement
+  children?: ReactElement
   onSave: (selected?: SnListItem[]) => Promise<void>
 }
 
-export function SnPersonaliseList({
-  unselected,
-  selected,
-  isUserList,
-  customTrigger,
-  onSave,
-}: SnPersonaliseListProps) {
+export function SnPersonaliseList({ unselected, selected, isUserList, children, onSave }: SnPersonaliseListProps) {
   const [open, setOpen] = useState(false)
   const [saving, isSaving] = useState(false)
   const [activeId, setActiveId] = useState<string | null>(null)
@@ -66,18 +69,21 @@ export function SnPersonaliseList({
   }, [all, selectedItems])
 
   // Handle Save/Reset
-  const handleSave = useCallback(async (items?: SnListItem[]) => {
-    try {
-      isSaving(true)
-      await onSave(items)
-      setOpen(false)
-    } catch (e) {
-      if (isAxiosError(e) && e.code === 'ERR_CANCELED') return
-      toast.error('Error saving personal list: ' + e)
-    } finally {
-      isSaving(false)
-    }
-  }, [onSave])
+  const handleSave = useCallback(
+    async (items?: SnListItem[]) => {
+      try {
+        isSaving(true)
+        await onSave(items)
+        setOpen(false)
+      } catch (e) {
+        if (isAxiosError(e) && e.code === 'ERR_CANCELED') return
+        toast.error('Error saving personal list: ' + e)
+      } finally {
+        isSaving(false)
+      }
+    },
+    [onSave]
+  )
 
   function onDragStart(e: DragStartEvent) {
     setActiveId(String(e.active.id))
@@ -129,11 +135,23 @@ export function SnPersonaliseList({
     }
   }
 
+  let triggerEl: ReactElement | null = null
+  if (children != null) {
+    const only = Children.only(children) // will throw in dev if multiple
+    if (isValidElement(only)) {
+      triggerEl = only as ReactElement
+    } else {
+      console.warn(
+        '[SnPersonaliseList] Child passed to component is not a valid React element. Falling back to default trigger.'
+      )
+    }
+  }
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <form>
         <DialogTrigger asChild>
-          {customTrigger ?? (
+          {triggerEl ?? (
             <Button variant="outline">
               <Settings2 />
               Personalise
@@ -203,7 +221,7 @@ export function SnPersonaliseList({
           </DndContext>
 
           <DialogFooter className="gap-2 items-center">
-            {saving && <Spinner className="size-6"/>}
+            {saving && <Spinner className="size-6" />}
             {isUserList && (
               <Button variant="secondary" onClick={() => handleSave()}>
                 Reset to column defaults
