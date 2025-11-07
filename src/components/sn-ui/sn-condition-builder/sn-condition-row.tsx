@@ -1,11 +1,12 @@
 import { Trash2 } from 'lucide-react'
-import { useCallback, useRef } from 'react'
+import { memo, useCallback, useRef } from 'react'
 import { Button } from '@kit/components/ui/button'
 import { SnConditionField } from './sn-condition-field'
 import { SnConditionValue } from './sn-condition-value'
 import { useCondMeta } from './contexts/SnConditionsContext'
-import { SnConditionRow, SnConditionMap } from '@kit/types/condition-schema'
+import { SnConditionRow, SnConditionMap, SnFieldOperator } from '@kit/types/condition-schema'
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@kit/components/ui/select'
+import { getChangeOperators } from '@kit/lib/sn-condition'
 
 type Props = {
   condition: SnConditionRow
@@ -15,9 +16,9 @@ type Props = {
   onChange: (updated: Partial<SnConditionRow>) => void
 }
 
-export function ConditionRow({ condition, onDelete, onOr, onChange }: Props) {
-  const { table, fieldsByTable, setFieldsByTable } = useCondMeta()
-  
+function ConditionRowComponent({ condition, onDelete, onOr, onChange }: Props) {
+  const { table, fieldsByTable, extended, setFieldsByTable } = useCondMeta()
+
   const lastEditor = useRef('')
   const tableName = condition.table ?? table
   const conditionField = condition.field?.split('.').pop() || ''
@@ -25,7 +26,7 @@ export function ConditionRow({ condition, onDelete, onOr, onChange }: Props) {
   const handleOperatorChange = useCallback(
     (operator: string) => {
       const currentField = fieldsByTable[tableName]?.[conditionField]
-      const fieldOp = currentField?.operators.find(o => o.operator === operator)
+      const fieldOp = currentField?.operators?.find(o => o.operator === operator)
       const label = fieldOp?.label
 
       if (fieldOp?.advancedEditor === lastEditor.current) onChange({ operator, operatorLabel: label })
@@ -61,7 +62,24 @@ export function ConditionRow({ condition, onDelete, onOr, onChange }: Props) {
 
   if (!fieldsByTable[tableName]) return null
   const currentField = fieldsByTable[tableName][conditionField]
+
   const operatorOptions = currentField?.operators ?? []
+  if (extended && operatorOptions.length > 0) {
+    const changeOps = getChangeOperators(currentField.type)
+
+    if (changeOps.includes('fvc') && !hasOperator(operatorOptions, 'VALCHANGES')) {
+      operatorOptions.push({ label: 'changes', editor: 'none', operator: 'VALCHANGES', advancedEditor: 'none' })
+    }
+
+    const firstOpt = operatorOptions[0]
+    if (changeOps.includes('fvf') && !hasOperator(operatorOptions, 'CHANGESFROM')) {
+      operatorOptions.push({ ...firstOpt, label: 'changes from', operator: 'CHANGESFROM' })
+    }
+    if (changeOps.includes('fvt') && !hasOperator(operatorOptions, 'CHANGESTO')) {
+      operatorOptions.push({ ...firstOpt, label: 'changes to', operator: 'CHANGESTO' })
+    }
+  }
+
   const [currentOperator] = operatorOptions.filter(op => op.operator === condition.operator)
 
   return (
@@ -123,3 +141,9 @@ export function ConditionRow({ condition, onDelete, onOr, onChange }: Props) {
     </div>
   )
 }
+
+function hasOperator(operators: SnFieldOperator[], operator: string) {
+  return operators.some(op => op.operator === operator)
+}
+
+export const ConditionRow = memo(ConditionRowComponent, (p, n) => p.condition === n.condition)

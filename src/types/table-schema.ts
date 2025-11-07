@@ -36,11 +36,25 @@ const rowItemNullable = z.object({
   label: z.string().optional(),
 })
 
-export const rowSchemaNullable = z.record(rowItemNullable)
+const listItem = z.object({
+  value: z.string(),
+  label: z.string(),
+})
+
+export const SnPersonalListSchema = z.object({
+  unselected: z.array(listItem),
+  selected: z.array(listItem),
+  isUserList: z.boolean(),
+})
+
+export type SnListItem = z.infer<typeof listItem>
+export type SnPersonalList = z.infer<typeof SnPersonalListSchema>
+
+export const rowSchemaNullable = z.record(z.string(), rowItemNullable)
 export type SnCell = z.infer<typeof rowItemNullable>
 export type SnRowNullable = z.infer<typeof rowSchemaNullable>
 
-export const rowSchema = z.record(rowItem)
+export const rowSchema = z.record(z.string(), rowItem)
 export type SnRowItem = z.infer<typeof rowItem>
 export type SnRow = z.infer<typeof rowSchema>
 export type SnColSchema = z.infer<typeof _snColSchema>

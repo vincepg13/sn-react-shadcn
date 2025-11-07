@@ -12,22 +12,24 @@ import { useReferenceRecords, RefRecord } from '../hooks/references/useReference
 import { useEffect, useRef, useState, UIEvent, MouseEvent, useMemo, useCallback } from 'react'
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@kit/components/ui/command'
 
-interface SnReferenceProps {
+export interface SnReferenceProps {
   field: SnFieldSchema
   onChange: (val: string | string[], displayValue?: string) => void
   formValues: Record<string, string>
   table: string
   recordSysId: string
   dependentValue?: string
+  forceRefQuery?: boolean
 }
 
 export function SnFieldReference({
   field,
-  onChange,
-  formValues,
   table,
+  formValues,
   recordSysId,
   dependentValue,
+  forceRefQuery = false,
+  onChange,
 }: SnReferenceProps) {
   const { readonly } = useFieldUI()
   const [open, setOpen] = useState(false)
@@ -98,14 +100,16 @@ export function SnFieldReference({
 
   const query = useMemo(
     () =>
-      buildReferenceQuery({
-        columns: displayCols,
-        term: debounced,
-        operator: ed.defaultOperator || 'LIKE',
-        orderBy,
-        excludeValues,
-      }),
-    [displayCols, debounced, ed.defaultOperator, orderBy, excludeValues]
+      forceRefQuery && ed.qualifier
+        ? ed.qualifier
+        : buildReferenceQuery({
+            columns: displayCols,
+            term: debounced,
+            operator: ed.defaultOperator || 'LIKE',
+            orderBy,
+            excludeValues,
+          }),
+    [forceRefQuery, ed.qualifier, ed.defaultOperator, displayCols, debounced, orderBy, excludeValues]
   )
 
   const { records, page, loading, fetchPage } = useReferenceRecords({
@@ -197,7 +201,7 @@ export function SnFieldReference({
                 'w-full min-w-[200px] flex items-center flex-wrap gap-1 border rounded-md px-3 py-2 text-sm shadow-sm text-left',
                 'bg-background text-foreground',
                 !disabled &&
-                  'cursor-pointer hover:bg-accent hover:text-accent-foreground focus:outline-none focus:ring-2 focus:ring-ring',
+                  'cursor-pointer hover:bg-accent hover:text-accent-foreground pr-4',
                 disabled && 'cursor-not-allowed opacity-50'
               )}
             >
@@ -214,9 +218,14 @@ export function SnFieldReference({
                       onClick={e => {
                         e.stopPropagation()
                         const updated = selectedRecords.filter(r => r.value !== record.value)
+                        const newDisplay = updated.map(r => r.display_value).join(',')
+
                         setSelectedRecords(updated)
-                        onChange(updated.map(r => r.value))
-                        field.displayValue = updated.map(r => r.display_value).join(',')
+                        onChange(
+                          updated.map(r => r.value),
+                          newDisplay
+                        )
+                        field.displayValue = newDisplay
                       }}
                     />
                   )}

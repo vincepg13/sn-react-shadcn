@@ -5,6 +5,10 @@ import { ColumnDef } from '@tanstack/react-table'
 import { getTableSchema } from '../../../utils/table-api'
 import { SnRow, SnRowItem } from '../../../types/table-schema'
 
+export async function fetchSchema(table: string, signal: AbortSignal) {
+  const res = await getTableSchema(table, signal)
+  return res.data.result
+}
 
 export function useFetchSchema({
   table,

@@ -3,15 +3,15 @@ import { cn } from '@kit/lib/utils'
 import { isAxiosError } from 'axios'
 import { Minimize2 } from 'lucide-react'
 import { SnScriptToolbar } from './sn-script-toolbar'
+import { Options as PrettierOptions } from 'prettier'
 import { ESLintConfigAny } from '@kit/types/es-lint-types'
-import { getAutocompleteData, getTheme } from '@kit/utils/script-editor'
 import { ReactNode, useEffect, useRef, useState } from 'react'
 import { SnCodeMirror, SnCodeMirrorHandle } from './sn-code-mirror'
+import { getAutocompleteData, getTheme } from '@kit/utils/script-editor'
+import { CmThemeValue, SnScriptFieldType, typeToLang } from '@kit/types/script-types'
 import { useInlineTern } from '@kit/components/sn-ui/sn-script-editor/hooks/useTernInline'
 import { useFullScreen } from '@kit/components/sn-ui/sn-script-editor/hooks/useFullScreen'
 import { esLintDefaultConfig } from '@kit/components/sn-ui/sn-script-editor/hooks/useEsLint'
-import { CmThemeValue, CodeMirrorLanguage, SnScriptFieldType } from '@kit/types/script-types'
-import { Options as PrettierOptions } from 'prettier'
 
 interface SnFieldScriptProps {
   snType: SnScriptFieldType
@@ -30,15 +30,6 @@ interface SnFieldScriptProps {
   onBlur?: (value: string) => void
   onChange?: (value: string) => void
   onReady?: (handle: SnCodeMirrorHandle) => void
-}
-
-const typeToLang: Record<SnScriptFieldType, CodeMirrorLanguage> = {
-  script: 'javascript',
-  script_plain: 'javascript',
-  html_template: 'html',
-  css: 'css',
-  json: 'json',
-  properties: 'css',
 }
 
 export function SnScriptEditor({

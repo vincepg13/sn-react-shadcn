@@ -5,13 +5,15 @@ import { useFieldCache } from './hooks/useFieldCache'
 import { Separator } from '@kit/components/ui/separator'
 import { CirclePlus, CircleX, Play } from 'lucide-react'
 import { TooltipProvider } from '@kit/components/ui/tooltip'
-import { useConditionModel } from './hooks/useConditionModel'
+import { serializeConditionModel, useConditionModel } from './hooks/useConditionModel'
 import { SnConditionSkeleton } from './sn-condition-skeleton'
-import { forwardRef, useImperativeHandle, useState } from 'react'
 import { SnConditionsContext } from './contexts/SnConditionsContext'
+import { forwardRef, useEffect, useImperativeHandle, useMemo, useState } from 'react'
 import { SnConditionMap, SnConditionModel, SnDateTimeMeta, SnFieldCurrencyChoice } from '@kit/types/condition-schema'
 
-type SnConditionsHandle = {
+export type SnConditionHandle = {
+  addGroup: () => void
+  clearQuery: () => void
   adjustModel: (gIndex: number, cIndex: number) => void
 }
 
@@ -20,11 +22,14 @@ type ConditionProps = {
   initialQuery?: string
   columns: SnConditionMap
   queryModel: SnConditionModel
+  showControls?: boolean
+  extendToChanges?: boolean
   onQueryBuilt: (encoded: string) => void
+  onModelChange?: (builtQuery: string) => void
 }
 
-export const SnConditions = forwardRef<SnConditionsHandle, ConditionProps>(
-  ({ table, columns, queryModel, onQueryBuilt }, ref) => {
+export const SnConditions = forwardRef<SnConditionHandle, ConditionProps>(
+  ({ table, columns, queryModel, extendToChanges, showControls = true, onQueryBuilt, onModelChange }, ref) => {
     const { model, updateCondition, deleteCondition, updateModel, executeQuery, clearQuery, addGroup, adjustByIndex } =
       useConditionModel(queryModel)
 
@@ -41,6 +46,8 @@ export const SnConditions = forwardRef<SnConditionsHandle, ConditionProps>(
     )
 
     useImperativeHandle(ref, () => ({
+      addGroup,
+      clearQuery,
       adjustModel: (gIndex: number, cIndex: number) => {
         const adjustedModel = gIndex < 0 && cIndex < 0 ? clearQuery() : adjustByIndex(gIndex, cIndex)
         runQuery(adjustedModel)
@@ -51,12 +58,32 @@ export const SnConditions = forwardRef<SnConditionsHandle, ConditionProps>(
       return onQueryBuilt(executeQuery(customModel) || '')
     }
 
+    useEffect(() => {
+      if (!onModelChange) return
+
+      const builtQuery = serializeConditionModel(model, false) || ''
+      onModelChange(builtQuery)
+    }, [model, onModelChange])
+
     const notLoaded = Object.values(cacheLoaded).some(value => value === false)
+
+    const ctxValue = useMemo(
+      () => ({
+        table,
+        fieldsByTable,
+        dateMeta,
+        currencyMeta,
+        extended: extendToChanges || false,
+        setFieldsByTable,
+      }),
+      [table, fieldsByTable, dateMeta, currencyMeta, extendToChanges, setFieldsByTable]
+    )
+
     if (notLoaded) return <SnConditionSkeleton />
 
     return (
       <div>
-        <SnConditionsContext.Provider value={{ table, fieldsByTable, dateMeta, currencyMeta, setFieldsByTable }}>
+        <SnConditionsContext.Provider value={ctxValue}>
           <TooltipProvider>
             <Toaster position="top-center" expand={true} richColors />
 
@@ -83,19 +110,21 @@ export const SnConditions = forwardRef<SnConditionsHandle, ConditionProps>(
                 </div>
               ))}
 
-              <div className="flex items-center justify-center gap-2">
-                <Button variant="outline" onClick={addGroup}>
-                  <CirclePlus />
-                  New Group
-                </Button>
-                <Button variant="outline" onClick={clearQuery}>
-                  <CircleX />
-                  Clear All
-                </Button>
-                <Button onClick={() => runQuery()}>
-                  <Play /> Run
-                </Button>
-              </div>
+              {showControls && (
+                <div className="flex items-center justify-center gap-2">
+                  <Button variant="outline" onClick={addGroup}>
+                    <CirclePlus />
+                    New Group
+                  </Button>
+                  <Button variant="outline" onClick={clearQuery}>
+                    <CircleX />
+                    Clear All
+                  </Button>
+                  <Button onClick={() => runQuery()}>
+                    <Play /> Run
+                  </Button>
+                </div>
+              )}
             </div>
           </TooltipProvider>
         </SnConditionsContext.Provider>

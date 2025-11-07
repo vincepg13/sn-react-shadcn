@@ -11,22 +11,24 @@ interface SnFieldDurProps extends Omit<SnFieldBaseProps<string>, 'field'> {
 
 type SnFieldDurCoreProps = {
   fVal: string
+  readonly?: boolean
   size?: 'sm' | 'default'
   field: { mandatory: boolean; readonly: boolean }
-  onChange: (value: string, displayValue?: string) => void
+  onChange: (value: string, displayValue?: string, splits?: string[]) => void
 }
 
 export function SnFieldDuration({ field, rhfField, onChange }: SnFieldDurProps) {
+  const { readonly } = useFieldUI()
+
   const dualChange = (value: string, displayValue?: string) => {
     onChange?.(value, displayValue)
     rhfField.onChange(value)
   }
 
-  return <SnFieldDurationCore field={field} fVal={rhfField.value as string} onChange={dualChange} />
+  return <SnFieldDurationCore field={field} readonly={readonly} fVal={rhfField.value as string} onChange={dualChange} />
 }
 
-export function SnFieldDurationCore({ field, fVal, size = 'default', onChange }: SnFieldDurCoreProps) {
-  const { readonly } = useFieldUI()
+export function SnFieldDurationCore({ field, fVal, readonly, size = 'default', onChange }: SnFieldDurCoreProps) {
   const [splits, setSplits] = useState(['', '', '', ''])
 
   useEffect(() => {
@@ -80,7 +82,7 @@ export function SnFieldDurationCore({ field, fVal, size = 'default', onChange }:
   const updateValue = (updatedSplits: string[]) => {
     const value = formatValue(updatedSplits)
     const display = toDisplayValue(updatedSplits)
-    onChange(value, display)
+    onChange(value, display, updatedSplits)
   }
 
   const handleChange = (i: number, value: string) => {

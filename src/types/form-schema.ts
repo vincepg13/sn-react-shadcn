@@ -105,6 +105,8 @@ const _attributes = z.object({
   ref_ac_order_by: z.string().optional(),
   ref_ac_table: z.string().optional(),
   ref_ac_display_value: z.string().optional(),
+  extended_operators: z.string().optional(),
+  allow_references: z.string().optional(),
 })
 
 const _ed = z.object({
@@ -115,7 +117,7 @@ const _ed = z.object({
   searchField: z.string().optional(),
 })
 
-export const pickerList = z.record(_recordPickerItem)
+export const pickerList = z.record(z.string(), _recordPickerItem)
 export type SnRecordPickerItem = z.infer<typeof _recordPickerItem>
 export type SnRecordPickerList = SnRecordPickerItem[]
 export type SnRefFieldEd = z.infer<typeof _ed>
@@ -222,6 +224,7 @@ const _fieldChoiceItem = z.object({
   type: z.string().optional(),
   display: boolean().optional(),
   value: z.string(),
+  reference: z.string().optional(),
 })
 
 const _formConfig = z.object({
@@ -232,7 +235,7 @@ const _formConfig = z.object({
   glide_user: _GlideUserSchema,
   prettier: z.custom<PrettierOptions>(),
   es_version: z.custom<ESVersion>().optional(),
-  es_lint: z.record(z.any()).optional(),
+  es_lint: z.record(z.string(), z.any()).optional(),
   theme: z.custom<CmThemeValue>().optional(),
   security: z.object({
     canWrite: z.boolean(),
@@ -249,7 +252,7 @@ const _formField = z.object({
   mandatory: z.boolean(),
   visible: z.boolean(),
   readonly: z.boolean(),
-  staged_data: z.record(z.any()).optional(),
+  staged_data: z.record(z.string(), z.any()).optional(),
   sys_readonly: z.boolean().optional(),
   sys_mandatory: z.boolean().optional(),
   type: z.string(), //z.enum(['string', 'choice', 'glide_date', 'glide_date_time', 'reference', 'boolean']),

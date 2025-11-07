@@ -1,7 +1,7 @@
 import { isAxiosError } from 'axios'
 import { createPortal } from 'react-dom'
 import { Minimize2 } from 'lucide-react'
-import { CodeMirrorLanguage } from '@kit/types/script-types'
+import { typeToLang } from '@kit/types/script-types'
 import { getAutocompleteData, getTheme } from '@kit/utils/script-editor'
 import { useFormLifecycle } from '../contexts/SnFormLifecycleContext'
 import { RefObject, useEffect, useMemo, useRef, useState } from 'react'
@@ -19,15 +19,6 @@ interface SnFieldScriptProps extends Omit<SnFieldBaseProps<string>, 'field'> {
   adornmentRef?: RefObject<HTMLElement | null>
 }
 
-const typeToLang: Record<string, CodeMirrorLanguage> = {
-  script: 'javascript',
-  script_plain: 'javascript',
-  html_template: 'html',
-  css: 'css',
-  json: 'json',
-  properties: 'css'
-}
-
 export function SnFieldScript({ table, field, rhfField, adornmentRef, onChange }: SnFieldScriptProps) {
   const { readonly } = useFieldUI()
   const { formConfig } = useFormLifecycle()
@@ -37,7 +28,7 @@ export function SnFieldScript({ table, field, rhfField, adornmentRef, onChange }
   const [snDefs, setSnDefs] = useState<unknown | null>(null)
 
   useEffect(() => {
-    if (field.type == 'html_template' || field.type == 'css') return
+    if (field.type == 'html_template' || field.type == 'css' || field.type == 'xml') return
 
     const controller = new AbortController()
 
@@ -81,7 +72,7 @@ export function SnFieldScript({ table, field, rhfField, adornmentRef, onChange }
       <div className={wrapperClasses}>
         <SnCodeMirror
           ref={editorRef}
-          language={typeToLang[field.type]}
+          language={typeToLang[field.type as keyof typeof typeToLang]}
           content={String(rhfField.value ?? '')}
           theme={getTheme(formConfig.theme)}
           readonly={readonly}

@@ -1,4 +1,5 @@
 import { css } from '@codemirror/lang-css'
+import { xml } from '@codemirror/lang-xml'
 import { html } from '@codemirror/lang-html'
 import { json } from '@codemirror/lang-json'
 import { tags as t } from '@lezer/highlight'
@@ -11,6 +12,7 @@ import { CmThemeValue } from '@kit/types/script-types'
 import { EditorView, keymap } from '@codemirror/view'
 import { Options as PrettierOptions } from 'prettier'
 import { javascript } from '@codemirror/lang-javascript'
+import { color } from '@uiw/codemirror-extensions-color'
 import { boolColorByTheme, buildAutocomplete } from '@kit/utils/script-editor'
 import { usePrettierFormatter } from './hooks/usePrettierFormat'
 import { indentationMarkers } from '@replit/codemirror-indentation-markers'
@@ -21,7 +23,7 @@ import { useEffect, useRef, forwardRef, useImperativeHandle, useMemo, useCallbac
 import CodeMirror, { Extension, Prec, ReactCodeMirrorProps, ReactCodeMirrorRef } from '@uiw/react-codemirror'
 
 interface SnCodeMirrorProps {
-  language?: 'javascript' | 'html' | 'css' | 'json'
+  language?: 'javascript' | 'html' | 'css' | 'json' | 'xml'
   height?: string
   content?: string
   readonly?: boolean
@@ -50,6 +52,8 @@ function getLanguageSupport(lang: string) {
       return css()
     case 'json':
       return json()
+    case 'xml':
+      return xml()
     default:
       return javascript()
   }
@@ -242,6 +246,8 @@ export const SnCodeMirror = forwardRef<SnCodeMirrorHandle, SnCodeMirrorProps>(fu
   ]
   if (lineWrapping !== false) extensions.push(EditorView.lineWrapping)
   if (esLint?.enabled) extensions.push(...(Array.isArray(lintExts) ? lintExts : [lintExts]))
+
+  if (inputLang === 'css') extensions.push(color)
 
   extensions.push(syntaxHighlighting(defaultHighlightStyle, { fallback: true }))
 

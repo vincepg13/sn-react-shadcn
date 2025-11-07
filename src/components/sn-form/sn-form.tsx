@@ -11,9 +11,9 @@ import { SnFormLayout } from './sn-form-layout/sn-form-layout'
 import { SnFormActions } from './sn-form-layout/sn-form-actions'
 import { SnUiPolicyContext } from './contexts/SnUiPolicyContext'
 import { SnUiActionContext } from './contexts/SnUiActionContext'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useFieldUIStateManager } from './hooks/useFieldUiState'
-import { useForm, FormProvider, FieldErrors } from 'react-hook-form'
+import { FormProvider, FieldErrors } from 'react-hook-form'
 import { SnFormActivity } from '../sn-ui/sn-activity/sn-form-activity'
 import { SnClientScriptContext } from './contexts/SnClientScriptContext'
 import { SnFormLifecycleContext } from './contexts/SnFormLifecycleContext'
@@ -31,6 +31,7 @@ import {
   SnUiAction,
 } from '@kit/types/form-schema'
 import { useScriptRunner } from './hooks/useScriptRunner'
+import { useDotSafeForm } from './hooks/useDotSafeForm'
 
 interface SnFormProps {
   table: string
@@ -76,16 +77,27 @@ export function SnForm({
   const fieldTabMapRef = useRef<Record<string, string>>({})
   const fieldChangeHandlersRef = useRef<Record<string, (val: SnFieldPrimitive) => void>>({})
 
+  const fieldList = useMemo(() => Object.keys(formFields), [formFields])
+
   const [overrideTab, setOverrideTab] = useState<string | undefined>()
   const { fieldUIState, updateFieldUI } = useFieldUIStateManager(formFields)
   const { defaultValues, buildNormalizedValues } = useNormalizedDefaultValues(formFields)
   const schema = useZodFormSchema(formFields, fieldUIState)
 
-  const form = useForm({
+  const form = useDotSafeForm({
     resolver: schema ? zodResolver(schema) : undefined,
     defaultValues,
     mode: 'onBlur',
   })
+
+  useEffect(() => {
+    if (!formFields || !schema) return
+    form.reset({}, { keepErrors: true, keepDirty: false, keepTouched: true })
+    const normalized = buildNormalizedValues(formFields, {})
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    form.reset(normalized as any, { keepErrors: true, keepDirty: true, keepTouched: true })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const { gForm, displayValuesRef, setUiActionHandler } = useGFormBridge({
     form,
@@ -211,6 +223,7 @@ export function SnForm({
                           <SnField
                             key={field.name}
                             field={field}
+                            fieldList={fieldList}
                             fieldUIState={fieldUIState}
                             displayValues={displayValuesRef}
                             updateFieldUI={updateFieldUI}

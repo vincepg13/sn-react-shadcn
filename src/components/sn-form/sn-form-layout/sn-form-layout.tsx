@@ -78,9 +78,9 @@ export function SnFormLayout({
               bootstrapCells={section._bootstrap_cells}
               renderField={renderField}
             />
-            {children.map(child => (
+            {children.map((child, idx) => (
               <SnFormSection
-                key={child.id}
+                key={child.id || `${section.id}-child-${idx}`}
                 columns={child.columns}
                 bootstrapCells={child._bootstrap_cells}
                 renderField={renderField}

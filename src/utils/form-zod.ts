@@ -9,7 +9,7 @@ export function mapFieldToZod(field: SnFieldSchema): ZodTypeAny {
     case 'glide_list':
       base = z.union([z.string(), z.array(z.string())])
       if (!allowEmpty) {
-        base = base.refine(val => (Array.isArray(val) ? val.length > 0 : val.trim() !== ''), {
+        base = base.refine(val => (Array.isArray(val) ? val.length > 0 : (val as string).trim() !== ''), {
           message: 'A selection is required',
         })
       }

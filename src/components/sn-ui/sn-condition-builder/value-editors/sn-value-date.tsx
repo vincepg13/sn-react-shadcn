@@ -129,7 +129,7 @@ export function SnValueDate({ value, operator, onChange, showTime }: SnValueDate
           <Select
             value={relativeKey ?? selectedCustomKey}
             onValueChange={val => {
-              if (val.startsWith('custom:')) return
+              if (!val || val.startsWith('custom:')) return
               setRelativeKey(val)
               setCustomDate(null)
             }}

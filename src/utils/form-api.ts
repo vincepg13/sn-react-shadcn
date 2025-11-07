@@ -10,6 +10,26 @@ export function getFormData(metadataApi: string, controller: AbortController | A
   })
 }
 
+type SnValuePair = { value: string; displayValue: string }
+export async function getDotwalkedValues(
+  table: string,
+  target: string,
+  dotwalkedFields: string[],
+  controller: AbortController | AbortSignal
+): Promise<Record<string, SnValuePair>> {
+  const axios = getAxiosInstance()
+  const dotWalkRes = await axios.get(`/api/now/v1/table/${table}`, {
+    params: {
+      sysparm_limit: '1',
+      sysparm_display_value: 'all',
+      sysparm_fields: dotwalkedFields.join(','),
+      sysparm_query: `sys_id=${target}`,
+    },
+    signal: controller instanceof AbortController ? controller.signal : controller,
+  })
+  return dotWalkRes.data.result[0];
+}
+
 export function postFormAction(
   table: string,
   recordID: string,
@@ -57,7 +77,10 @@ async function _getTableDisplayFieldDictionary(table: string): Promise<string[]>
   return dictionaryDisplay
 }
 
-export async function getFieldList(table: string, controller: AbortController | AbortSignal): Promise<SnFieldChoiceItem[]> {
+export async function getFieldList(
+  table: string,
+  controller: AbortController | AbortSignal
+): Promise<SnFieldChoiceItem[]> {
   let fieldList: SnFieldChoiceItem[] = []
   const axios = getAxiosInstance()
   try {

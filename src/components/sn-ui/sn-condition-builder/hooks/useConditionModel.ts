@@ -1,6 +1,11 @@
-import { useCallback, useState } from 'react'
 import { v4 as uuid } from 'uuid'
-import { SnConditionGroup, SnConditionRow, SnConditionModel, SnConditionNode } from '@kit/types/condition-schema'
+import { useCallback, useState } from 'react'
+import {
+  SnConditionGroup,
+  SnConditionRow,
+  SnConditionModel,
+  SnConditionNode,
+} from '@kit/types/condition-schema'
 
 export type SnAddConditionType = 'add' | 'new' | 'split'
 
@@ -32,99 +37,7 @@ function createEmptyCondition(): SnConditionRow {
   }
 }
 
-function addConditionToGroup(groupId: string, model: SnConditionModel): SnConditionModel {
-  const add = (group: SnConditionGroup): SnConditionGroup => {
-    if (group.id === groupId) {
-      return { ...group, conditions: [...group.conditions, createEmptyCondition()] }
-    }
-
-    return { ...group, conditions: group.conditions.map(cond => (cond.type === 'condition' ? cond : add(cond))) }
-  }
-
-  return model.map(add)
-}
-
-function appendAndConditionNear(groupId: string, model: SnConditionModel): SnConditionModel {
-  function recurse(group: SnConditionGroup): SnConditionGroup {
-    const updatedConditions: typeof group.conditions = []
-
-    let foundTargetIndex: number | null = null
-    let reuseAndGroupIndex: number | null = null
-
-    for (let i = 0; i < group.conditions.length; i++) {
-      const cond = group.conditions[i]
-
-      if (cond.type !== 'condition') {
-        if (cond.id === groupId) foundTargetIndex = i
-        updatedConditions.push(recurse(cond))
-      } else {
-        updatedConditions.push(cond)
-      }
-    }
-
-    if (foundTargetIndex !== null) {
-      for (let i = foundTargetIndex + 1; i < updatedConditions.length; i++) {
-        const next = updatedConditions[i]
-        if (next.type === 'and') {
-          reuseAndGroupIndex = i
-          break
-        }
-      }
-
-      if (reuseAndGroupIndex !== null) {
-        const target = updatedConditions[reuseAndGroupIndex] as SnConditionGroup
-        const updatedAndGroup = {
-          ...target,
-          conditions: [...target.conditions, createEmptyCondition()],
-        }
-        updatedConditions[reuseAndGroupIndex] = updatedAndGroup
-      } else {
-        const newAndGroup: SnConditionGroup = createEmptyGroup('and')
-        updatedConditions.push(newAndGroup)
-      }
-    }
-
-    return { ...group, conditions: updatedConditions }
-  }
-
-  return model.map(recurse)
-}
-
-function splitConditionToOrGroup(groupId: string, condId: string, model: SnConditionModel): SnConditionModel {
-  let lifted: SnConditionRow | null = null
-
-  function recurse(group: SnConditionGroup): SnConditionGroup | null {
-    if (group.id === groupId) {
-      const newConditions = group.conditions.filter(cond => {
-        const match = cond.type === 'condition' && cond.id === condId
-        if (match) lifted = cond
-        return !match
-      })
-      return newConditions.length ? { ...group, conditions: newConditions } : null
-    }
-
-    const updatedConditions: SnConditionGroup['conditions'] = []
-
-    for (const cond of group.conditions) {
-      if (cond.type === 'condition') {
-        updatedConditions.push(cond)
-        continue
-      }
-
-      const updatedSubgroup = recurse(cond)
-      if (updatedSubgroup) updatedConditions.push(updatedSubgroup)
-
-      if (cond.id === groupId && lifted) {
-        updatedConditions.push(createEmptyGroup('or', lifted))
-      }
-    }
-
-    return { ...group, conditions: updatedConditions }
-  }
-
-  return model.map(root => recurse(root)).filter(Boolean) as SnConditionModel
-}
-
+/** Update a single condition (by ids) within the tree. Preserves references elsewhere. */
 function updateGroupPartial(
   group: SnConditionGroup,
   groupId: string,
@@ -132,27 +45,184 @@ function updateGroupPartial(
   partial: Partial<SnConditionRow>
 ): SnConditionGroup {
   if (group.id === groupId) {
-    return {
-      ...group,
-      conditions: group.conditions.map(c => (c.type === 'condition' && c.id === condId ? { ...c, ...partial } : c)),
-    }
+    let changed = false
+    const nextConds = group.conditions.map((c) => {
+      if (c.type === 'condition' && c.id === condId) {
+        changed = true
+        return { ...c, ...partial }
+      }
+      return c
+    })
+    return changed ? { ...group, conditions: nextConds } : group
   }
 
-  return {
-    ...group,
-    conditions: group.conditions.map(c =>
-      c.type === 'condition' ? c : updateGroupPartial(c, groupId, condId, partial)
-    ),
-  }
+  let childChanged = false
+  const nextConds = group.conditions.map((c) => {
+    if (c.type === 'condition') return c
+    const next = updateGroupPartial(c, groupId, condId, partial)
+    if (next !== c) childChanged = true
+    return next
+  })
+
+  return childChanged ? { ...group, conditions: nextConds } : group
 }
 
-function deleteFromGroup(group: SnConditionGroup, groupId: string, condId: string): SnConditionGroup | null {
-  if (group.id === groupId) {
-    const newConditions = group.conditions.filter(c => !(c.type === 'condition' && c.id === condId))
-    if (newConditions.length === 0) return null
-    return { ...group, conditions: newConditions }
+/** Add an empty condition to a specific group id. */
+function addConditionToGroup(groupId: string, model: SnConditionModel): [SnConditionModel, boolean] {
+  let rootChanged = false
+
+  const add = (group: SnConditionGroup): SnConditionGroup => {
+    if (group.id === groupId) {
+      rootChanged = true
+      return { ...group, conditions: [...group.conditions, createEmptyCondition()] }
+    }
+
+    let childChanged = false
+    const next = group.conditions.map((cond) => {
+      if (cond.type === 'condition') return cond
+      const updated = add(cond)
+      if (updated !== cond) childChanged = true
+      return updated
+    })
+
+    return childChanged ? { ...group, conditions: next } : group
   }
 
+  const nextModel = model.map(add)
+  return [rootChanged ? nextModel : model, rootChanged]
+}
+
+/** Append an AND group "nearby" a target group, but only copy along changed branches. */
+function appendAndConditionNear(groupId: string, model: SnConditionModel): [SnConditionModel, boolean] {
+  let rootChanged = false
+
+  function recurse(group: SnConditionGroup): SnConditionGroup {
+    let foundTargetIndex: number | null = null
+    let reuseAndGroupIndex: number | null = null
+    let childChanged = false
+
+    const updatedConditions: typeof group.conditions = group.conditions.map((cond, i) => {
+      if (cond.type === 'condition') return cond
+      if (cond.id === groupId) foundTargetIndex = i
+      const next = recurse(cond)
+      if (next !== cond) childChanged = true
+      return next
+    })
+
+    if (foundTargetIndex !== null) {
+      // search ahead for an AND group to reuse
+      for (let i = foundTargetIndex + 1; i < updatedConditions.length; i++) {
+        const next = updatedConditions[i]
+        if (next.type !== 'condition' && next.type === 'and') {
+          reuseAndGroupIndex = i
+          break
+        }
+      }
+
+      if (reuseAndGroupIndex !== null) {
+        const target = updatedConditions[reuseAndGroupIndex] as SnConditionGroup
+        const updatedAndGroup: SnConditionGroup = {
+          ...target,
+          conditions: [...target.conditions, createEmptyCondition()],
+        }
+        if (updatedAndGroup !== target) {
+          updatedConditions[reuseAndGroupIndex] = updatedAndGroup
+          childChanged = true
+        }
+      } else {
+        // push a new AND group
+        updatedConditions.push(createEmptyGroup('and'))
+        childChanged = true
+      }
+    }
+
+    if (childChanged) rootChanged = true
+    return childChanged ? { ...group, conditions: updatedConditions } : group
+  }
+
+  const nextModel = model.map(recurse)
+  return [rootChanged ? nextModel : model, rootChanged]
+}
+
+/** Lift a condition into a sibling OR group, with structural sharing. */
+function splitConditionToOrGroup(
+  groupId: string,
+  condId: string,
+  model: SnConditionModel
+): [SnConditionModel, boolean] {
+  let rootChanged = false
+  let lifted: SnConditionRow | null = null
+
+  function recurse(group: SnConditionGroup): SnConditionGroup | null {
+    if (group.id === groupId) {
+      let changedLocal = false
+      const newConditions = group.conditions.filter((cond) => {
+        const isTarget = cond.type === 'condition' && cond.id === condId
+        if (isTarget) lifted = cond
+        if (isTarget) changedLocal = true
+        return !isTarget
+      })
+      if (!newConditions.length) return null
+      if (changedLocal) {
+        rootChanged = true
+        return { ...group, conditions: newConditions }
+      }
+      return group
+    }
+
+    let childChanged = false
+    const nextConds: SnConditionGroup['conditions'] = []
+
+    for (const cond of group.conditions) {
+      if (cond.type === 'condition') {
+        nextConds.push(cond)
+        continue
+      }
+
+      const updated = recurse(cond)
+      if (updated) {
+        if (updated !== cond) childChanged = true
+        nextConds.push(updated)
+      }
+
+      // insert new OR group after encountering the target group path
+      if (cond.id === groupId && lifted) {
+        nextConds.push(createEmptyGroup('or', lifted))
+        childChanged = true
+      }
+    }
+
+    if (childChanged) {
+      rootChanged = true
+      return { ...group, conditions: nextConds }
+    }
+    return group
+  }
+
+  const next = model.map((root) => recurse(root)).filter(Boolean) as SnConditionModel
+  if (next.length !== model.length) {
+    rootChanged = true
+    return [next.length ? next : createEmptyModel(), true]
+  }
+  return [rootChanged ? next : model, rootChanged]
+}
+
+/** Delete a condition; clean and merge as before, but share refs when no change. */
+function deleteFromGroup(
+  group: SnConditionGroup,
+  groupId: string,
+  condId: string
+): SnConditionGroup | null {
+  if (group.id === groupId) {
+    const newConditions = group.conditions.filter((c) => !(c.type === 'condition' && c.id === condId))
+    if (newConditions.length === 0) return null
+    if (newConditions.length !== group.conditions.length) {
+      return { ...group, conditions: newConditions }
+    }
+    return group
+  }
+
+  let childChanged = false
   const newConditions: SnConditionGroup['conditions'] = []
 
   for (const c of group.conditions) {
@@ -160,41 +230,46 @@ function deleteFromGroup(group: SnConditionGroup, groupId: string, condId: strin
       newConditions.push(c)
     } else {
       const updated = deleteFromGroup(c, groupId, condId)
-      if (updated) newConditions.push(updated)
+      if (updated) {
+        if (updated !== c) childChanged = true
+        newConditions.push(updated)
+      } else {
+        // subtree removed
+        childChanged = true
+      }
     }
   }
 
-  //Convert from OR to AND if only one condition remains
-  const cleanedConditions = newConditions.map(c => {
-    if (c.type !== 'condition' && c.type === 'or' && c.conditions.length === 1) {
-      return {
-        ...c,
-        type: 'and',
-      } as const
-    }
-    return c
-  })
+  if (!newConditions.length) return null
 
-  //Merge touching AND groups
-  const mergedConditions = []
-
-  for (let i = 0; i < cleanedConditions.length; i++) {
-    const current = cleanedConditions[i]
-
-    if (current.type === 'and' && i > 0 && cleanedConditions[i - 1].type === 'and') {
-      const prev = mergedConditions.pop() as SnConditionGroup
-      mergedConditions.push({
-        ...prev,
-        conditions: [...prev.conditions, ...current.conditions],
-      })
-    } else {
-      mergedConditions.push(current)
-    }
+  // Convert OR to AND if only one child remains
+  let cleaned = newConditions
+  if (cleaned.length === 1 && cleaned[0].type !== 'condition' && cleaned[0].type === 'or') {
+    cleaned = [{ ...cleaned[0], type: 'and' }]
+    childChanged = true
   }
 
-  if (mergedConditions.length === 0) return null
+  // Merge touching AND groups
+  const merged: SnConditionGroup['conditions'] = []
+  for (let i = 0; i < cleaned.length; i++) {
+    const cur = cleaned[i]
+    if (cur.type !== 'condition' && cur.type === 'and' && merged.length > 0) {
+      const prev = merged[merged.length - 1]
+      if (prev.type !== 'condition' && prev.type === 'and') {
+        merged.pop()
+        merged.push({
+          ...prev,
+          conditions: [...prev.conditions, ...cur.conditions],
+        })
+        childChanged = true
+        continue
+      }
+    }
+    merged.push(cur)
+  }
 
-  return { ...group, conditions: mergedConditions }
+  if (!childChanged) return group
+  return { ...group, conditions: merged }
 }
 
 export function truncateConditionModelAtIndex(
@@ -251,7 +326,7 @@ export function truncateConditionModelAtIndex(
   return result
 }
 
-export function serializeConditionModel(model: SnConditionModel): string | null {
+export function serializeConditionModel(model: SnConditionModel, strict = true): string | null {
   const invalidConditions: SnConditionNode[] = []
 
   function validateGroup(group: SnConditionNode): void {
@@ -261,16 +336,14 @@ export function serializeConditionModel(model: SnConditionModel): string | null 
       }
       return
     }
-
     group.conditions.forEach(validateGroup)
   }
 
   model.forEach(validateGroup)
-  if (invalidConditions.length > 0) return null
+  if (strict && invalidConditions.length > 0) return null
 
   function serializeGroup(group: SnConditionNode): string {
     if (group.type === 'condition') return `${group.field}${group.operator}${group.value}`
-
     return group.conditions
       .map(serializeGroup)
       .filter(Boolean)
@@ -283,41 +356,83 @@ export function serializeConditionModel(model: SnConditionModel): string | null 
 export function useConditionModel(initialModel: SnConditionModel) {
   const [model, setModel] = useState(() => initialModel)
 
-  const updateCondition = useCallback(
-    (groupId: string, condId: string, partial: Partial<SnConditionRow>) => {
-      setModel(prev => prev.map(g => updateGroupPartial(g, groupId, condId, partial)))
-    },
-    [setModel]
-  )
-
-  const deleteCondition = (groupId: string, condId: string) => {
-    setModel(prev => {
-      const updated = prev.map(g => deleteFromGroup(g, groupId, condId)).filter(g => g !== null)
-      return updated.length === 0 ? createEmptyModel() : updated
+  const updateCondition = useCallback((groupId: string, condId: string, partial: Partial<SnConditionRow>) => {
+    setModel((prev) => {
+      let changed = false
+      const next = prev.map((g) => {
+        const u = updateGroupPartial(g, groupId, condId, partial)
+        if (u !== g) changed = true
+        return u
+      })
+      return changed ? next : prev
     })
-  }
+  }, [])
 
-  const updateModel = (groupId: string, type: SnAddConditionType, condId?: string) => {
-    if (type === 'add') return setModel(prev => addConditionToGroup(groupId, prev))
-    if (type === 'new') return setModel(prev => appendAndConditionNear(groupId, prev))
-    if (type === 'split' && condId) return setModel(prev => splitConditionToOrGroup(groupId, condId, prev))
-  }
+  const deleteCondition = useCallback((groupId: string, condId: string) => {
+    setModel((prev) => {
+      let changed = false
+      const updated = prev
+        .map((g) => {
+          const u = deleteFromGroup(g, groupId, condId)
+          if (u !== g) changed = true
+          return u
+        })
+        .filter(Boolean) as SnConditionModel
 
-  const adjustByIndex = (gIndex: number, cIndex: number) => {
+      if (!updated.length) {
+        changed = true
+        return createEmptyModel()
+      }
+      return changed ? updated : prev
+    })
+  }, [])
+
+  const updateModel = useCallback((groupId: string, type: SnAddConditionType, condId?: string) => {
+    setModel((prev) => {
+      if (type === 'add') {
+        const [next, changed] = addConditionToGroup(groupId, prev)
+        return changed ? next : prev
+      }
+      if (type === 'new') {
+        const [next, changed] = appendAndConditionNear(groupId, prev)
+        return changed ? next : prev
+      }
+      if (type === 'split' && condId) {
+        const [next, changed] = splitConditionToOrGroup(groupId, condId, prev)
+        return changed ? next : prev
+      }
+      return prev
+    })
+  }, [])
+
+  const adjustByIndex = useCallback((gIndex: number, cIndex: number) => {
     const newModel = truncateConditionModelAtIndex(model, gIndex, cIndex)
-    setModel(newModel)
-    return newModel
-  }
+    // Only set if something actually changed (length or reference change on root)
+    const changed =
+      newModel.length !== model.length ||
+      newModel.some((g, i) => g !== model[i])
+    if (changed) setModel(newModel)
+    return changed ? newModel : model
+  }, [model])
 
-  const executeQuery = (customModel?: SnConditionModel) => serializeConditionModel(customModel || model)
-  const addGroup = () => setModel(prev => [...prev].concat(createEmptyModel()))
-
-  const clearQuery = () => {
+  const executeQuery = useCallback((customModel?: SnConditionModel) => serializeConditionModel(customModel || model), [model])
+  const addGroup = useCallback(() => {
+    setModel((prev) => [...prev, ...createEmptyModel()])
+  }, [])
+  const clearQuery = useCallback(() => {
     const newModel = createEmptyModel()
     setModel(newModel)
     return newModel
+  }, [])
+
+  return {
+    model,
+    updateCondition,
+    deleteCondition,
+    updateModel,
+    executeQuery,
+    clearQuery,
+    addGroup,
+    adjustByIndex,
   }
-
-
-  return { model, updateCondition, deleteCondition, updateModel, executeQuery, clearQuery, addGroup, adjustByIndex }
 }
