@@ -1,4 +1,10 @@
 # Change Log
+## [V2.1.2]
+- Fixed an issue where the CodeMirror editor would reset to blank when doing an "undo" after its mounted
+
+## [V2.1.1]
+- Fixed the field selector not displaying in full width in the condition builder
+
 ## [V2.1.0]
 - Moved *sonner* and *zod* from dependencies to peer dependencies
 - Added support for **XML** in the CodeMirror editor. This will allow you to modify the scripts of UI Macros and UI Pages in SnForm

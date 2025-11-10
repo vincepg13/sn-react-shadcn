@@ -5,7 +5,6 @@ import { json } from '@codemirror/lang-json'
 import { tags as t } from '@lezer/highlight'
 import { useEsLint } from './hooks/useEsLint'
 import { lintGutter } from '@codemirror/lint'
-import { EditorState } from '@codemirror/state'
 import { indentUnit } from '@codemirror/language'
 import { openSearchPanel } from '@codemirror/search'
 import { CmThemeValue } from '@kit/types/script-types'
@@ -13,6 +12,7 @@ import { EditorView, keymap } from '@codemirror/view'
 import { Options as PrettierOptions } from 'prettier'
 import { javascript } from '@codemirror/lang-javascript'
 import { color } from '@uiw/codemirror-extensions-color'
+import { EditorState, Transaction } from '@codemirror/state'
 import { boolColorByTheme, buildAutocomplete } from '@kit/utils/script-editor'
 import { usePrettierFormatter } from './hooks/usePrettierFormat'
 import { indentationMarkers } from '@replit/codemirror-indentation-markers'
@@ -116,11 +116,13 @@ export const SnCodeMirror = forwardRef<SnCodeMirrorHandle, SnCodeMirrorProps>(fu
     if (cur === next) return
     if (view.composing) return
     if (performance.now() - lastTypeTimeRef.current < 400) return
+
     const sel = view.state.selection.main
     view.dispatch({
       changes: { from: 0, to: cur.length, insert: next },
       selection: { anchor: Math.min(next.length, sel.anchor), head: Math.min(next.length, sel.head) },
       userEvent: 'external',
+      annotations: Transaction.addToHistory.of(false),
     })
     lastExternalAppliedRef.current = next
   }, [])

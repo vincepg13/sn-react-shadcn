@@ -257,6 +257,21 @@ SnFilter props:
 | `initialOpenState` **?** | `open OR closed` | Whether to have the condition builder open on first load. It will default to closed. |
 | `onQueryBuilt` **?** | `(encoded: string)` | The callback called when the user executes the built condition by pressing the Run button |
 
+## `<SnDotwalkChoice />`
+
+Used as part of the condition builder, this component displays a list of ServiceNow fields whilst also allowing you to dotwalk through any of them which are reference fields. It is is a shadcn popover trigger button which displays a command menu when open.
+
+SnDotwalkChoice props:
+| Prop | Type | Description |
+|----------------|--------------------- |------------------------------------------------|
+| `label` **?** | `string` | A field value name which appears as the label of the combo input, otherwise placeholder is shown |
+| `baseTable` | `string` | The table name of the table who's fields you are displaying  |
+| `disabled` **?** | `boolean` | When true the field is read only. |
+| `className` **?** | `string` | Additional class names that will be merged onto popovers trigger button |
+| `fieldsByTable` | `Record<string, SnConditionMap>` | a state holding metadata for all fields, can be fetched from the `api/now/ui/meta` ServiceNow endpoint |
+| `setFieldsByTable` | `SetStateAction` | The setter for the above state |
+| `onChange` | `(updated: Partial<SnConditionRow>, table: string)` | Callback to run on change of the selected value |
+
 ## `<SnScriptEditor />`
 
 A modern script editor built using CodeMirror V6, designed to work seamlessly with ServiceNow script fields. This editor includes formatting, jslint, themeing, plus all the built in codemirror commands such as searching and commenting etc.
