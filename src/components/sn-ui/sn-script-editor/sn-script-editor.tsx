@@ -5,7 +5,7 @@ import { Minimize2 } from 'lucide-react'
 import { SnScriptToolbar } from './sn-script-toolbar'
 import { Options as PrettierOptions } from 'prettier'
 import { ESLintConfigAny } from '@kit/types/es-lint-types'
-import { ReactNode, useEffect, useRef, useState } from 'react'
+import { ReactNode, useEffect, useMemo, useRef, useState } from 'react'
 import { SnCodeMirror, SnCodeMirrorHandle } from './sn-code-mirror'
 import { getAutocompleteData, getTheme } from '@kit/utils/script-editor'
 import { CmThemeValue, SnScriptFieldType, typeToLang } from '@kit/types/script-types'
@@ -88,9 +88,11 @@ export function SnScriptEditor({
   const editorHeight = isMaximized ? 'calc(100vh)' : height
   const wrapperClasses = isMaximized ? 'fixed inset-0 z-[1000] bg-background/95' : cn('w-full', cmContainerClasses)
 
+  const cmTheme = useMemo(() => getTheme(theme), [theme]);
+  
   const esLint = {
     enabled: lang === 'javascript',
-    debounceMs: 800, // slightly higher to improve continuous typing perf
+    debounceMs: 800,
     config: esLintConfig || esLintDefaultConfig,
   }
 
@@ -110,7 +112,7 @@ export function SnScriptEditor({
           language={lang}
           content={String(content ?? '')}
           themeId={theme || 'atom'}
-          theme={getTheme(theme)}
+          theme={cmTheme}
           readonly={readonly}
           height={editorHeight}
           signatureExt={signatureExt}

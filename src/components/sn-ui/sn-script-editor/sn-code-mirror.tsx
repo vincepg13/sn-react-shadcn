@@ -6,7 +6,7 @@ import { tags as t } from '@lezer/highlight'
 import { useEsLint } from './hooks/useEsLint'
 import { lintGutter } from '@codemirror/lint'
 import { indentUnit } from '@codemirror/language'
-import { openSearchPanel } from '@codemirror/search'
+import { openSearchPanel, search, searchKeymap } from '@codemirror/search'
 import { CmThemeValue } from '@kit/types/script-types'
 import { EditorView, keymap } from '@codemirror/view'
 import { Options as PrettierOptions } from 'prettier'
@@ -245,6 +245,8 @@ export const SnCodeMirror = forwardRef<SnCodeMirrorHandle, SnCodeMirrorProps>(fu
     ...extra,
     ...(Array.isArray(autocompleteExt) ? autocompleteExt : [autocompleteExt]),
     ...lintGutterExts,
+    search({ top: false }),
+    keymap.of(searchKeymap),
   ]
   if (lineWrapping !== false) extensions.push(EditorView.lineWrapping)
   if (esLint?.enabled) extensions.push(...(Array.isArray(lintExts) ? lintExts : [lintExts]))

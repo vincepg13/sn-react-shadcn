@@ -1,4 +1,7 @@
 # Change Log
+## [V2.1.3]
+- Fixed CodeMirror editor closing the search overlay when typing into a script field
+
 ## [V2.1.2]
 - Fixed an issue where the CodeMirror editor would reset to blank when doing an "undo" after its mounted
 
