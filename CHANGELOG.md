@@ -1,4 +1,9 @@
 # Change Log
+## [V2.1.4]
+- Fixed nested tags not auto closing in codemirror html fields
+- Made the debounce timer a settable property in SnScriptEditor
+- After formatting a script field, the caret will now stay in the same position
+
 ## [V2.1.3]
 - Fixed CodeMirror editor closing the search overlay when typing into a script field
 

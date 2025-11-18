@@ -26,6 +26,7 @@ interface SnFieldScriptProps {
   cmContainerClasses?: string
   lineWrapping?: boolean
   theme?: CmThemeValue
+  bounceTime?: number
   prettierOptions?: PrettierOptions
   onBlur?: (value: string) => void
   onChange?: (value: string) => void
@@ -46,6 +47,7 @@ export function SnScriptEditor({
   cmContainerClasses,
   theme = 'dark',
   prettierOptions,
+  bounceTime = 250,
   onChange,
   onReady,
   onBlur,
@@ -95,7 +97,7 @@ export function SnScriptEditor({
     debounceMs: 800,
     config: esLintConfig || esLintDefaultConfig,
   }
-
+  
   return (
     <div className={cn('flex flex-col gap-2', parentClasses)}>
       {customToolbar === null && null}
@@ -124,6 +126,7 @@ export function SnScriptEditor({
           onBlur={onBlur}
           onChange={onChange}
           onToggleMax={toggleMax}
+          bounceTime={bounceTime}
         />
         {isMaximized && (
           <button

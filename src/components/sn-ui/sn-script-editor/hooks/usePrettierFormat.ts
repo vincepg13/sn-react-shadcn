@@ -1,4 +1,5 @@
 import { keymap } from '@codemirror/view'
+import { EditorSelection } from '@codemirror/state'   // ← add this
 import { RefObject, useCallback, useMemo } from 'react'
 import { ReactCodeMirrorRef } from '@uiw/react-codemirror'
 import { BuiltInParserName, Plugin, Options as PrettierOptions } from 'prettier'
@@ -22,9 +23,7 @@ function needsSnWrapper(src: string) {
 function addSnPrefix(src: string, start: number) {
   return src.slice(0, start) + 'void ' + src.slice(start)
 }
-
 function stripSnPrefixFromFormatted(formatted: string) {
-  // remove void at the start of file, even if indented, spaced, or newline-separated
   return formatted.replace(/^(\s*)(?:void\s+)(?=(?:async\s+)?function\*?\s*\()/m, '$1')
 }
 
@@ -36,13 +35,14 @@ export function usePrettierFormatter(
   setEditorValue: (val: string) => void,
   onFormat?: (result: { changed: boolean; error?: string }) => void
 ) {
-  const formatNow = useCallback(async (): Promise<{ changed: boolean; error?: string }> => {
+  const formatNow = useCallback(async () => {
     if (isReadOnly) return { changed: false }
 
     const view = editorRef.current?.view
     if (!view) return { changed: false }
 
     const originalCode = view.state.doc.toString()
+    const cursorHead = view.state.selection.main.head
 
     try {
       const prettier = await import('prettier/standalone')
@@ -74,42 +74,62 @@ export function usePrettierFormatter(
         plugins = [babel, estree]
       }
 
+      // Prepare source + caret for Prettier
       let codeForPrettier = originalCode
+      let cursorForPrettier = cursorHead
       let willStripPrefix = false
+      let prefixStart = 0
+      const PREFIX = 'void '
 
-      // Only wrap JS-like files when anonymous top-level function detected
       if (parser === 'babel') {
         const { anonTop, start } = needsSnWrapper(originalCode)
         if (anonTop) {
           codeForPrettier = addSnPrefix(originalCode, start)
           willStripPrefix = true
+          prefixStart = start
+          // if caret is after where we inject, shift the cursor we pass to Prettier
+          if (cursorHead >= start) cursorForPrettier += PREFIX.length
         }
       }
 
-      let formatted = await prettier.format(codeForPrettier, {
-        parser,
-        plugins,
-        ...prettierOpts,
-      })
+      // ✨ Use formatWithCursor to get the new caret position
+      const { formatted: rawFormatted, cursorOffset: newCursorFromPrettier } =
+        await prettier.formatWithCursor(codeForPrettier, {
+          parser,
+          plugins,
+          cursorOffset: cursorForPrettier,
+          ...prettierOpts,
+        })
 
+      // Undo the temporary prefix if we added it, and remap the cursor
+      let formatted = rawFormatted
+      let mappedCursor = newCursorFromPrettier
       if (willStripPrefix) {
-        formatted = stripSnPrefixFromFormatted(formatted)
+        formatted = stripSnPrefixFromFormatted(rawFormatted)
+        if (newCursorFromPrettier > prefixStart) {
+          mappedCursor = Math.max(prefixStart, newCursorFromPrettier - PREFIX.length)
+        }
       }
 
-      // Avoid triggering updates for no-op formatting
+      // No-op?
       if (formatted.trimEnd() === originalCode.trimEnd()) {
         onFormat?.({ changed: false })
         return { changed: false }
       }
 
+      // Replace doc AND restore caret
       view.dispatch({
         changes: { from: 0, to: originalCode.length, insert: formatted },
+        selection: EditorSelection.cursor(mappedCursor),
+        scrollIntoView: true,
+        userEvent: 'format',
       })
+      view.focus()
 
       setEditorValue(formatted)
       onFormat?.({ changed: true })
       return { changed: true }
-    } catch (err: unknown) {
+    } catch (err) {
       const message = err instanceof Error ? err.message : String(err)
       onFormat?.({ changed: false, error: message })
       return { changed: false, error: message }

@@ -36,6 +36,7 @@ interface SnCodeMirrorProps {
   esLint?: Parameters<typeof useEsLint>[0]
   lineWrapping?: boolean
   isMaximized?: boolean
+  bounceTime?: number
   onToggleMax: () => void
   onChange?: (value: string) => void
   onBlur?: (value: string) => void
@@ -84,6 +85,7 @@ export const SnCodeMirror = forwardRef<SnCodeMirrorHandle, SnCodeMirrorProps>(fu
     esLint,
     lineWrapping = true,
     isMaximized,
+    bounceTime = 250,
     onBlur,
     onChange,
     onFormat,
@@ -92,7 +94,7 @@ export const SnCodeMirror = forwardRef<SnCodeMirrorHandle, SnCodeMirrorProps>(fu
   ref
 ) {
   const inputLang = language || 'javascript'
-  const lang = getLanguageSupport(inputLang)
+  const lang = useMemo(() => getLanguageSupport(inputLang), [inputLang])
 
   const editorRef = useRef<ReactCodeMirrorRef | null>(null)
   const lastExternalAppliedRef = useRef<string | undefined>(undefined)
@@ -163,7 +165,13 @@ export const SnCodeMirror = forwardRef<SnCodeMirrorHandle, SnCodeMirrorProps>(fu
       '.cm-gutters': { minWidth: '3.5ch' },
     })
 
-    return [lintGutter(), fixedWidth]
+    const hideLintFixButton = EditorView.theme({
+      '.cm-tooltip-lint .cm-lintAction, .cm-tooltip-lint .cm-diagnosticAction': {
+        display: 'none !important',
+      },
+    })
+
+    return [lintGutter(), fixedWidth, hideLintFixButton]
   }, [esLint?.enabled])
 
   // Prettier
@@ -252,13 +260,14 @@ export const SnCodeMirror = forwardRef<SnCodeMirrorHandle, SnCodeMirrorProps>(fu
   if (esLint?.enabled) extensions.push(...(Array.isArray(lintExts) ? lintExts : [lintExts]))
 
   if (inputLang === 'css') extensions.push(color)
+  if (inputLang === 'html') extensions.push(Prec.highest(forceCloseSameTag))
 
   extensions.push(syntaxHighlighting(defaultHighlightStyle, { fallback: true }))
 
   // Debounce only the parent write; let CM keep its own buffer
   const sendChangeDebounced = useDebouncedCallback((val: string) => {
     onChange?.(val)
-  }, 300)
+  }, bounceTime)
   const handleChange = (val: string) => sendChangeDebounced(val)
 
   useImperativeHandle(
@@ -320,3 +329,22 @@ function useDebouncedCallback<T extends (...args: any[]) => void>(callback: T, d
   )
   return fn as T
 }
+
+const forceCloseSameTag = EditorView.inputHandler.of((view, _from, to, text) => {
+  if (text !== '>') return false
+  const pos = view.state.selection.main.head
+  const before = view.state.doc.sliceString(Math.max(0, pos - 200), pos)
+
+  // Are we at the end of a start tag like <div ...>
+  const m = before.match(/<([a-zA-Z][\w:-]*)[^<>]*$/)
+  if (!m) return false
+  const tag = m[1]
+
+  // Always insert inner closer; place caret between > and </tag>
+  view.dispatch({
+    changes: { from: pos, to, insert: `></${tag}>` },
+    selection: { anchor: pos + 1 },
+    userEvent: 'input',
+  })
+  return true
+})
