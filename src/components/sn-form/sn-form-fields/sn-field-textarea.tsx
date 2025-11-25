@@ -20,7 +20,7 @@ export function SnFieldTextarea({ rhfField, onChange, onFocus }: SnFieldTextarea
       onBlur={e => onChange(e.target.value)}
       onFocus={onFocus}
       disabled={readonly}
-      className="w-full"
+      className="w-full max-h-[450px]"
     />
   )
 }
