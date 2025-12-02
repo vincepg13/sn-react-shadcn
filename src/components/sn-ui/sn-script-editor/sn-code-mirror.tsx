@@ -1,26 +1,28 @@
 import { css } from '@codemirror/lang-css'
 import { xml } from '@codemirror/lang-xml'
 import { html } from '@codemirror/lang-html'
-import { json } from '@codemirror/lang-json'
 import { tags as t } from '@lezer/highlight'
 import { useEsLint } from './hooks/useEsLint'
-import { lintGutter } from '@codemirror/lint'
+import { useHtmlLint } from './hooks/useHtmlLint'
+import { linter, lintGutter } from '@codemirror/lint'
 import { indentUnit } from '@codemirror/language'
-import { openSearchPanel, search, searchKeymap } from '@codemirror/search'
 import { CmThemeValue } from '@kit/types/script-types'
 import { EditorView, keymap } from '@codemirror/view'
 import { Options as PrettierOptions } from 'prettier'
-import { javascript } from '@codemirror/lang-javascript'
 import { color } from '@uiw/codemirror-extensions-color'
+import { javascript } from '@codemirror/lang-javascript'
 import { EditorState, Transaction } from '@codemirror/state'
-import { boolColorByTheme, buildAutocomplete } from '@kit/utils/script-editor'
+import { json, jsonParseLinter } from '@codemirror/lang-json'
 import { usePrettierFormatter } from './hooks/usePrettierFormat'
+import { openSearchPanel, search, searchKeymap } from '@codemirror/search'
 import { indentationMarkers } from '@replit/codemirror-indentation-markers'
 import { toggleBlockComment, toggleLineComment } from '@codemirror/commands'
+import { boolColorByTheme, buildAutocomplete } from '@kit/utils/script-editor'
 import { startCompletion, type CompletionSource } from '@codemirror/autocomplete'
 import { HighlightStyle, syntaxHighlighting, defaultHighlightStyle } from '@codemirror/language'
 import { useEffect, useRef, forwardRef, useImperativeHandle, useMemo, useCallback } from 'react'
 import CodeMirror, { Extension, Prec, ReactCodeMirrorProps, ReactCodeMirrorRef } from '@uiw/react-codemirror'
+import { forceCloseSameTag } from '@kit/utils/html-parser'
 
 interface SnCodeMirrorProps {
   language?: 'javascript' | 'html' | 'css' | 'json' | 'xml'
@@ -155,10 +157,14 @@ export const SnCodeMirror = forwardRef<SnCodeMirrorHandle, SnCodeMirrorProps>(fu
     replaceDocSafely(String(content))
   }, [content, replaceDocSafely])
 
-  // ESLint
-  const { extensions: lintExts } = useEsLint(esLint)
+  // Lint Guttering
+  const lintGutterNeeded = useMemo(
+    () => esLint?.enabled || language == 'json' || language == 'html',
+    [esLint?.enabled, language]
+  )
+
   const lintGutterExts = useMemo(() => {
-    if (!esLint?.enabled) return []
+    if (!lintGutterNeeded) return []
 
     const fixedWidth = EditorView.theme({
       '.cm-gutter-lint': { width: '1.25rem' },
@@ -172,7 +178,16 @@ export const SnCodeMirror = forwardRef<SnCodeMirrorHandle, SnCodeMirrorProps>(fu
     })
 
     return [lintGutter(), fixedWidth, hideLintFixButton]
-  }, [esLint?.enabled])
+  }, [lintGutterNeeded])
+
+  // HTML Lint
+  const { extensions: htmlLintExts } = useHtmlLint({
+    enabled: inputLang === 'html',
+    debounceMs: 250,
+  })
+
+  // ESLint
+  const { extensions: lintExts } = useEsLint(esLint)
 
   // Prettier
   const { formatNow, formatKeymap } = usePrettierFormatter(
@@ -257,10 +272,21 @@ export const SnCodeMirror = forwardRef<SnCodeMirrorHandle, SnCodeMirrorProps>(fu
     keymap.of(searchKeymap),
   ]
   if (lineWrapping !== false) extensions.push(EditorView.lineWrapping)
-  if (esLint?.enabled) extensions.push(...(Array.isArray(lintExts) ? lintExts : [lintExts]))
+  if (lintGutterNeeded) extensions.push(...(Array.isArray(lintExts) ? lintExts : [lintExts]))
+
+  if (inputLang === 'json') {
+    extensions.push(
+      linter(jsonParseLinter(), {
+        delay: Math.max(0, esLint?.debounceMs ?? 250),
+      })
+    )
+  }
 
   if (inputLang === 'css') extensions.push(color)
-  if (inputLang === 'html') extensions.push(Prec.highest(forceCloseSameTag))
+  if (inputLang === 'html') {
+    extensions.push(...htmlLintExts)
+    extensions.push(Prec.highest(forceCloseSameTag))
+  }
 
   extensions.push(syntaxHighlighting(defaultHighlightStyle, { fallback: true }))
 
@@ -329,22 +355,3 @@ function useDebouncedCallback<T extends (...args: any[]) => void>(callback: T, d
   )
   return fn as T
 }
-
-const forceCloseSameTag = EditorView.inputHandler.of((view, _from, to, text) => {
-  if (text !== '>') return false
-  const pos = view.state.selection.main.head
-  const before = view.state.doc.sliceString(Math.max(0, pos - 200), pos)
-
-  // Are we at the end of a start tag like <div ...>
-  const m = before.match(/<([a-zA-Z][\w:-]*)[^<>]*$/)
-  if (!m) return false
-  const tag = m[1]
-
-  // Always insert inner closer; place caret between > and </tag>
-  view.dispatch({
-    changes: { from: pos, to, insert: `></${tag}>` },
-    selection: { anchor: pos + 1 },
-    userEvent: 'input',
-  })
-  return true
-})

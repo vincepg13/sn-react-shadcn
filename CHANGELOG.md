@@ -1,6 +1,7 @@
 # Change Log
 ## [V2.1.5]
-- Limited the max height over text area in SnForm.
+- Added linting for html and json fields in codemirror.
+- Limited the max height of the text area in SnForm.
 - Fixed UI policies with reverse is false triggering when they shouldnt.
 - Removed instances of Toaster throughout package, this should be instantiated in the hosting application instead.
 

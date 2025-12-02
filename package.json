@@ -143,6 +143,8 @@
     "eslint-linter-browserify": "8.57.0",
     "globals": "^16.0.0",
     "html-react-parser": "^5.2.6",
+    "html-validate": "^10.4.0",
+    "htmlhint": "^1.8.0",
     "lodash.isequal": "^4.5.0",
     "lowlight": "^3.3.0",
     "lucide-react": "^0.488.0",
