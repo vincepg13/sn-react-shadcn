@@ -4,6 +4,7 @@
 - Limited the max height of the text area in SnForm.
 - Fixed UI policies with reverse is false triggering when they shouldnt.
 - Removed instances of Toaster throughout package, this should be instantiated in the hosting application instead.
+- Added the ability to pass through custom tern definitions to SnScriptEditor.
 
 ## [V2.1.4]
 - Fixed nested tags not auto closing in codemirror html fields

@@ -27,6 +27,7 @@ interface SnFieldScriptProps {
   lineWrapping?: boolean
   theme?: CmThemeValue
   bounceTime?: number
+  extraTernDefs?: unknown[]
   prettierOptions?: PrettierOptions
   onBlur?: (value: string) => void
   onChange?: (value: string) => void
@@ -47,6 +48,7 @@ export function SnScriptEditor({
   cmContainerClasses,
   theme = 'dark',
   prettierOptions,
+  extraTernDefs,
   bounceTime = 250,
   onChange,
   onReady,
@@ -56,6 +58,8 @@ export function SnScriptEditor({
   const { isMaximized, toggleMax } = useFullScreen()
   const editorRef = useRef<SnCodeMirrorHandle | null>(null)
   const [snDefs, setSnDefs] = useState<unknown | null>(null)
+
+  const stableTernDefs = useMemo(() => extraTernDefs ?? undefined, [extraTernDefs])
 
   useEffect(() => {
     if (editorRef.current) onReady?.(editorRef.current)
@@ -83,6 +87,7 @@ export function SnScriptEditor({
 
   const { completionSources, signatureExt } = useInlineTern({
     serviceNowDefs: snDefs,
+    extraDefs: stableTernDefs,
     fileName: `${fieldName}.js`,
   })
 
@@ -90,14 +95,14 @@ export function SnScriptEditor({
   const editorHeight = isMaximized ? 'calc(100vh)' : height
   const wrapperClasses = isMaximized ? 'fixed inset-0 z-[1000] bg-background/95' : cn('w-full', cmContainerClasses)
 
-  const cmTheme = useMemo(() => getTheme(theme), [theme]);
-  
+  const cmTheme = useMemo(() => getTheme(theme), [theme])
+
   const esLint = {
     enabled: lang === 'javascript',
     debounceMs: 800,
     config: esLintConfig || esLintDefaultConfig,
   }
-  
+
   return (
     <div className={cn('flex flex-col gap-2', parentClasses)}>
       {customToolbar === null && null}

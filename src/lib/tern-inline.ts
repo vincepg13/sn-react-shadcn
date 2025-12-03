@@ -10,6 +10,7 @@ import { EditorState, StateEffect, StateField } from '@codemirror/state'
 import { EditorView, showTooltip, type Tooltip } from '@codemirror/view'
 
 /* ----------------------------- helpers ---------------------------------- */
+const IDENT_RE = /[A-Za-z0-9_$]+/
 
 function toLineCh(doc: any, pos: number) {
   const line = doc.lineAt(pos)
@@ -121,7 +122,16 @@ function ternSignatureHelpExt(server: any, fileName: string) {
       let resp: any
       await new Promise<void>(resolve => {
         server.request(
-          { query: { type: 'type', file: fileName, end: ternEnd, lineCharPositions: true, preferFunction: true } },
+          {
+            query: {
+              type: 'type',
+              file: fileName,
+              end: ternEnd,
+              lineCharPositions: true,
+              preferFunction: true,
+              guess: false,
+            },
+          },
           (_err: any, r: any) => {
             resp = r
             resolve()
@@ -155,20 +165,32 @@ function ternSignatureHelpExt(server: any, fileName: string) {
 
 export function createInlineTern(
   serviceNowDefs: any,
+  extraDefs: any[] = [],
   fileName = 'file.js'
 ): {
   sources: CompletionSource[]
   signatureExt: any[]
 } {
+  const allDefs = [ecma, ...extraDefs, serviceNowDefs].filter(Boolean)
+
   const server = new (tern as any).Server({
     async: false,
-    defs: [ecma, serviceNowDefs].filter(Boolean),
+    defs: allDefs,
     plugins: { doc_comment: true },
   })
 
-  const snGlobals = topLevelNamesFromDefs(serviceNowDefs)
+  const snGlobals = new Set<string>()
+  for (const d of allDefs) {
+    if (d === ecma) continue // optional, if you don’t want built-ins in your globalsSource
+    for (const name of topLevelNamesFromDefs(d)) {
+      snGlobals.add(name)
+    }
+  }
 
-  function runTernCompletions(ctx: any): any[] {
+  function runTernCompletions(
+    ctx: any,
+    { filter = true, guess = true }: { filter?: boolean; guess?: boolean } = {}
+  ): any[] {
     const text = ctx.state.doc.toString()
     try {
       server.delFile(fileName)
@@ -190,8 +212,8 @@ export function createInlineTern(
           docs: false,
           includeKeywords: false,
           caseInsensitive: true,
-          filter: true,
-          guess: true,
+          filter,
+          guess,
         },
       },
       (_err: any, resp: any) => {
@@ -201,15 +223,23 @@ export function createInlineTern(
     return result?.completions || []
   }
 
-  // 1) Only AFTER DOT: members (methods/properties). Vars are excluded (CM handles them).
+  // 1) Members (methods/properties) after a dot.
+  //    - Ask Tern for *all* members of the base expression (no prefix filter, no guess).
+  //    - Then manually filter by the word before the cursor (case-insensitive).
   const memberSource: CompletionSource = (ctx: any) => {
-    const word = ctx.matchBefore(/\w+/)
+    const word = ctx.matchBefore(IDENT_RE)
     const from = word ? word.from : ctx.pos
+    const prefix = (word?.text ?? '').toLowerCase()
+
     const beforeIdx = (word ? from : ctx.pos) - 1
     const memberCtx = beforeIdx >= 0 && ctx.state.doc.sliceString(beforeIdx, beforeIdx + 1) === '.'
     if (!memberCtx) return null
 
-    const opts = runTernCompletions(ctx).map((c: any) => {
+    const raw = runTernCompletions(ctx, { filter: false, guess: false }).filter((c: any) => !c.guess)
+
+    const filtered = prefix ? raw.filter((c: any) => c.name.toLowerCase().startsWith(prefix)) : raw
+
+    const options = filtered.map((c: any) => {
       const isFn = typeof c.type === 'string' && c.type.startsWith('fn(')
       const isProp = !!c.isProperty
       return {
@@ -219,14 +249,16 @@ export function createInlineTern(
       }
     })
 
-    if (!opts.length) return null
-    return { from, to: ctx.pos, options: opts, filter: false }
+    if (!options.length) return null
+
+    // We've already filtered by prefix; tell CM not to apply extra filtering.
+    return { from, to: ctx.pos, options, filter: false }
   }
 
   // 2) TOP-LEVEL constructors/globals from SN defs only (no locals → no dupes)
   const globalsSource: CompletionSource = (ctx: any) => {
-    const word = ctx.matchBefore(/\w+/)
-    if (!word && !ctx.explicit) return null // don’t pop everywhere
+    const word = ctx.matchBefore(IDENT_RE)
+    if (!word && !ctx.explicit) return null
     const from = word ? word.from : ctx.pos
 
     // Not in member context
@@ -234,9 +266,8 @@ export function createInlineTern(
     const memberCtx = beforeIdx >= 0 && ctx.state.doc.sliceString(beforeIdx, beforeIdx + 1) === '.'
     if (memberCtx) return null
 
-    // Ask Tern and keep only symbols that belong to SN top-level defs
-    const opts = runTernCompletions(ctx)
-      .filter((c: any) => snGlobals.has(c.name)) // ← key to avoid locals/ECMA vars
+    const opts = runTernCompletions(ctx, { filter: true, guess: true })
+      .filter((c: any) => snGlobals.has(c.name))
       .map((c: any) => {
         const isFn = typeof c.type === 'string' && c.type.startsWith('fn(')
         return {
@@ -254,7 +285,7 @@ export function createInlineTern(
   return { sources: [memberSource, globalsSource], signatureExt }
 }
 
-/** For backward-compat if you still need just one source */
-export function createInlineTernCompletionSource(serviceNowDefs: any, fileName = 'file.js') {
-  return createInlineTern(serviceNowDefs, fileName).sources[0]
+/** For backward-compat if need just one source */
+export function createInlineTernCompletionSource(serviceNowDefs: any, extraDefs: any[] = [], fileName = 'file.js') {
+  return createInlineTern(serviceNowDefs, extraDefs, fileName).sources[0]
 }
