@@ -4,13 +4,14 @@ import { html } from '@codemirror/lang-html'
 import { tags as t } from '@lezer/highlight'
 import { useEsLint } from './hooks/useEsLint'
 import { useHtmlLint } from './hooks/useHtmlLint'
-import { linter, lintGutter } from '@codemirror/lint'
 import { indentUnit } from '@codemirror/language'
-import { CmThemeValue } from '@kit/types/script-types'
 import { EditorView, keymap } from '@codemirror/view'
 import { Options as PrettierOptions } from 'prettier'
+import { linter, lintGutter } from '@codemirror/lint'
+import { CmThemeValue } from '@kit/types/script-types'
 import { color } from '@uiw/codemirror-extensions-color'
 import { javascript } from '@codemirror/lang-javascript'
+import { forceCloseSameTag } from '@kit/utils/html-parser'
 import { EditorState, Transaction } from '@codemirror/state'
 import { json, jsonParseLinter } from '@codemirror/lang-json'
 import { usePrettierFormatter } from './hooks/usePrettierFormat'
@@ -18,11 +19,10 @@ import { openSearchPanel, search, searchKeymap } from '@codemirror/search'
 import { indentationMarkers } from '@replit/codemirror-indentation-markers'
 import { toggleBlockComment, toggleLineComment } from '@codemirror/commands'
 import { boolColorByTheme, buildAutocomplete } from '@kit/utils/script-editor'
-import { startCompletion, type CompletionSource } from '@codemirror/autocomplete'
 import { HighlightStyle, syntaxHighlighting, defaultHighlightStyle } from '@codemirror/language'
 import { useEffect, useRef, forwardRef, useImperativeHandle, useMemo, useCallback } from 'react'
 import CodeMirror, { Extension, Prec, ReactCodeMirrorProps, ReactCodeMirrorRef } from '@uiw/react-codemirror'
-import { forceCloseSameTag } from '@kit/utils/html-parser'
+import { startCompletion, acceptCompletion, completionKeymap, type CompletionSource } from '@codemirror/autocomplete'
 
 interface SnCodeMirrorProps {
   language?: 'javascript' | 'html' | 'css' | 'json' | 'xml'
@@ -256,6 +256,11 @@ export const SnCodeMirror = forwardRef<SnCodeMirrorHandle, SnCodeMirrorProps>(fu
     [isMaximized, onToggleMax]
   )
 
+  const completionKeys = useMemo(
+    () => Prec.highest(keymap.of([{ key: 'Tab', run: acceptCompletion }, ...completionKeymap])),
+    []
+  )
+
   const extensions: Extension[] = [
     lang,
     formatKeymap,
@@ -270,6 +275,7 @@ export const SnCodeMirror = forwardRef<SnCodeMirrorHandle, SnCodeMirrorProps>(fu
     ...lintGutterExts,
     search({ top: false }),
     keymap.of(searchKeymap),
+    completionKeys,
   ]
   if (lineWrapping !== false) extensions.push(EditorView.lineWrapping)
   if (lintGutterNeeded) extensions.push(...(Array.isArray(lintExts) ? lintExts : [lintExts]))
