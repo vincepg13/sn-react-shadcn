@@ -20,3 +20,9 @@ export interface SnCodeMirrorHandle {
   toggleComment: (block?: boolean) => void
   format: () => Promise<{ changed: boolean; error?: string }>
 }
+
+export type TernMemberInfo = { name: string; type: string | undefined }
+
+export type InlineTernConfig = {
+  injectorToDefKey?: Record<string, string>
+}

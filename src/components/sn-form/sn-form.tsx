@@ -1,5 +1,4 @@
 import { SnField } from './sn-form-fields/sn-field'
-import { Toaster } from '../../components/ui/sonner'
 import { useUiActions } from './hooks/useUiActions'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useUiPolicies } from './hooks/useUiPolicies'
@@ -186,7 +185,6 @@ export function SnForm({
         <SnUiPolicyContext.Provider value={{ formConfig, runUiPolicies, runUiPoliciesForField }}>
           <SnUiActionContext.Provider value={{ handleUiAction, uiActions, loadingActionId }}>
             <FormProvider {...form}>
-              <Toaster position="top-center" expand={true} richColors />
               <div className="w-full">
                 <form className="w-full">
                   <SnFormLayout

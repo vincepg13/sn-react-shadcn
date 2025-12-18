@@ -8,10 +8,10 @@ import { ESLintConfigAny } from '@kit/types/es-lint-types'
 import { ReactNode, useEffect, useMemo, useRef, useState } from 'react'
 import { SnCodeMirror, SnCodeMirrorHandle } from './sn-code-mirror'
 import { getAutocompleteData, getTheme } from '@kit/utils/script-editor'
-import { CmThemeValue, SnScriptFieldType, typeToLang } from '@kit/types/script-types'
 import { useInlineTern } from '@kit/components/sn-ui/sn-script-editor/hooks/useTernInline'
 import { useFullScreen } from '@kit/components/sn-ui/sn-script-editor/hooks/useFullScreen'
 import { esLintDefaultConfig } from '@kit/components/sn-ui/sn-script-editor/hooks/useEsLint'
+import { CmThemeValue, InlineTernConfig, SnScriptFieldType, typeToLang } from '@kit/types/script-types'
 
 interface SnFieldScriptProps {
   snType: SnScriptFieldType
@@ -27,6 +27,8 @@ interface SnFieldScriptProps {
   lineWrapping?: boolean
   theme?: CmThemeValue
   bounceTime?: number
+  extraTernDefs?: unknown[]
+  ternConfig?: InlineTernConfig
   prettierOptions?: PrettierOptions
   onBlur?: (value: string) => void
   onChange?: (value: string) => void
@@ -47,6 +49,8 @@ export function SnScriptEditor({
   cmContainerClasses,
   theme = 'dark',
   prettierOptions,
+  extraTernDefs,
+  ternConfig,
   bounceTime = 250,
   onChange,
   onReady,
@@ -56,6 +60,9 @@ export function SnScriptEditor({
   const { isMaximized, toggleMax } = useFullScreen()
   const editorRef = useRef<SnCodeMirrorHandle | null>(null)
   const [snDefs, setSnDefs] = useState<unknown | null>(null)
+
+  const stableTernConfig = useMemo(() => ternConfig ?? undefined, [ternConfig])
+  const stableTernDefs = useMemo(() => extraTernDefs ?? undefined, [extraTernDefs])
 
   useEffect(() => {
     if (editorRef.current) onReady?.(editorRef.current)
@@ -83,6 +90,8 @@ export function SnScriptEditor({
 
   const { completionSources, signatureExt } = useInlineTern({
     serviceNowDefs: snDefs,
+    config: stableTernConfig,
+    extraDefs: stableTernDefs,
     fileName: `${fieldName}.js`,
   })
 
@@ -90,14 +99,14 @@ export function SnScriptEditor({
   const editorHeight = isMaximized ? 'calc(100vh)' : height
   const wrapperClasses = isMaximized ? 'fixed inset-0 z-[1000] bg-background/95' : cn('w-full', cmContainerClasses)
 
-  const cmTheme = useMemo(() => getTheme(theme), [theme]);
-  
+  const cmTheme = useMemo(() => getTheme(theme), [theme])
+
   const esLint = {
     enabled: lang === 'javascript',
     debounceMs: 800,
     config: esLintConfig || esLintDefaultConfig,
   }
-  
+
   return (
     <div className={cn('flex flex-col gap-2', parentClasses)}>
       {customToolbar === null && null}

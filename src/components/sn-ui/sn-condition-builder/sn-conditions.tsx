@@ -1,4 +1,3 @@
-import { Toaster } from 'sonner'
 import { Button } from '@kit/components/ui/button'
 import { ConditionGroup } from './sn-condition-group'
 import { useFieldCache } from './hooks/useFieldCache'
@@ -85,8 +84,6 @@ export const SnConditions = forwardRef<SnConditionHandle, ConditionProps>(
       <div>
         <SnConditionsContext.Provider value={ctxValue}>
           <TooltipProvider>
-            <Toaster position="top-center" expand={true} richColors />
-
             <div className="sn-conditions flex flex-col gap-4">
               {model.map((group, i) => (
                 <div key={group.id}>

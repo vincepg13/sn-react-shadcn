@@ -65,6 +65,7 @@ export function evaluateAndApplyPolicy(
 ) {
   const formData = form.getValues()
   const result = evaluatePolicy(policy, formData, formFields, formConfig)
+  if (!policy.reverse && !result) return;
 
   if (policy.is_run_scripts) {
     const _run = result ? executePolicyScript(policy.script_true) : executePolicyScript(policy.script_false)
