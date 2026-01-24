@@ -3,7 +3,6 @@ import { xml } from '@codemirror/lang-xml'
 import { html } from '@codemirror/lang-html'
 import { tags as t } from '@lezer/highlight'
 import { useEsLint } from './hooks/useEsLint'
-import { useHtmlLint } from './hooks/useHtmlLint'
 import { indentUnit } from '@codemirror/language'
 import { EditorView, keymap } from '@codemirror/view'
 import { Options as PrettierOptions } from 'prettier'
@@ -35,6 +34,7 @@ interface SnCodeMirrorProps {
   signatureExt?: Extension[]
   autocompleteType?: 'default' | 'override'
   completionSources?: CompletionSource[]
+  htmlLintExts?: Extension[]
   esLint?: Parameters<typeof useEsLint>[0]
   lineWrapping?: boolean
   isMaximized?: boolean
@@ -88,6 +88,7 @@ export const SnCodeMirror = forwardRef<SnCodeMirrorHandle, SnCodeMirrorProps>(fu
     lineWrapping = true,
     isMaximized,
     bounceTime = 250,
+    htmlLintExts = [],
     onBlur,
     onChange,
     onFormat,
@@ -179,12 +180,6 @@ export const SnCodeMirror = forwardRef<SnCodeMirrorHandle, SnCodeMirrorProps>(fu
 
     return [lintGutter(), fixedWidth, hideLintFixButton]
   }, [lintGutterNeeded])
-
-  // HTML Lint
-  const { extensions: htmlLintExts } = useHtmlLint({
-    enabled: inputLang === 'html',
-    debounceMs: 250,
-  })
 
   // ESLint
   const { extensions: lintExts } = useEsLint(esLint)

@@ -1,4 +1,9 @@
 # Change Log
+## [V2.2.0]
+- hooks exports
+- ui exports
+- table header
+
 ## [V2.1.5]
 - Added linting for html and json fields in codemirror.
 - Limited the max height of the text area in SnForm.

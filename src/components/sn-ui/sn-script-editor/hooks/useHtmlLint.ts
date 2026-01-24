@@ -6,6 +6,7 @@ import { HtmlValidate, type Message } from 'html-validate'
 
 type UseHtmlLintOptions = {
   enabled: boolean
+  rules?: Record<string, any>
   config?: Record<string, any>
   debounceMs?: number | null
 }
@@ -15,20 +16,20 @@ export function useHtmlLint(opts: UseHtmlLintOptions = { enabled: false }): {
   ready: boolean
   error: string | null
 } {
-  const { enabled, config, debounceMs = 300 } = opts
+  const { enabled, config, rules, debounceMs = 300 } = opts
 
   const validator = useMemo(() => {
     if (!enabled) return null
 
     const baseConfig: Record<string, any> = config ?? {
       extends: ['html-validate:recommended'],
-      rules: {
+      rules: rules ?? {
         'void-style': 'off',
       }
     }
 
     return new HtmlValidate(baseConfig)
-  }, [enabled, config])
+  }, [enabled, config, rules])
 
   const extensions = useMemo<Extension[]>(() => {
     if (!enabled || !validator) return []

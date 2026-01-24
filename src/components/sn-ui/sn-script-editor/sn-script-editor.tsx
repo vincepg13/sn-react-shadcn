@@ -2,6 +2,7 @@
 import { cn } from '@kit/lib/utils'
 import { isAxiosError } from 'axios'
 import { Minimize2 } from 'lucide-react'
+import { useHtmlLint } from './hooks/useHtmlLint'
 import { SnScriptToolbar } from './sn-script-toolbar'
 import { Options as PrettierOptions } from 'prettier'
 import { ESLintConfigAny } from '@kit/types/es-lint-types'
@@ -21,6 +22,7 @@ interface SnFieldScriptProps {
   content?: string
   readonly?: boolean
   esLintConfig?: ESLintConfigAny
+  htmlLintRules?: Record<string, unknown>
   customToolbar?: ReactNode | null
   parentClasses?: string
   cmContainerClasses?: string
@@ -42,6 +44,7 @@ export function SnScriptEditor({
   height,
   readonly,
   esLintConfig,
+  htmlLintRules,
   content,
   lineWrapping,
   customToolbar,
@@ -107,6 +110,13 @@ export function SnScriptEditor({
     config: esLintConfig || esLintDefaultConfig,
   }
 
+  // HTML Lint
+  const { extensions: htmlLintExts } = useHtmlLint({
+    enabled: lang === 'html',
+    rules: htmlLintRules,
+    debounceMs: 250,
+  })
+
   return (
     <div className={cn('flex flex-col gap-2', parentClasses)}>
       {customToolbar === null && null}
@@ -130,6 +140,7 @@ export function SnScriptEditor({
           completionSources={completionSources}
           lineWrapping={lineWrapping}
           esLint={esLint}
+          htmlLintExts={htmlLintExts}
           isMaximized={isMaximized}
           prettierOptions={prettierOptions}
           onBlur={onBlur}
