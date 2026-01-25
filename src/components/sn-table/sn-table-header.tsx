@@ -1,7 +1,7 @@
 import { Input } from '../ui/input';
 import { CircleX, ListFilter} from 'lucide-react';
 import { Fragment, useEffect, useRef, useState, ReactNode } from 'react';
-import { SnLoadingSpinner } from '../sn-ui/sn-script-editor/sn-loader';
+import { SnLoadingSpinner } from '../sn-ui/sn-loader';
 import { SnSimpleTooltip } from '../sn-ui/sn-tooltip';
 import { Button } from '../ui/button';
 import { SnConditionBuilder } from '../sn-ui/sn-condition-builder/sn-condition-builder';
