@@ -1,10 +1,10 @@
 import { ReactNode } from 'react'
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip'
 
-export function SnSimpleTooltip({ trigger, content }: { trigger: ReactNode; content: string }) {
+export function SnSimpleTooltip({ content, children }: { content: string; children: ReactNode }) {
   return (
     <Tooltip>
-      <TooltipTrigger asChild>{trigger}</TooltipTrigger>
+      <TooltipTrigger asChild>{children}</TooltipTrigger>
       <TooltipContent>
         <p>{content}</p>
       </TooltipContent>

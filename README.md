@@ -21,12 +21,14 @@ To keep performance optimal in the hosting application, only import what is bein
 
 - **`sn-shadcn-kit`** – Root exports for core setup utilities like `setAxiosInstance` / `getAxiosInstance`.
 - **`sn-shadcn-kit/amb`** – Functionality for ServiceNow’s _Asynchronous Message Bus_ (e.g., `useRecordWatch`).
+- **`sn-shadcn-kit/hooks`** – Utility React hooks (e.g., debouncing, shortcuts, responsive helpers).
 - **`sn-shadcn-kit/form`** – Form components (relies on heavier deps like CodeMirror and TipTap). ⚡ Consider lazy-loading these in your app.
 - **`sn-shadcn-kit/table`** – Components and utilities for working with ServiceNow tables.
 - **`sn-shadcn-kit/user`** – User-related components (avatars, user cards, group cards).
 - **`sn-shadcn-kit/skeleton`** – Placeholder skeletons and loaders.
 - **`sn-shadcn-kit/script`** – Script editor logic, including linting, formatting, and editor integrations.
 - **`sn-shadcn-kit/standalone`** – Lightweight components without heavy dependencies (e.g., attachments, record watchers).
+- **`sn-shadcn-kit/ui`** – Small UI/UX helpers and utility components.
 
 ---
 
@@ -121,6 +123,26 @@ This has more or less the same properties as SnDataTable with the exception that
 - Display the last used view of the logged in user with any customisations to it
 - If they have no list view pref for that table, it will display the default view
 - You can pass in the view name of a specific view via the _view_ property
+
+### `<SnTableHeader />`
+
+A simple table header component with a debounced search input and an optional advanced filter panel, designed to sit above one or the table components exported by this package and bring the whole UI together.
+
+SnTableHeader props:
+| Prop | Type | Description |
+|----------------|--------------------- |------------------------------------------------|
+| `title` | `string` | Header title text |
+| `tagline` **?** | `string` | Optional subtitle text under the title |
+| `table` | `string` | ServiceNow table name for the condition builder |
+| `displayField` | `string` | Field name used for the quick search input |
+| `query` **?** | `string` | Current encoded query string |
+| `uuid` **?** | `string` | Optional key to reset the condition builder instance |
+| `isFetching` **?** | `boolean` | Shows a loading spinner when true |
+| `actions` **?** | `ReactNode[]` | Additional action elements rendered on the right |
+| `onQueryChange` | `(nextQuery: string) => void` | Callback when the query changes |
+| `onResetQuery` | `() => void` | Callback when the query should be cleared |
+
+![SnTableHeader Demo](/demo/SnTableHeader.png)
 
 ### `<DataTable />`
 
@@ -291,6 +313,41 @@ SnScriptEditor props:
 ![SnActivity](/demo/SNActivityDemo.png)
 ![SnFormAttachments](/demo/SNDemoFormAttachments.png)
 
+## 🧰 UI/UX Helpers
+
+These components (imported from `sn-shadcn-kit/ui`) are small helpers that supplement the UI/UX of your application.
+
+### `<SnGeneralConfirm />`
+
+A general-purpose confirmation dialog that opens when a message is provided and fires callbacks on continue/cancel.
+
+SnGeneralConfirm props:
+| Prop | Type | Description |
+|----------------|--------------------- |------------------------------------------------|
+| `title` **?** | `string` | Optional dialog title |
+| `msg` **?** | `string` | Message content that triggers the dialog when set |
+| `continueCb` **?** | `() => void` | Callback when the user confirms |
+| `cancelCb` **?** | `() => void` | Callback when the user cancels |
+
+### `<SnSimpleTooltip />`
+
+A simple tooltip wrapper that displays a short string over a trigger element.
+
+SnSimpleTooltip props:
+| Prop | Type | Description |
+|----------------|--------------------- |------------------------------------------------|
+| `content` | `string` | Tooltip text to display |
+| `children` | `ReactNode` | The trigger element |
+
+### `<SnLoadingSpinner />`
+
+A small loading spinner icon for inline loading states.
+
+SnLoadingSpinner props:
+| Prop | Type | Description |
+|----------------|--------------------- |------------------------------------------------|
+| `className` **?** | `string` | Additional class names to override size/color |
+
 ## 👥 Interacting With User Data
 
 ### `<SnAvatar />`
@@ -383,6 +440,88 @@ export function ServicenowAmb() {
   }
 
   useRecordWatch('problem', 'active=true', watcherCallback)
+}
+```
+
+### Utility hooks (`sn-shadcn-kit/hooks`)
+
+High-level overviews of the hooks exported from `src/hooks`:
+
+- **`useAbortableController`**: Manages a single `AbortController` with `renew` and `abort` helpers; use it for fetches or async work you want to cancel on unmount or before a new run.
+
+```ts
+import { useAbortableController } from 'sn-shadcn-kit/hooks'
+
+function Users() {
+  const { getSignal } = useAbortableController()
+
+  const load = async () => {
+    const res = await fetch('/api/users', { signal: getSignal() })
+    return res.json()
+  }
+
+  // call load() from an effect or event handler
+}
+```
+
+- **`useCancelableFn`**: Wraps an async function that accepts an `AbortSignal` and returns `run`/`abort`; use it to cancel in-flight requests tied to a single caller.
+
+```ts
+import { useCancelableFn } from 'sn-shadcn-kit/hooks'
+
+function Search() {
+  const { run, abort } = useCancelableFn((signal, q: string) =>
+    fetch(`/api/search?q=${q}`, { signal }).then((r) => r.json())
+  )
+
+  // run('foo'); abort();
+}
+```
+
+- **`useDebouncedFn`**: Returns a debounced version of a function plus `cancel`; use it to delay rapid calls like search, resize, or validation.
+
+```ts
+import { useDebouncedFn } from 'sn-shadcn-kit/hooks'
+
+function Filters() {
+  const onChange = useDebouncedFn((value: string) => {
+    console.log('apply filter', value)
+  }, 300)
+
+  // onChange('new value')
+}
+```
+
+- **`useIsMobile`**: Returns a boolean based on a breakpoint (default 768px); use it for JS-driven responsive behavior.
+
+```ts
+import { useIsMobile } from 'sn-shadcn-kit/hooks'
+
+function Layout() {
+  const isMobile = useIsMobile()
+  return isMobile ? <MobileNav /> : <DesktopNav />
+}
+```
+
+- **`useSaveShortcut`**: Handles Cmd/Ctrl+S to trigger a callback or button click while preserving focus; use it to add a consistent “save” shortcut.
+
+```ts
+import { useSaveShortcut } from 'sn-shadcn-kit/hooks'
+
+function Editor() {
+  useSaveShortcut({ onTrigger: () => console.log('save') })
+  return <textarea />
+}
+```
+
+- **`useSlashPrevention`**: Provides an `onKeyDown` handler that stops Mod-/ propagation when already handled; use it to prevent global listeners (such as snUtils) from double-handling shortcuts.
+
+```ts
+import { useSlashPrevention } from 'sn-shadcn-kit/hooks'
+
+function Input() {
+  const { onKeyDown } = useSlashPrevention()
+  return <input onKeyDown={onKeyDown} />
 }
 ```
 

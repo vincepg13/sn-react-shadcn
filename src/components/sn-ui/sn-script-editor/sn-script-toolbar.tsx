@@ -12,25 +12,35 @@ interface SnScriptToolbarProps {
 export function SnScriptToolbar({ readonly, toggleMax, editorRef }: SnScriptToolbarProps) {
   return (
     <div className="flex items-center gap-3">
-      <button type="button" className="hover:opacity-80" onClick={() => editorRef.current?.openSearch()}>
-        <SnSimpleTooltip trigger={<SearchCode size={18} />} content="Search (Ctrl + F)" />
-      </button>
+      <SnSimpleTooltip content="Search (Ctrl + F)">
+        <button type="button" className="hover:opacity-80" onClick={() => editorRef.current?.openSearch()}>
+          <SearchCode size={18} />
+        </button>
+      </SnSimpleTooltip>
       {readonly ? (
-        <SnSimpleTooltip trigger={<Lock size={18} />} content="Readonly field" />
+        <SnSimpleTooltip content="Readonly field">
+          <Lock size={18} />
+        </SnSimpleTooltip>
       ) : (
         <>
-          <button type="button" className="hover:opacity-80" onClick={() => editorRef.current?.toggleComment()}>
-            <SnSimpleTooltip trigger={<MessageSquareCode size={18} />} content="Comment (Ctrl + /)" />
-          </button>
-          <button type="button" className="hover:opacity-80" onClick={() => editorRef.current?.format()}>
-            <SnSimpleTooltip trigger={<Wand2 size={18} />} content="Format (Shift + Alt + F)" />
-          </button>
+          <SnSimpleTooltip content="Comment (Ctrl + /)">
+            <button type="button" className="hover:opacity-80" onClick={() => editorRef.current?.toggleComment()}>
+              <MessageSquareCode size={18} />
+            </button>
+          </SnSimpleTooltip>
+          <SnSimpleTooltip content="Format (Shift + Alt + F)">
+            <button type="button" className="hover:opacity-80" onClick={() => editorRef.current?.format()}>
+              <Wand2 size={18} />
+            </button>
+          </SnSimpleTooltip>
         </>
       )}
       {toggleMax && (
-        <button type="button" className="hover:opacity-80" onClick={toggleMax}>
-          <SnSimpleTooltip trigger={<Maximize2 size={18} />} content="Full screen (Ctrl + M)" />
-        </button>
+        <SnSimpleTooltip content="Full screen (Ctrl + M)">
+          <button type="button" className="hover:opacity-80" onClick={toggleMax}>
+            <Maximize2 size={18} />
+          </button>
+        </SnSimpleTooltip>
       )}
     </div>
   )

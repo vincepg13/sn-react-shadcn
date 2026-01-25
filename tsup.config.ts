@@ -7,6 +7,8 @@ export default defineConfig({
   entry: {
     index: 'src/index.ts',
     type: 'src/exports/type.index.ts',
+    ui: 'src/exports/ui.index.ts',
+    hooks: 'src/exports/hooks.index.ts',
     amb: 'src/exports/amb.index.ts',
     form: 'src/exports/form.index.ts',
     table: 'src/exports/table.index.ts',

@@ -1,4 +1,9 @@
 # Change Log
+## [V2.2.0]
+- Added a new import path `sn-shadcn-kit/hooks` which contains multiple react hooks I find useful when building a ServiceNow based react application. Check the **hooks** section of the readme for more details.
+- Added a new import path `sn-shadcn-kit/ui` which contains small components focussed on improving the UX of your applications UI. Check the **UI/UX Components** section of the readme for more details.
+- Added a new component `SnTableHeader` to the table import which gives you a nice shadcn header to go above your table components.
+
 ## [V2.1.5]
 - Added linting for html and json fields in codemirror.
 - Limited the max height of the text area in SnForm.

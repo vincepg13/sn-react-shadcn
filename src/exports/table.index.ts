@@ -5,6 +5,7 @@ export { resolveUpdater, getColumnLabel, getSortedQuery, getDefaultSortingFromQu
 export { getViewPreference, getListView, getListViewElements, getTableSchema, getTableRows } from '../utils/table-api'
 
 // Table Components
+export { SnTableHeader } from '../components/sn-table/sn-table-header'
 export { DataTable } from '../components/sn-table/data-table'
 export { default as SnTable } from '../components/sn-table/sn-table'
 export { default as SnDataTable } from '../components/sn-table/sn-data-table'
