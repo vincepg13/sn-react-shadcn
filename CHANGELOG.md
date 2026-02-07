@@ -1,4 +1,10 @@
 # Change Log
+## [V2.2.1]
+- Added support for additional `g_form` methods in SnForm, including:
+  - field messages - showFieldMsg, hideFieldMsg, hideAllFieldMsgs, showErrorBox, hideErrorBox
+  - field decorations - addDecoration, removeDecoration.
+- Added client-side `nowapi.g_i18n` support (getMessage, getMessages, format).
+
 ## [V2.2.0]
 - Added a new import path `sn-shadcn-kit/hooks` which contains multiple react hooks I find useful when building a ServiceNow based react application. Check the **hooks** section of the readme for more details.
 - Added a new import path `sn-shadcn-kit/ui` which contains small components focussed on improving the UX of your applications UI. Check the **UI/UX Components** section of the readme for more details.

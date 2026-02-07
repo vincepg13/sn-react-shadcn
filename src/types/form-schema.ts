@@ -289,10 +289,72 @@ export type SnFormApis = {
   refDisplay?: string
 }
 
+export type FieldMessageType = 'info' | 'warning' | 'error'
+
+export type FieldMessage = {
+  text: string
+  type: FieldMessageType
+}
+
+export type SnDecorationIcon =
+  | 'icon-user'
+  | 'icon-user-group'
+  | 'icon-lightbulb'
+  | 'icon-home'
+  | 'icon-mobile'
+  | 'icon-comment'
+  | 'icon-mail'
+  | 'icon-locked'
+  | 'icon-database'
+  | 'icon-book'
+  | 'icon-drawer'
+  | 'icon-folder'
+  | 'icon-catalog'
+  | 'icon-tab'
+  | 'icon-cards'
+  | 'icon-tree-right'
+  | 'icon-tree'
+  | 'icon-book-open'
+  | 'icon-paperclip'
+  | 'icon-edit'
+  | 'icon-trash'
+  | 'icon-image'
+  | 'icon-search'
+  | 'icon-power'
+  | 'icon-cog'
+  | 'icon-star'
+  | 'icon-star-empty'
+  | 'icon-new-ticket'
+  | 'icon-dashboard'
+  | 'icon-cart-full'
+  | 'icon-view'
+  | 'icon-label'
+  | 'icon-filter'
+  | 'icon-calendar'
+  | 'icon-script'
+  | 'icon-add'
+  | 'icon-delete'
+  | 'icon-help'
+  | 'icon-info'
+  | 'icon-check-circle'
+  | 'icon-alert'
+  | 'icon-sort-ascending'
+  | 'icon-console'
+  | 'icon-list'
+  | 'icon-form'
+  | 'icon-livefeed'
+
+export type FieldDecoration = {
+  icon: SnDecorationIcon
+  title?: string
+}
+
 export type FieldUIState = {
   mandatory: boolean
   visible: boolean
   readonly: boolean
+  fieldMsgs?: FieldMessage[]
+  decoration?: FieldDecoration
 }
 
 export interface SnFieldBaseProps<T> {

@@ -2,10 +2,21 @@
 import { toast } from 'sonner'
 import { RefObject } from 'react'
 import { GlideAjax } from './glide-ajax'
-import { parseAjaxGlideRecord } from '@kit/utils/xml-parser'
-import { computeEffectiveFieldState, formatSectionName } from '@kit/utils/form-client'
-import { FieldUIState, SnFieldsSchema, SnSection, SnUiAction, UiActionHandler } from '../types/form-schema'
 import { htmlToReact } from '@kit/utils/html-parser'
+import { parseAjaxGlideRecord } from '@kit/utils/xml-parser'
+import { isSupportedSnDecorationIcon } from '@kit/utils/decoration-icons'
+import { computeEffectiveFieldState, formatSectionName } from '@kit/utils/form-client'
+import {
+  FieldDecoration,
+  FieldMessage,
+  FieldMessageType,
+  SnDecorationIcon,
+  FieldUIState,
+  SnFieldsSchema,
+  SnSection,
+  SnUiAction,
+  UiActionHandler,
+} from '../types/form-schema'
 
 const refCache = new Map<string, any>()
 let _actionName = ''
@@ -78,6 +89,38 @@ export function createGFormBridge(opts: GFormBridgeOptions) {
     console.warn(`g_form.save: no handler or action found for ${actionName}`)
   }
 
+  const normalizeFieldMsgType = (type?: string): FieldMessageType => {
+    if (!type) return 'info'
+    const normalized = type.toLowerCase()
+    if (normalized === 'warning' || normalized === 'warn') return 'warning'
+    if (normalized === 'error' || normalized === 'err') return 'error'
+    return 'info'
+  }
+
+  const setFieldMessages = (fieldName: string, fieldMsgs: FieldMessage[]) => {
+    const uiState = getUIState()
+    fieldUIStateRef.current = {
+      ...uiState,
+      [fieldName]: {
+        ...(uiState[fieldName] ?? {}),
+        fieldMsgs,
+      },
+    }
+    updateFieldUI(fieldName, { fieldMsgs })
+  }
+
+  const setFieldDecoration = (fieldName: string, decoration?: FieldDecoration) => {
+    const uiState = getUIState()
+    fieldUIStateRef.current = {
+      ...uiState,
+      [fieldName]: {
+        ...(uiState[fieldName] ?? {}),
+        decoration,
+      },
+    }
+    updateFieldUI(fieldName, { decoration })
+  }
+
   const base: Record<string, any> = {
     // Meta
     getViewName: () => view,
@@ -91,6 +134,7 @@ export function createGFormBridge(opts: GFormBridgeOptions) {
     getFieldNames: () => Object.keys(getFormFields()),
 
     // Value accessors
+    getDisplayValue: (field: string) => getDisplayValues()[field] ?? '',
     getValue: (field: string) => {
       const vals = getValues() || {}
       return String(vals[field] ?? '')
@@ -109,21 +153,17 @@ export function createGFormBridge(opts: GFormBridgeOptions) {
       const v = base.getValue(field)
       return v === true || v === 'true'
     },
-    getDisplayValue: (field: string) => getDisplayValues()[field] ?? '',
-
     setValue: (fieldName: string, value: any, displayValue: any) => {
-      // setTimeout(() => {
-        if (displayValue) {
-          const localField = getFormFields()[fieldName]
-          if (localField) {
-            localField.displayValue = String(displayValue)
-          }
+      if (displayValue) {
+        const localField = getFormFields()[fieldName]
+        if (localField) {
+          localField.displayValue = String(displayValue)
         }
+      }
 
-        setValue(fieldName, value, { shouldDirty: true, shouldTouch: true, shouldValidate: true })
-        const handlers = fieldChangeHandlers.current
-        if (handlers?.[fieldName]) handlers[fieldName](value)
-      // }, 0)
+      setValue(fieldName, value, { shouldDirty: true, shouldTouch: true, shouldValidate: true })
+      const handlers = fieldChangeHandlers.current
+      if (handlers?.[fieldName]) handlers[fieldName](value)
     },
     clearValue: (field: string) => base.setValue(field, ''),
 
@@ -175,7 +215,6 @@ export function createGFormBridge(opts: GFormBridgeOptions) {
         field.choices.push(newChoice)
       }
     },
-
     removeOption: (fieldName: string, choiceValue: string) => {
       const fields = getFormFields()
       const field = fields[fieldName]
@@ -187,7 +226,6 @@ export function createGFormBridge(opts: GFormBridgeOptions) {
 
       field.choices = field.choices.filter(choice => choice.value !== choiceValue)
     },
-
     clearOptions: (fieldName: string) => {
       const field = getFormFields()[fieldName]
       if (!field || !field.choices) return
@@ -202,6 +240,68 @@ export function createGFormBridge(opts: GFormBridgeOptions) {
     addInfoMessage: (message: string) => {
       if (!message) return
       toast.info(htmlToReact(message))
+    },
+    showErrorBox(fieldName: string, message: string) {
+      this.showFieldMsg(fieldName, message, 'error')
+    },
+    hideErrorBox(fieldName: string) {
+      this.hideFieldMsg(fieldName, false)
+    },
+    showFieldMsg(fieldName: string, message: string, type?: string) {
+      if (!fieldName || !message || !base.hasField(fieldName)) return
+
+      const current = getFieldUIState(fieldName).fieldMsgs ?? []
+      const next = [...current, { text: String(message), type: normalizeFieldMsgType(type) }]
+
+      setFieldMessages(fieldName, next)
+    },
+    hideFieldMsg(fieldName: string, clearAll = false) {
+      if (!fieldName || !base.hasField(fieldName)) return
+
+      const current = getFieldUIState(fieldName).fieldMsgs ?? []
+      if (current.length === 0) return
+
+      const next = clearAll ? [] : current.slice(0, -1)
+      setFieldMessages(fieldName, next)
+    },
+    hideAllFieldMsgs(type?: string) {
+      const fields = getFormFields()
+      const targetType = type ? normalizeFieldMsgType(type) : undefined
+
+      for (const fieldName of Object.keys(fields)) {
+        const current = getFieldUIState(fieldName).fieldMsgs ?? []
+        const next = targetType ? current.filter(msg => msg.type !== targetType) : []
+
+        if (next.length !== current.length) {
+          setFieldMessages(fieldName, next)
+        }
+      }
+    },
+
+    // Iconography
+    addDecoration(fieldName: string, icon: string, title?: string) {
+      if (!fieldName || !icon || !base.hasField(fieldName)) return
+      if (!isSupportedSnDecorationIcon(icon)) {
+        console.warn(`g_form.addDecoration: unsupported icon "${icon}"`)
+        return
+      }
+
+      const next: FieldDecoration = {
+        icon: icon as SnDecorationIcon,
+        title: title ? String(title) : undefined,
+      }
+
+      setFieldDecoration(fieldName, next)
+    },
+    removeDecoration(fieldName: string, icon?: string, title?: string) {
+      if (!fieldName || !base.hasField(fieldName)) return
+
+      const current = getFieldUIState(fieldName).decoration
+      if (!current) return
+      if (icon && current.icon !== icon) return
+      if (title !== undefined && (current.title ?? '') !== String(title)) return
+
+      setFieldDecoration(fieldName, undefined)
     },
 
     // Data fetching helpers
@@ -242,29 +342,8 @@ export function createGFormBridge(opts: GFormBridgeOptions) {
     showRelatedLists() {},
     getRelatedListNames() {},
 
-    addDecoration() {
-      console.warn('GForm addDecoration method is not supported in React')
-    },
     getEncodedRecord() {
       console.warn('GForm getEncodedRecord method is not supported in React')
-    },
-    hideAllFieldMsgs() {
-      console.warn('GForm hideAllFieldMsgs method is not supported in React')
-    },
-    hideErrorBox() {
-      console.warn('GForm hideErrorBox method is not supported in React')
-    },
-    hideFieldMsg() {
-      console.warn('GForm hideFieldMsg method is not supported in React')
-    },
-    removeDecoration() {
-      console.warn('GForm removeDecoration method is not supported in React')
-    },
-    showFieldMsg() {
-      console.warn('GForm showFieldMsg method is not supported in React')
-    },
-    showErrorBox() {
-      console.warn('GForm showErrorBox method is not supported in React')
     },
 
     //Unsupported Desktop or Legacy

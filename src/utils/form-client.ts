@@ -91,14 +91,24 @@ export function computeEffectiveFieldState(
   override: Partial<FieldUIState> | undefined
 ): FieldUIState {
   const sysRo = !!field?.sys_readonly
-  const ro = (override?.readonly ?? field?.readonly ?? false) as boolean
-  const man = (override?.mandatory ?? field?.mandatory ?? false) as boolean
-  const visible = (override?.visible ?? field?.visible ?? true) as boolean
+  let readonly = (override?.readonly ?? field?.readonly ?? false) as boolean
+  let mandatory = (override?.mandatory ?? field?.mandatory ?? false) as boolean
+  let visible = (override?.visible ?? field?.visible ?? true) as boolean
+
+  if (sysRo) {
+    readonly = true
+    mandatory = false
+  } else if (mandatory) {
+    readonly = false;
+    visible = !fieldVal || visible
+  }
 
   return {
-    readonly: sysRo ? true : ro && !!(fieldVal || !man),
-    mandatory: sysRo ? false : man,
+    readonly,
+    mandatory,
     visible,
+    fieldMsgs: override?.fieldMsgs ?? [],
+    decoration: override?.decoration,
   }
 }
 

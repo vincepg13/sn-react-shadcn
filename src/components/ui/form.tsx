@@ -133,9 +133,14 @@ function FormDescription({ className, ...props }: React.ComponentProps<"p">) {
   )
 }
 
-function FormMessage({ className, ...props }: React.ComponentProps<"p">) {
+type FormMessageProps = React.ComponentProps<"p"> & {
+  useError?: boolean
+}
+
+function FormMessage({ className, useError = true, id, ...props }: FormMessageProps) {
   const { error, formMessageId } = useFormField()
-  const body = error ? String(error?.message ?? "") : props.children
+  const hasError = useError && !!error
+  const body = hasError ? String(error?.message ?? "") : props.children
 
   if (!body) {
     return null
@@ -144,8 +149,13 @@ function FormMessage({ className, ...props }: React.ComponentProps<"p">) {
   return (
     <p
       data-slot="form-message"
-      id={formMessageId}
-      className={cn("text-destructive text-sm", className)}
+      data-error={hasError}
+      id={hasError ? formMessageId : id}
+      className={cn(
+        "text-sm",
+        hasError ? "text-destructive" : "text-muted-foreground",
+        className
+      )}
       {...props}
     >
       {body}
