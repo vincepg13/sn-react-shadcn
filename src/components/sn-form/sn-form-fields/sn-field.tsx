@@ -21,11 +21,20 @@ import { SnFieldReference } from './sn-field-reference'
 import { FieldUIContext } from '../contexts/FieldUIContext'
 import { useEffectiveFieldState } from '../hooks/useFieldUiState'
 import { linkRefFieldDotWalks } from '@kit/utils/form-client'
+import { SN_DECORATION_ICON_MAP } from '@kit/utils/decoration-icons'
 import { useClientScripts } from '../contexts/SnClientScriptContext'
 import { useUiPoliciesContext } from '../contexts/SnUiPolicyContext'
 import { ReactNode, useRef, useCallback, memo, RefObject, useEffect } from 'react'
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '../../ui/form'
-import { SnFieldSchema, RHFField, FieldUIState, SnFieldPrimitive, SnCurrencyField } from '../../../types/form-schema'
+import {
+  SnFieldSchema,
+  RHFField,
+  FieldUIState,
+  SnFieldPrimitive,
+  SnCurrencyField,
+  FieldMessage,
+} from '../../../types/form-schema'
+import { SnSimpleTooltip } from '@kit/exports/ui.index'
 
 interface SnFieldProps {
   field: SnFieldSchema
@@ -35,6 +44,19 @@ interface SnFieldProps {
   table: string
   guid: string
   updateFieldUI: (field: string, updates: Partial<FieldUIState>) => void
+}
+
+const getFieldMessageClassName = (msgType: FieldMessage['type']) => {
+  const base = 'rounded-sm border-r-2 border-l-2 bg-transparent px-2 py-1'
+
+  switch (msgType) {
+    case 'error':
+      return `${base} border-destructive/60 text-destructive`
+    case 'warning':
+      return `${base} border-amber-500/50 text-amber-500`
+    default:
+      return `${base} border-muted-foreground/50 text-muted-foreground`
+  }
 }
 
 function SnFieldComponent({ field, fieldList, fieldUIState, guid, table, displayValues }: SnFieldProps) {
@@ -101,6 +123,7 @@ function SnFieldComponent({ field, fieldList, fieldUIState, guid, table, display
         name={toSafe(field.name)}
         control={control}
         render={({ field: rhfField }) => {
+          const DecorationIcon = fieldUI.decoration ? SN_DECORATION_ICON_MAP[fieldUI.decoration.icon] : null
           const handleFocus = () => {}
 
           const handleSelect = (newValue: SnFieldPrimitive, displayValue?: string) => {
@@ -128,8 +151,16 @@ function SnFieldComponent({ field, fieldList, fieldUIState, guid, table, display
             <FormItem className="mb-4">
               {field.type !== 'boolean' && (
                 <FormLabel className="flex items-center justify-between">
-                  <span>
-                    {field.label}{' '}
+                  <span className="inline-flex items-center">
+                    {DecorationIcon && (
+                      <SnSimpleTooltip content={fieldUI.decoration?.title || ''}>
+                        <span className="mr-1.5 inline-flex text-muted-foreground">
+                          <DecorationIcon className="size-3.5" aria-hidden />
+                        </span>
+                      </SnSimpleTooltip>
+                    )}
+                    {field.label}
+                    {''}
                     {fieldUI.mandatory && <span className={rhfField.value ? 'text-grey-500' : 'text-red-500'}>*</span>}
                   </span>
                   <div ref={formLabelRightRef} />
@@ -137,6 +168,15 @@ function SnFieldComponent({ field, fieldList, fieldUIState, guid, table, display
               )}
               <FormControl>{input}</FormControl>
               <FormMessage />
+              {fieldUI.fieldMsgs?.map((message, index) => (
+                <FormMessage
+                  key={`${message.type}-${index}`}
+                  useError={false}
+                  className={getFieldMessageClassName(message.type)}
+                >
+                  {message.text}
+                </FormMessage>
+              ))}
             </FormItem>
           )
         }}

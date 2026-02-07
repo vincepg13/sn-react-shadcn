@@ -1,6 +1,7 @@
 import { GlideUser } from '@kit/lib/g-user'
 import { GlideAjax } from '@kit/lib/glide-ajax'
 import { GlideRecord } from '@kit/lib/glide-record'
+import { NowApi } from '@kit/lib/now-api'
 import { SnClientScript, SnPolicyScript } from '@kit/types/form-schema'
 import { GlideUserSchema } from '@kit/types/client-scripts'
 import { useCallback, useEffect, useMemo, useRef } from 'react'
@@ -41,6 +42,10 @@ export function useScriptRunner({ gForm, glideUser, scratchpad, messages, scope 
     return new GlideUser(glideUser)
   }, [glideUser])
 
+  const nowapi = useMemo(() => {
+    return new NowApi(messages)
+  }, [messages])
+
   // Initialise scope for GlideAjax
   const ScopedGlideAjax = useMemo(() => {
     return class extends GlideAjax {
@@ -71,16 +76,17 @@ export function useScriptRunner({ gForm, glideUser, scratchpad, messages, scope 
             \nconst getMessage = arguments[3];
             \nconst GlideAjax = arguments[4];
             \nconst GlideRecord = arguments[5];
+            \nconst nowapi = arguments[6];
             \n${script.script};
             \nreturn onCondition()`
         )
 
-        return func(gForm, g_user, scratchpad, getMessage, ScopedGlideAjax, ControlledGlideRecord)
+        return func(gForm, g_user, scratchpad, getMessage, ScopedGlideAjax, ControlledGlideRecord, nowapi)
       } catch (e) {
         console.error(`Failed to run policy script [${script.name}]`, e)
       }
     },
-    [gForm, g_user, scratchpad, getMessage, ScopedGlideAjax, ControlledGlideRecord]
+    [gForm, g_user, scratchpad, getMessage, ScopedGlideAjax, ControlledGlideRecord, nowapi]
   )
 
   const executeClientScript = useCallback(
@@ -106,6 +112,7 @@ export function useScriptRunner({ gForm, glideUser, scratchpad, messages, scope 
             \nconst getMessage = arguments[8];
             \nconst GlideAjax = arguments[9];
             \nconst GlideRecord = arguments[10];
+            \nconst nowapi = arguments[11];
             \n${script.script};
             \nreturn ${mapCsTypeToMethod(script.type)}`
         )
@@ -121,13 +128,14 @@ export function useScriptRunner({ gForm, glideUser, scratchpad, messages, scope 
           scratchpad,
           getMessage,
           ScopedGlideAjax,
-          ControlledGlideRecord
+          ControlledGlideRecord,
+          nowapi
         )
       } catch (e) {
         console.error(`Failed to run client script [${script.type}]`, e)
       }
     },
-    [gForm, g_user, scratchpad, getMessage, ScopedGlideAjax, ControlledGlideRecord]
+    [gForm, g_user, scratchpad, getMessage, ScopedGlideAjax, ControlledGlideRecord, nowapi]
   )
 
   return { executePolicyScript, executeClientScript }
