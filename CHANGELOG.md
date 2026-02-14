@@ -1,4 +1,9 @@
 # Change Log
+
+## [V2.2.2] 
+- Fixed a key error in SnTableHeader
+- Changed the default behaviour of SnRecordPicker to close on select when multiple is used. Can be overriden to stay open by setting the closeOnSelectMultiple to false
+
 ## [V2.2.1]
 - Added support for additional `g_form` methods in SnForm, including:
   - field messages - showFieldMsg, hideFieldMsg, hideAllFieldMsgs, showErrorBox, hideErrorBox

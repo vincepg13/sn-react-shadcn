@@ -129,7 +129,7 @@ export function SnTableHeader({
       </div>
       <div className={showFilter ? 'block' : 'hidden'}>
         <SnConditionBuilder
-          {...(uuid ? { key: uuid } : {})}
+          key={uuid}
           table={table}
           onQueryBuilt={handleQueryChange}
           encodedQuery={query || ''}
