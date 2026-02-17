@@ -7,27 +7,16 @@ export async function getAttachments(
   controller: AbortController | AbortSignal
 ): Promise<SnAttachment[]> {
   const axios = getAxiosInstance()
-  try {
-    const response = await axios.get(
-      `/angular.do?sysparm_type=ngk_attachments&action=list&sys_id=${guid}&table=${table}`,
-      { signal: controller instanceof AbortController ? controller.signal : controller }
-    )
-    return response.data.files || []
-  } catch (error) {
-    console.error('Error fetching attachments:', error)
-    return []
-  }
+  const response = await axios.get(
+    `/angular.do?sysparm_type=ngk_attachments&action=list&sys_id=${guid}&table=${table}`,
+    { signal: controller instanceof AbortController ? controller.signal : controller }
+  )
+  return response.data.files || []
 }
 
-export async function deleteAttachment(guid: string): Promise<boolean> {
+export async function deleteAttachment(guid: string): Promise<void> {
   const axios = getAxiosInstance()
-  try {
-    await axios.get(`/angular.do?sysparm_type=ngk_attachments&action=delete&sys_id=${guid}`)
-  } catch (error) {
-    console.error('Error deleting attachment:', error)
-    return false
-  }
-  return true
+  await axios.get(`/angular.do?sysparm_type=ngk_attachments&action=delete&sys_id=${guid}`)
 }
 
 export async function uploadFieldAttachment(file: File, table: string, sysId: string, fieldName: string) {
@@ -54,10 +43,5 @@ export async function uploadAttachment(
 
   let cont = controller ? { signal: controller instanceof AbortController ? controller.signal : controller } : {}
 
-  try {
-    return await axios.post(url, formData, cont).then(res => res.data)
-  } catch (error) {
-    console.error('Error uploading image attachment:', error)
-    return ''
-  }
+  return await axios.post(url, formData, cont).then(res => res.data)
 }

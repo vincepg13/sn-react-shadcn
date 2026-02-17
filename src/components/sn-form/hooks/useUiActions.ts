@@ -85,19 +85,21 @@ export function useUiActions<TFormValues extends Record<string, any> = Record<st
         await runCallbacks('post')
 
         const uiRes = uiResponse.result as SnUiResponse
-        if (uiRes?.isActionAborted) return
+        //console.log('UI Action Response:', uiRes)
 
         if (uiRes.$$uiNotification) {
           uiRes.$$uiNotification.forEach((msg) => {
             if (msg.type === 'error') toast.error(htmlToReact(msg.message))
-            if (msg.type === 'success') toast.success(htmlToReact(msg.message))
-            if (msg.type === 'info') toast.info(htmlToReact(msg.message))
+            else if (msg.type === 'success') toast.success(htmlToReact(msg.message))
+            else if (msg.type === 'info') toast.info(htmlToReact(msg.message))
             else toast(htmlToReact(msg.message))
           })
         }
 
+        if (uiRes?.isActionAborted) return
+
         if (snInsert && uiRes?.isInsert) return snInsert(uiRes.sys_id)
-        snSubmit(uiRes.sys_id)
+        snSubmit(guid)
       } finally {
         setLoadingActionId(null)
       }

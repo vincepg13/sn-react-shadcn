@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import Dropzone from 'shadcn-dropzone'
 import { Button } from '@kit/components/ui/button'
 import { TooltipProvider } from '@kit/components/ui/tooltip'
@@ -6,27 +5,32 @@ import { LoaderCircle, Trash2, Upload } from 'lucide-react'
 import { Tooltip, TooltipTrigger, TooltipContent } from '@kit/components/ui/tooltip'
 
 type DropzoneProps = {
-  onFileSave: (acceptedFiles: File[]) => Promise<void>
+  files: File[]
+  onFilesChange: (files: File[]) => void
+  onFileSave: () => Promise<void>
+  isSaving?: boolean
+  showActionRow?: boolean
 }
 
-export function SnDropzone({ onFileSave }: DropzoneProps) {
-  const [isSaving, setIsSaving] = useState(false)
-  const [files, setFiles] = useState<File[]>([])
-
+export function SnDropzone({
+  files,
+  onFilesChange,
+  onFileSave,
+  isSaving = false,
+  showActionRow = true,
+}: DropzoneProps) {
   const handleSave = async () => {
     if (isSaving) return
     try {
-      setIsSaving(true)
-      await onFileSave(files)
-      setFiles([])
-    } finally {
-      setIsSaving(false)
+      await onFileSave()
+    } catch (error) {
+      console.error('Error saving files:', error)
     }
   }
 
   return (
     <>
-      <Dropzone onDrop={setFiles}>
+      <Dropzone onDrop={onFilesChange}>
         {dropzone => (
           <div
             {...dropzone.getRootProps()}
@@ -48,19 +52,23 @@ export function SnDropzone({ onFileSave }: DropzoneProps) {
                   <Upload />
                   <span>Files to upload: {files.length}</span>
                 </p>
-                <p className="text-muted-foreground">Use the buttons below to upload the files or cancel</p>
+                <p className="text-muted-foreground">
+                  {showActionRow
+                    ? 'Attachments will be saved automatically when saving the record.'
+                    : 'Use the buttons below to upload the files or cancel'}
+                </p>
               </>
             )}
           </div>
         )}
       </Dropzone>
-      {!!files.length && (
+      {!!files.length && showActionRow && (
         <div className="flex gap-2 align-center">
           {!isSaving && (
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button type="button" onClick={() => setFiles([])} variant="outline" className="text-red-500">
+                  <Button type="button" onClick={() => onFilesChange([])} variant="outline" className="text-red-500">
                     <Trash2 />
                   </Button>
                 </TooltipTrigger>
@@ -70,10 +78,13 @@ export function SnDropzone({ onFileSave }: DropzoneProps) {
               </Tooltip>
             </TooltipProvider>
           )}
+
           <Button type="button" onClick={handleSave} disabled={isSaving} className="flex-1">
             {isSaving ? (
               <span className="flex gap-2 items-center">
-                <span><LoaderCircle className="animate-spin" /></span> 
+                <span>
+                  <LoaderCircle className="animate-spin" />
+                </span>
                 <span>Uploading...</span>
               </span>
             ) : (

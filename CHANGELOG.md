@@ -1,8 +1,10 @@
 # Change Log
 
 ## [V2.2.2] 
-- Fixed a key error in SnTableHeader
+- Fixed an key prop error in SnTableHeader
+- Fixed a bug displaying duplicate messages from UI actions
 - Changed the default behaviour of SnRecordPicker to close on select when multiple is used. Can be overriden to stay open by setting the closeOnSelectMultiple to false
+- Updated SnClippy and the attachment related components to add a new "Save Mode". The save mode dictates whether the component handles the saving of files (internal) or the hosting application does (external). Useful when you want to use the component with a record where you do not know the sys_id or attachment guid until after you save.
 
 ## [V2.2.1]
 - Added support for additional `g_form` methods in SnForm, including:
