@@ -202,8 +202,6 @@ function renderFieldComponent(
   const depValue = depField ? watch(depField) : undefined
 
   // TODO:
-  // - File Attachment
-  // - User Roles
   // - Field List
 
   switch (field.type) {
@@ -295,8 +293,18 @@ function renderFieldComponent(
     case 'html':
     case 'translated_html':
       return <SnFieldHtml rhfField={rhfField} onChange={handleChange} />
-    case 'field_name':
-      return <SnFieldFieldList field={field} rhfField={rhfField} onChange={handleChange} dependentValue={depValue} />
+    case 'field_list':
+    case 'field_name': {
+      return (
+        <SnFieldFieldList
+          field={field}
+          rhfField={rhfField}
+          onChange={handleChange}
+          dependentValue={depValue}
+          multiple={field.type === 'field_list'}
+        />
+      )
+    }
     case 'conditions':
       return (
         <SnFieldCondition
@@ -325,8 +333,9 @@ function renderFieldComponent(
         />
       )
     case 'video':
-    case 'user_image': {
-      const extension = field.type === 'user_image' ? '.iix' : '.vvx'
+    case 'user_image':
+    case 'file_attachment': {
+      const extension = field.type === 'user_image' ? '.iix' : field.type === 'video' ? '.vvx' : ''
       return (
         <SnFieldMedia
           table={table}

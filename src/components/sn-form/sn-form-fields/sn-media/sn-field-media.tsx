@@ -13,17 +13,21 @@ interface SnFieldMediaProps extends Omit<SnFieldBaseProps<string>, 'field'> {
   extension: string
   table: string
   attachmentGuid: string
-  onChange: (value: string) => void
+  onChange: (value: string, displayValue?: string) => void
 }
 
 export function SnFieldMedia({ field, rhfField, onChange, table, extension, attachmentGuid }: SnFieldMediaProps) {
   const fieldVal = String(rhfField.value ?? '')
-  const snFixedValue = field.displayValue?.replace(extension, '') ?? ''
+  const isFileAttachment = extension === ''
   const { readonly } = useFieldUI()
   const { formConfig, registerPreUiActionCallback } = useFormLifecycle()
-  const fileInputRef = useRef<HTMLInputElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null!)
   const videoRef = useRef<HTMLVideoElement>(null)
-  const [origValue, setOrigValue] = useState<string>(snFixedValue)
+  const [fileLabel, setFileLabel] = useState<string>(field.displayValue || '')
+  //const snFixedValue = field.displayValue?.replace(extension, '') ?? ''
+  const [origValue, setOrigValue] = useState<string>(field.value || '')
+
+  console.log("ORIG VAL: " + field.name, origValue, fieldVal);
 
   const {
     file,
@@ -33,12 +37,16 @@ export function SnFieldMedia({ field, rhfField, onChange, table, extension, atta
   } = useMediaPreview(field.staged_data?.file || null, fileInputRef)
 
   const previewUrl = source || field.staged_data?.preview || getFullSrcPath(formConfig.base_url, fieldVal)
+  const persistedAttachmentId = isFileAttachment && origValue && origValue === fieldVal ? origValue : ''
+
+  console.log("INIT LIFECYCLE MEDIA: " + field.name, { file, fieldVal, origValue })
 
   useMediaLifecycle({
     field,
     file,
     fieldVal,
     origValue,
+    displayValue: fileLabel,
     table,
     extension,
     attachmentGuid,
@@ -49,12 +57,16 @@ export function SnFieldMedia({ field, rhfField, onChange, table, extension, atta
   })
 
   useEffect(() => {
-  if (extension === '.vvx' && videoRef.current) {
-    videoRef.current.load()
-  }
-}, [previewUrl, extension])
+    setFileLabel(field.displayValue || '')
+  }, [field.displayValue])
 
-  const accept = extension === '.iix' ? 'image/*' : extension === '.vvx' ? 'video/*' : ''
+  useEffect(() => {
+    if (extension === '.vvx' && videoRef.current) {
+      videoRef.current.load()
+    }
+  }, [previewUrl, extension])
+
+  const accept = extension === '.iix' ? 'image/*' : extension === '.vvx' ? 'video/*' : undefined
 
   function getFullSrcPath(baseUrl: string, snValue: string) {
     if (!snValue) return ''
@@ -69,6 +81,7 @@ export function SnFieldMedia({ field, rhfField, onChange, table, extension, atta
   function clearLocalFile() {
     setFile(null)
     setSource(null)
+    setFileLabel('')
     field.staged_data = {}
     if (fileInputRef.current) {
       fileInputRef.current.value = ''
@@ -87,7 +100,8 @@ export function SnFieldMedia({ field, rhfField, onChange, table, extension, atta
       const previewUrl = URL.createObjectURL(selectedFile)
       setFile(selectedFile)
       setSource(previewUrl)
-      onChange(selectedFile.name.substring(0, 40))
+      setFileLabel(selectedFile.name)
+      onChange(selectedFile.name.substring(0, 40), selectedFile.name)
 
       field.staged_data = {
         file: selectedFile,
@@ -97,14 +111,31 @@ export function SnFieldMedia({ field, rhfField, onChange, table, extension, atta
   }
 
   return (
-    <div className="flex flex-col gap-2">
-      {!readonly && (
-        <div className="flex gap-2">
-          <Input type="file" accept={accept} ref={fileInputRef} onChange={handleFileChange} />
-          {previewUrl && (
-            <Button type="button" variant="destructive" size="icon" onClick={removeFile}>
-              <Trash />
-            </Button>
+    <div className="flex min-w-0 w-full flex-col gap-2">
+      {(isFileAttachment || !readonly) && (
+        <div className="flex min-w-0 w-full flex-col gap-1">
+          <div className="flex gap-2">
+            {!readonly && <Input type="file" accept={accept} ref={fileInputRef} onChange={handleFileChange} />}
+            {!readonly && previewUrl && (
+              <Button type="button" variant="destructive" size="icon" onClick={removeFile}>
+                <Trash />
+              </Button>
+            )}
+          </div>
+          {isFileAttachment && fileLabel && (
+            <p className="w-full max-w-full overflow-hidden text-ellipsis whitespace-nowrap text-sm text-muted-foreground">
+              {persistedAttachmentId ? (
+                <a
+                  href={`${formConfig.base_url}/sys_attachment.do?sys_id=${persistedAttachmentId}`}
+                  className="text-blue-400 block w-full max-w-full overflow-hidden text-ellipsis whitespace-nowrap underline underline-offset-2"
+                  rel="noreferrer"
+                >
+                  {fileLabel}
+                </a>
+              ) : (
+                fileLabel
+              )}
+            </p>
           )}
         </div>
       )}

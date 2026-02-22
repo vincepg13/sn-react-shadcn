@@ -13,6 +13,7 @@ export function useMediaLifecycle({
   file,
   fieldVal,
   origValue,
+  displayValue,
   table,
   extension,
   attachmentGuid,
@@ -26,20 +27,26 @@ export function useMediaLifecycle({
   file: File | null
   fieldVal: string
   origValue: string
+  displayValue?: string
   table: string
   extension: string
   attachmentGuid: string
-  onChange: (val: string) => void
+  onChange: (val: string, displayValue?: string) => void
   setOrigValue: (val: string) => void
   registerPreUiActionCallback: (fieldName: string, cb: () => Promise<void>) => void
   clearLocalFile: () => void
 }) {
   const ld = useRef<LifecycleData>({ file, fieldVal, origValue })
 
-  function updateMediaValues(val: string) {
-    onChange(val)
+  function updateMediaValues(val: string, nextDisplayValue?: string) {
+    onChange(val, nextDisplayValue)
     setOrigValue(val)
-    field.displayValue = val ? `${val}${extension}` : ''
+    if (!val) {
+      field.displayValue = ''
+      return
+    }
+
+    field.displayValue = nextDisplayValue ?? `${val}${extension}`
   }
 
   useEffect(() => {
@@ -73,7 +80,7 @@ export function useMediaLifecycle({
       try {
         const upload = await uploadFieldAttachment(l.file, table, attachmentGuid, field.name)
         if (upload?.sys_id) {
-          updateMediaValues(upload.sys_id)
+          updateMediaValues(upload.sys_id, displayValue || upload.file_name)
           clearLocalFile()
         }
       } catch (error) {
@@ -81,5 +88,5 @@ export function useMediaLifecycle({
       }
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [field.name, fieldVal])
+  }, [field.name, fieldVal, displayValue])
 }
