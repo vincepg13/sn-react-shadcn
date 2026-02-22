@@ -190,6 +190,8 @@
     "zod": "^4.1.12"
   },
   "overrides": {
+    "minimatch": "^10.2.2",
+    "glob": "^10.4.5",
     "shadcn-dropzone": {
       "react": "^19.0.0",
       "react-dom": "^19.0.0"
