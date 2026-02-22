@@ -20,6 +20,7 @@ export interface SnReferenceProps {
   recordSysId: string
   dependentValue?: string
   forceRefQuery?: boolean
+  closeOnSelectMultiple?: boolean
 }
 
 export function SnFieldReference({
@@ -29,6 +30,7 @@ export function SnFieldReference({
   recordSysId,
   dependentValue,
   forceRefQuery = false,
+  closeOnSelectMultiple = true,
   onChange,
 }: SnReferenceProps) {
   const { readonly } = useFieldUI()
@@ -158,6 +160,9 @@ export function SnFieldReference({
       const dv = updated.map(r => r.display_value).join(',')
       onChange(updated.map(r => r.value).toString(), dv)
       field.displayValue = dv
+      if (closeOnSelectMultiple) {
+        setOpen(false)
+      }
     } else {
       setSelectedRecords([record])
       onChange(record.value, record.display_value)

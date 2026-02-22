@@ -246,7 +246,11 @@ SnTabs props:
 
 ## `<SnClippy/>`
 
-Your own personal clippy to be used in ServiceNow. Just give it a table and record then click the paperclip icon to view all the attachments in a shadcn sheet. From here you can delete attachments or add new onces using the drop zone in the footer of the sheet.
+Your own personal clippy to be used in ServiceNow. Give it a table and record, then click the paperclip icon to open a sheet for attachments.
+
+`SnClippy` supports two save modes:
+- `internal` (default): the component shows upload controls in the dropzone and handles save from inside the sheet.
+- `external`: the host application triggers upload via a component ref. In this mode the dropzone action row is hidden and the sheet shows a list of local files waiting to upload.
 
 SnClippy props:
 | Prop | Type | Description |
@@ -254,6 +258,38 @@ SnClippy props:
 | `table` | `string` | The table name of the record to load attachments from |
 | `guid` | `string` | The sys_id of the record to load attachments from |
 | `instance` **?** | `string` | Only needed when testing on a dev server, but the SN instance name |
+| `saveMode` **?** | `'internal' \| 'external'` | Save flow mode. Defaults to `'internal'` |
+
+In `external` mode, use `SnClippyRef`:
+
+| Method | Type | Description |
+|----------------|--------------------- |------------------------------------------------|
+| `save` | `(options?: { guid?: string }) => Promise<void>` | Uploads queued files. Uses the prop `guid` unless you pass an override |
+| `clearPending` | `() => void` | Clears all queued local files |
+| `hasPending` | `() => boolean` | Returns `true` if files are queued |
+
+Example external save usage:
+
+```tsx
+import { useRef } from 'react'
+import { SnClippy, type SnClippyRef } from 'sn-shadcn-kit/standalone'
+
+function MyFormActions({ table, guid }: { table: string; guid: string }) {
+  const clippyRef = useRef<SnClippyRef>(null)
+
+  const onSaveRecord = async () => {
+    // Save your record first, then upload pending attachments
+    await clippyRef.current?.save()
+  }
+
+  return (
+    <>
+      <SnClippy ref={clippyRef} table={table} guid={guid} saveMode="external" />
+      <button onClick={onSaveRecord}>Save</button>
+    </>
+  )
+}
+```
 
 ## `<SnActivity/>`
 
@@ -534,12 +570,13 @@ This package exports helpful types for working with ServiceNow data:
 ```ts
 import type { SnRow, SnRowItem } from 'sn-shadcn-kit/table'
 import type { SnUser, SnGroup } from 'sn-shadcn-kit/user'
-import type { SnRecordPickerItem, SnRecordPickerList } from 'sn-shadcn-kit/standalone'
+import type { SnRecordPickerItem, SnRecordPickerList, SnClippyRef } from 'sn-shadcn-kit/standalone'
 ```
 
 - SnRowItem corresponds to a fields value which is simply an object with both its value and display_value. SnRow is a record (array) of SnRowItems.
 - SnUser and SnGroup define the schema for a user and group object respectively
 - SnRecordPickerItem represents all the data you will get back when selecting a record using the SnRecordPicker component, and SnRecordPickerList is an array of these items
+- SnClippyRef provides the external-save methods for the SnClippy attachment workflow
 
 ---
 

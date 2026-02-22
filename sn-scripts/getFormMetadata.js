@@ -23,7 +23,7 @@
   }
 
   var grTarget = new GlideRecord(table);
-  if (guid == -1 && grTarget.canCreate())
+  if (guid == -1 && !grTarget.canCreate())
     return sendError('400', 'You do not have access to create a record of this type');
   if (guid != -1 && !grTarget.get(guid)) return sendError('400', 'Record not found.');
   if (guid != -1 && !grTarget.canRead()) return sendError('400', 'You are not authorised to view this record.');

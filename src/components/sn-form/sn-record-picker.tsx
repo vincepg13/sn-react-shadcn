@@ -21,6 +21,7 @@ interface RecordPickerProps {
   onChange: (record: Record | Record[] | null) => void
   value?: Record | Record[] | null
   multiple?: boolean
+  closeOnSelectMultiple?: boolean
   metaFields?: string[]
   query?: string
   pageSize?: number
@@ -40,6 +41,7 @@ export function SnRecordPicker({
   pageSize = 20,
   placeholder = '-- Select a Record --',
   multiple = false,
+  closeOnSelectMultiple = true,
   editable = true,
   clearable = true,
   portalContainer = null,
@@ -94,6 +96,9 @@ export function SnRecordPicker({
       const updated = exists ? selectedRecords.filter(r => r.value !== selected.value) : [...selectedRecords, selected]
       setSelectedRecords(updated)
       onChange(updated)
+      if (closeOnSelectMultiple) {
+        setOpen(false)
+      }
     } else {
       setSelectedRecords([selected])
       onChange(selected)

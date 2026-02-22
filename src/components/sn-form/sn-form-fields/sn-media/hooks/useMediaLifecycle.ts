@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { deleteAttachment, uploadFieldAttachment } from '@kit/utils/attachment-api'
+import { errorHandler } from '@kit/lib/utils'
 
 type LifecycleData = {
   file: File | null
@@ -12,6 +13,7 @@ export function useMediaLifecycle({
   file,
   fieldVal,
   origValue,
+  displayValue,
   table,
   extension,
   attachmentGuid,
@@ -25,20 +27,26 @@ export function useMediaLifecycle({
   file: File | null
   fieldVal: string
   origValue: string
+  displayValue?: string
   table: string
   extension: string
   attachmentGuid: string
-  onChange: (val: string) => void
+  onChange: (val: string, displayValue?: string) => void
   setOrigValue: (val: string) => void
   registerPreUiActionCallback: (fieldName: string, cb: () => Promise<void>) => void
   clearLocalFile: () => void
 }) {
   const ld = useRef<LifecycleData>({ file, fieldVal, origValue })
 
-  function updateMediaValues(val: string) {
-    onChange(val)
+  function updateMediaValues(val: string, nextDisplayValue?: string) {
+    onChange(val, nextDisplayValue)
     setOrigValue(val)
-    field.displayValue = val ? `${val}${extension}` : ''
+    if (!val) {
+      field.displayValue = ''
+      return
+    }
+
+    field.displayValue = nextDisplayValue ?? `${val}${extension}`
   }
 
   useEffect(() => {
@@ -50,23 +58,35 @@ export function useMediaLifecycle({
       const l = ld.current
 
       if (l.origValue && !l.file && !l.fieldVal) {
-        const res = await deleteAttachment(l.origValue)
-        if (res) updateMediaValues('')
+        try {
+          await deleteAttachment(l.origValue)
+          updateMediaValues('')
+        } catch (error) {
+          errorHandler(error, 'Failed to delete media attachment')
+        }
         return
       }
 
       if (!l.file) return
 
       if (l.origValue && l.origValue !== l.fieldVal) {
-        await deleteAttachment(l.origValue)
+        try {
+          await deleteAttachment(l.origValue)
+        } catch (error) {
+          errorHandler(error, 'Failed to delete previous media attachment')
+        }
       }
 
-      const upload = await uploadFieldAttachment(l.file, table, attachmentGuid, field.name)
-      if (upload?.sys_id) {
-        updateMediaValues(upload.sys_id)
-        clearLocalFile()
+      try {
+        const upload = await uploadFieldAttachment(l.file, table, attachmentGuid, field.name)
+        if (upload?.sys_id) {
+          updateMediaValues(upload.sys_id, displayValue || upload.file_name)
+          clearLocalFile()
+        }
+      } catch (error) {
+        errorHandler(error, 'Failed to upload media attachment')
       }
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [field.name, fieldVal])
+  }, [field.name, fieldVal, displayValue])
 }

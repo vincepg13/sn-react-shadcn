@@ -1,6 +1,6 @@
 {
   "name": "sn-shadcn-kit",
-  "version": "2.2.1",
+  "version": "2.2.2",
   "type": "module",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
@@ -101,7 +101,7 @@
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/modifiers": "^9.0.0",
     "@dnd-kit/sortable": "^10.0.0",
-    "@hookform/resolvers": "^5.0.1",
+    "@hookform/resolvers": "5.2.2",
     "@radix-ui/react-alert-dialog": "^1.1.15",
     "@radix-ui/react-avatar": "^1.1.10",
     "@radix-ui/react-checkbox": "^1.2.3",
@@ -153,14 +153,13 @@
     "globals": "^16.0.0",
     "html-react-parser": "^5.2.6",
     "html-validate": "^10.4.0",
-    "htmlhint": "^1.8.0",
     "lodash.isequal": "^4.5.0",
     "lowlight": "^3.3.0",
     "lucide-react": "^0.488.0",
     "next-themes": "^0.4.6",
     "prettier": "^3.6.2",
     "react-day-picker": "^9.6.7",
-    "react-hook-form": "^7.56.1",
+    "react-hook-form": "7.66.1",
     "react-medium-image-zoom": "^5.2.14",
     "react-number-format": "^5.4.4",
     "shadcn-dropzone": "^0.2.1",
@@ -169,7 +168,7 @@
     "uuid": "^11.1.0"
   },
   "devDependencies": {
-    "@eslint/js": "^9.25.1",
+    "@eslint/js": "^9.39.3",
     "@tanstack/eslint-plugin-query": "^5.73.3",
     "@types/espree": "^10.1.0",
     "@types/lodash.isequal": "^4.5.8",
@@ -177,9 +176,10 @@
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",
     "@types/tern": "^0.23.9",
-    "@typescript-eslint/eslint-plugin": "^8.31.0",
-    "@typescript-eslint/parser": "^8.31.0",
+    "@typescript-eslint/eslint-plugin": "^8.56.0",
+    "@typescript-eslint/parser": "^8.56.0",
     "@vitejs/plugin-react-swc": "^3.0.0",
+    "eslint": "^9.39.3",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.20",
     "react": "^19.0.0",
@@ -190,6 +190,8 @@
     "zod": "^4.1.12"
   },
   "overrides": {
+    "minimatch": "^10.2.2",
+    "glob": "^10.4.5",
     "shadcn-dropzone": {
       "react": "^19.0.0",
       "react-dom": "^19.0.0"

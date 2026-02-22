@@ -87,8 +87,8 @@ export function SnTableHeader({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-end justify-between w-full flex-wrap">
-        <div>
+      <div className="flex items-end justify-between w-full flex-wrap gap-4">
+        <div className='flex-1'>
           <h2 className="text-2xl font-bold tracking-tight flex gap-1 items-center">{title}</h2>
           {tagline ? <p className="text-muted-foreground">{tagline}</p> : null}
         </div>
@@ -129,7 +129,7 @@ export function SnTableHeader({
       </div>
       <div className={showFilter ? 'block' : 'hidden'}>
         <SnConditionBuilder
-          {...(uuid ? { key: uuid } : {})}
+          key={uuid}
           table={table}
           onQueryBuilt={handleQueryChange}
           encodedQuery={query || ''}
