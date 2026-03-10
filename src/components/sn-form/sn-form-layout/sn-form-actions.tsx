@@ -20,7 +20,7 @@ export function SnFormActions({ table, attachments, attachmentGuid, setAttachmen
 
   return (
     <div className="mt-6 flex justify-center flex-wrap gap-2">
-      {!!attachments && (
+      {!!attachments && (canWrite || attachments.length > 0) && (
         <SnAttachments
           table={table}
           guid={attachmentGuid}

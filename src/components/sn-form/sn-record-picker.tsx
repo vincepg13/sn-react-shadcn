@@ -202,7 +202,7 @@ export function SnRecordPicker({
                     </div> */}
                     <div className="flex items-center flex-wrap">
                       {record.displayFields?.map((f, i, arr) => (
-                        <span key={f} className="flex items-center text-muted-foreground text-sm">
+                        <span key={`${record.value}-${i}-${f}`} className="flex items-center text-muted-foreground text-sm">
                           <span>{f}</span>
                           {arr[i + 1] && <Dot />}
                         </span>

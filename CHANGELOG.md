@@ -1,4 +1,8 @@
 # Change Log
+## [V2.2.3]
+- Fixed duplicate key violation in SnRecordPicker
+- Fixed SnDropzone showing the wrong instruction message depending on the save mode
+- Updated SnFormActions so that when using SnForm, the attachments will not be shown 
 
 ## [V2.2.2] 
 - Fixed a console error appearing do to key prop in SnTableHeader

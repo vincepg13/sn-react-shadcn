@@ -54,8 +54,8 @@ export function SnDropzone({
                 </p>
                 <p className="text-muted-foreground">
                   {showActionRow
-                    ? 'Attachments will be saved automatically when saving the record.'
-                    : 'Use the buttons below to upload the files or cancel'}
+                    ? 'Use the buttons below to upload the files or cancel'
+                    : 'Attachments will be saved automatically when saving the record.'}
                 </p>
               </>
             )}
