@@ -1,4 +1,12 @@
 # Change Log
+## [V2.2.4]
+- Added a `minSearchCharacters` prop to SnRecordPicker to delay searching until a minimum number of characters have been typed.
+- Added a `searchType` prop to SnRecordPicker with `STARTSWITH` and `CONTAINS` options.
+
+## [V2.2.3]
+- Fixed duplicate key violation in SnRecordPicker
+- Fixed SnDropzone showing the wrong instruction message depending on the save mode
+- Updated SnFormActions so that when using SnForm, the attachments will not be shown 
 
 ## [V2.2.2] 
 - Fixed a console error appearing do to key prop in SnTableHeader
