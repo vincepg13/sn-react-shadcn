@@ -6,6 +6,8 @@ import { SnRecordPickerItem as Record } from '../../../../types/form-schema'
 import axios from 'axios'
 // import { getRefData } from '@kit/utils/form-api'
 
+type RecordPickerSearchType = 'CONTAINS' | 'STARTSWITH'
+
 interface PickerOptions {
   table: string
   fields: string[]
@@ -14,9 +16,31 @@ interface PickerOptions {
   pageSize: number
   open: boolean
   metaFields: string[]
+  searchType: RecordPickerSearchType
 }
 
-export function usePickerData({ table, fields, query, searchTerm, pageSize, open, metaFields }: PickerOptions) {
+function getSearchFilter(field: string, search: string, searchType: RecordPickerSearchType) {
+  if (!search) return ''
+
+  const useContains = searchType === 'CONTAINS' || search.startsWith('*')
+  const operator = useContains ? 'LIKE' : 'STARTSWITH'
+  const searchValue = searchType === 'STARTSWITH' && search.startsWith('*') ? search.slice(1) : search
+
+  if (!searchValue) return ''
+
+  return `^${field}${operator}${searchValue}`
+}
+
+export function usePickerData({
+  table,
+  fields,
+  query,
+  searchTerm,
+  pageSize,
+  open,
+  metaFields,
+  searchType,
+}: PickerOptions) {
   const [records, setRecords] = useState<Record[]>([])
   const [loading, setLoading] = useState(false)
   const [hasMore, setHasMore] = useState(true)
@@ -26,10 +50,17 @@ export function usePickerData({ table, fields, query, searchTerm, pageSize, open
   useEffect(() => controllerRef.current.abort(), [])
 
   useEffect(() => {
-    if (open) {
-      fetchRecords(0, searchTerm, true)
+    if (!open) {
+      controllerRef.current.abort()
+      setRecords([])
+      setHasMore(false)
+      setPage(0)
+      setLoading(false)
+      return
     }
-  }, [table, query, fields, open, searchTerm])
+
+    fetchRecords(0, searchTerm, true)
+  }, [table, query, fields, open, searchTerm, searchType])
 
   async function fetchRecords(pageNumber: number, search: string, reset = false) {
     setLoading(true)
@@ -37,7 +68,7 @@ export function usePickerData({ table, fields, query, searchTerm, pageSize, open
     let queryString = query
     let apiFields = [...fields, 'sys_id', ...metaFields]
 
-    if (search) queryString += `^${fields[0]}LIKE${search}`
+    queryString += getSearchFilter(fields[0], search, searchType)
     if (!query.includes('ORDERBY')) queryString += `^ORDERBY${fields[0]}`
 
     try {
@@ -60,7 +91,6 @@ export function usePickerData({ table, fields, query, searchTerm, pageSize, open
           display_value: row[fields[0]]?.display_value || row[fields[0]]?.value,
         }
 
-        
         if (fields[1]) record.primary = row[fields[1]]?.display_value
         if (fields[2]) record.secondary = row[fields[2]]?.display_value
 

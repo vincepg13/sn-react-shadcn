@@ -15,6 +15,8 @@ import {
   CommandList,
 } from '../../components/ui/command'
 
+type RecordPickerSearchType = 'CONTAINS' | 'STARTSWITH'
+
 interface RecordPickerProps {
   table: string
   fields: string[]
@@ -29,6 +31,8 @@ interface RecordPickerProps {
   clearable?: boolean
   editable?: boolean
   portalContainer?: HTMLElement | null
+  minSearchCharacters?: number
+  searchType?: RecordPickerSearchType
 }
 
 export function SnRecordPicker({
@@ -45,10 +49,19 @@ export function SnRecordPicker({
   editable = true,
   clearable = true,
   portalContainer = null,
+  minSearchCharacters = 0,
+  searchType = 'STARTSWITH',
 }: RecordPickerProps) {
   const [open, setOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const debouncedSearchTerm = useDebounce(searchTerm, 300)
+  const minimumSearchCharacters = Number.isFinite(minSearchCharacters)
+    ? Math.max(0, Math.floor(minSearchCharacters))
+    : 0
+  const hasMinimumSearchCharacters = debouncedSearchTerm.trim().length >= minimumSearchCharacters
+  const needsMoreSearchCharacters = searchTerm.trim().length < minimumSearchCharacters
+  const isWaitingForDebouncedSearch =
+    !needsMoreSearchCharacters && debouncedSearchTerm.trim().length < minimumSearchCharacters
   const listRef = useRef<HTMLDivElement>(null)
 
   const { records, loading, hasMore, page, fetchRecords } = usePickerData({
@@ -57,9 +70,14 @@ export function SnRecordPicker({
     query,
     searchTerm: debouncedSearchTerm,
     pageSize,
-    open,
+    open: open && hasMinimumSearchCharacters,
     metaFields,
+    searchType,
   })
+
+  const showSearchResults = !needsMoreSearchCharacters && !isWaitingForDebouncedSearch
+  const visibleRecords = showSearchResults ? records : []
+  const showLoading = showSearchResults && loading
 
   const [selectedRecords, setSelectedRecords] = useState<Record[]>([])
 
@@ -74,6 +92,8 @@ export function SnRecordPicker({
   }, [value, multiple])
 
   function handleScroll(e: UIEvent<HTMLDivElement>) {
+    if (!showSearchResults || !hasMinimumSearchCharacters) return
+
     const target = e.currentTarget
     if (!loading && hasMore && target.scrollTop + target.clientHeight >= target.scrollHeight - 10) {
       fetchRecords(page + 1, debouncedSearchTerm)
@@ -88,7 +108,7 @@ export function SnRecordPicker({
   }
 
   function handleSelect(currentValue: string) {
-    const selected = records.find(r => r.value === currentValue)
+    const selected = visibleRecords.find(r => r.value === currentValue)
     if (!selected) return
 
     if (multiple) {
@@ -175,7 +195,12 @@ export function SnRecordPicker({
         )}
       </div>
 
-      <PopoverContent container={portalContainer} className="w-full max-w-[500px] p-0">
+      <PopoverContent
+        container={portalContainer}
+        side="bottom"
+        avoidCollisions={false}
+        className="w-full max-w-[500px] p-0"
+      >
         <Command shouldFilter={false}>
           <div className="relative">
             <CommandInput
@@ -184,14 +209,19 @@ export function SnRecordPicker({
               onValueChange={val => setSearchTerm(val)}
               className="pr-10"
             />
-            {loading && (
+            {showLoading && (
               <Loader2 className="absolute right-2 top-1/2 h-4 w-4 animate-spin text-muted-foreground transform -translate-y-1/2" />
             )}
           </div>
           <CommandList ref={listRef} onScroll={handleScroll}>
-            {!loading && records.length === 0 && <CommandEmpty>No records found.</CommandEmpty>}
+            {needsMoreSearchCharacters && (
+              <CommandEmpty>Type at least {minimumSearchCharacters} characters to search.</CommandEmpty>
+            )}
+            {showSearchResults && !loading && visibleRecords.length === 0 && (
+              <CommandEmpty>No records found.</CommandEmpty>
+            )}
             <CommandGroup>
-              {records.map(record => (
+              {visibleRecords.map(record => (
                 <CommandItem key={record.value} value={record.value} onSelect={() => handleSelect(record.value)}>
                   <div className="flex flex-col gap-1">
                     {record.display_value}
@@ -202,7 +232,10 @@ export function SnRecordPicker({
                     </div> */}
                     <div className="flex items-center flex-wrap">
                       {record.displayFields?.map((f, i, arr) => (
-                        <span key={`${record.value}-${i}-${f}`} className="flex items-center text-muted-foreground text-sm">
+                        <span
+                          key={`${record.value}-${i}-${f}`}
+                          className="flex items-center text-muted-foreground text-sm"
+                        >
                           <span>{f}</span>
                           {arr[i + 1] && <Dot />}
                         </span>
@@ -212,7 +245,7 @@ export function SnRecordPicker({
                   <Check className={cn('ml-auto', isSelected(record) ? 'opacity-100' : 'opacity-0')} />
                 </CommandItem>
               ))}
-              {loading && <div className="text-center text-muted-foreground text-sm p-2">Loading...</div>}
+              {showLoading && <div className="text-center text-muted-foreground text-sm p-2">Loading...</div>}
             </CommandGroup>
           </CommandList>
         </Command>
