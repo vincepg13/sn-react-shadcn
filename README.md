@@ -17,12 +17,14 @@ npm install sn-shadcn-kit axios react react-dom sonner tailwindcss zod @tanstack
 ---
 
 ## ⚠️ Import Paths (V2+)
+
 To keep performance optimal in the hosting application, only import what is being used by the relevant path:
 
 - **`sn-shadcn-kit`** – Root exports for core setup utilities like `setAxiosInstance` / `getAxiosInstance`.
 - **`sn-shadcn-kit/amb`** – Functionality for ServiceNow’s _Asynchronous Message Bus_ (e.g., `useRecordWatch`).
 - **`sn-shadcn-kit/hooks`** – Utility React hooks (e.g., debouncing, shortcuts, responsive helpers).
 - **`sn-shadcn-kit/form`** – Form components (relies on heavier deps like CodeMirror and TipTap). ⚡ Consider lazy-loading these in your app.
+- **`sn-shadcn-kit/knowledge`** – Knowledge article viewing components and Knowledge API helpers.
 - **`sn-shadcn-kit/table`** – Components and utilities for working with ServiceNow tables.
 - **`sn-shadcn-kit/user`** – User-related components (avatars, user cards, group cards).
 - **`sn-shadcn-kit/skeleton`** – Placeholder skeletons and loaders.
@@ -71,6 +73,64 @@ if (import.meta.env.MODE === 'development') {
 // Important: inject the configured instance into sn-shadcn-kit
 setAxiosInstance(axios)
 ```
+
+---
+
+## 📚 Knowledge Articles
+
+The knowledge components use ServiceNow's [Knowledge Management REST API](https://www.servicenow.com/docs/r/api-reference/rest-apis/knowledge-api.html). The **Knowledge API (`sn_km_api`) plugin must be active** on the target instance and the current user must be able to read the requested article and its attachments.
+
+`SnKbContentWrapper` fetches an article by either `sys_id` or KB number and renders it with `SnKbContentViewer`. Article HTML is sanitized before rendering, and attachments are downloaded through the Knowledge API.
+
+```tsx
+import { SnKbContentWrapper } from 'sn-shadcn-kit/knowledge'
+
+export function KnowledgeArticle() {
+  return (
+    <SnKbContentWrapper
+      articleId="KB0000011"
+      fields={['author', 'published']}
+      language="en"
+      updateView
+      onLoad={article => console.log(`Loaded ${article.number}`)}
+    />
+  )
+}
+```
+
+`updateView` defaults to `true`. Set it to `false` when displaying an article should not increment its ServiceNow view count. Search results can preserve ServiceNow search attribution by passing both values together:
+
+```tsx
+<SnKbContentWrapper articleId="0b48fd75474321009db4b5b08b9a71c2" search={{ id: searchId, rank: searchRank }} />
+```
+
+### `<SnKbContentWrapper />`
+
+| Prop                      | Type                                   | Description                                                       |
+| ------------------------- | -------------------------------------- | ----------------------------------------------------------------- |
+| `articleId`               | `string`                               | Article `sys_id` or KB number                                     |
+| `fields` **?**            | `string[]`                             | Additional `kb_knowledge` fields to request                       |
+| `language` **?**          | `string`                               | Two-letter language code when loading by KB number                |
+| `search` **?**            | `SnKbSearchOptions`                    | Search ID and rank used for ServiceNow view attribution           |
+| `apiVersion` **?**        | `string`                               | Knowledge API version such as `v1`; the latest is used by default |
+| `updateView` **?**        | `boolean`                              | Increment the article view count; defaults to `true`              |
+| `className` **?**         | `string`                               | Classes applied to the viewer, skeleton, or error state           |
+| `getAttachmentUrl` **?**  | `(attachment, article) => string`      | Override attachment URL construction                              |
+| `onAttachmentClick` **?** | `(attachment, article, event) => void` | Observe or prevent the default attachment action                  |
+| `onLoad` **?**            | `(article) => void`                    | Called after an article loads successfully                        |
+| `onError` **?**           | `(error) => void`                      | Called when article loading fails                                 |
+
+Use `SnKbContentViewer` directly when article data is already available. It accepts a typed `SnKbArticle` through its `article` prop and performs no article fetches.
+
+```tsx
+import { SnKbContentViewer, type SnKbArticle } from 'sn-shadcn-kit/knowledge'
+
+function Article({ article }: { article: SnKbArticle }) {
+  return <SnKbContentViewer article={article} />
+}
+```
+
+The same entry point exports `getKnowledgeArticle` and `getKnowledgeAttachmentUrl` for applications that need custom fetching or layout behavior.
 
 ---
 
@@ -570,11 +630,13 @@ This package exports helpful types for working with ServiceNow data:
 ```ts
 import type { SnRow, SnRowItem } from 'sn-shadcn-kit/table'
 import type { SnUser, SnGroup } from 'sn-shadcn-kit/user'
+import type { SnKbArticle, SnKbAttachment } from 'sn-shadcn-kit/knowledge'
 import type { SnRecordPickerItem, SnRecordPickerList, SnClippyRef } from 'sn-shadcn-kit/standalone'
 ```
 
 - SnRowItem corresponds to a fields value which is simply an object with both its value and display_value. SnRow is a record (array) of SnRowItems.
 - SnUser and SnGroup define the schema for a user and group object respectively
+- SnKbArticle and SnKbAttachment describe Knowledge API article content and downloadable attachments
 - SnRecordPickerItem represents all the data you will get back when selecting a record using the SnRecordPicker component, and SnRecordPickerList is an array of these items
 - SnClippyRef provides the external-save methods for the SnClippy attachment workflow
 

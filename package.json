@@ -1,6 +1,6 @@
 {
   "name": "sn-shadcn-kit",
-  "version": "2.2.3",
+  "version": "2.2.4",
   "type": "module",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
@@ -60,6 +60,10 @@
     "./user": {
       "types": "./dist/user.d.ts",
       "import": "./dist/user.js"
+    },
+    "./knowledge": {
+      "types": "./dist/knowledge.d.ts",
+      "import": "./dist/knowledge.js"
     },
     "./skeleton": {
       "types": "./dist/skeleton.d.ts",

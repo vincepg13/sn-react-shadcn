@@ -1,4 +1,11 @@
 # Change Log
+
+## [V2.2.4]
+
+- Added `SnKbContentViewer` for safely rendering knowledge article content and attachments in a responsive Shadcn card.
+- Added `SnKbContentWrapper` for loading articles through the ServiceNow Knowledge API with language, field, search attribution, API version, and view tracking options.
+- Added the `sn-shadcn-kit/knowledge` entry point with Knowledge API helpers and TypeScript types.
+
 ## [V2.2.3]
 - Fixed duplicate key violation in SnRecordPicker
 - Fixed SnDropzone showing the wrong instruction message depending on the save mode
