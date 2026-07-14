@@ -104,6 +104,7 @@ export function computeEffectiveFieldState(
   }
 
   return {
+    label: override?.label ?? field?.label ?? '',
     readonly,
     mandatory,
     visible,

@@ -2,23 +2,26 @@ import { SnField } from './sn-form-fields/sn-field'
 import { useUiActions } from './hooks/useUiActions'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useUiPolicies } from './hooks/useUiPolicies'
+import { useDotSafeForm } from './hooks/useDotSafeForm'
 import { useGFormBridge } from './hooks/useGFormBridge'
+import { useScriptRunner } from './hooks/useScriptRunner'
 import { useZodFormSchema } from './hooks/useZodFormSchema'
 import { useClientScripts } from './hooks/useClientScripts'
 import { SnAttachment } from '@kit/types/attachment-schema'
+import { FormProvider, FieldErrors } from 'react-hook-form'
 import { SnFormLayout } from './sn-form-layout/sn-form-layout'
 import { SnFormActions } from './sn-form-layout/sn-form-actions'
 import { SnUiPolicyContext } from './contexts/SnUiPolicyContext'
 import { SnUiActionContext } from './contexts/SnUiActionContext'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useFieldUIStateManager } from './hooks/useFieldUiState'
-import { FormProvider, FieldErrors } from 'react-hook-form'
 import { SnFormActivity } from '../sn-ui/sn-activity/sn-form-activity'
 import { SnClientScriptContext } from './contexts/SnClientScriptContext'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { SnFormLifecycleContext } from './contexts/SnFormLifecycleContext'
 import { useNormalizedDefaultValues } from './hooks/useNormalizedDefaultValues'
-
 import {
+  BeforeUiActionHandler,
+  HintDisplayType,
   SnActivity,
   SnClientScript,
   SnFieldPrimitive,
@@ -29,8 +32,6 @@ import {
   SnSection,
   SnUiAction,
 } from '@kit/types/form-schema'
-import { useScriptRunner } from './hooks/useScriptRunner'
-import { useDotSafeForm } from './hooks/useDotSafeForm'
 
 interface SnFormProps {
   table: string
@@ -47,6 +48,8 @@ interface SnFormProps {
   attachments: SnAttachment[] | null
   messages: Record<string, string>
   scratchpad: Record<string, unknown>
+  hintDisplay?: HintDisplayType
+  onBeforeUiAction?: BeforeUiActionHandler
   activity?: SnActivity
   setAttachments: (attachments: SnAttachment[]) => void
   snSubmit(guid: string): void
@@ -69,6 +72,8 @@ export function SnForm({
   activity,
   messages,
   scratchpad,
+  hintDisplay = 'hover',
+  onBeforeUiAction,
   setAttachments,
   snInsert,
   snSubmit,
@@ -168,6 +173,7 @@ export function SnForm({
     snSubmit,
     snInsert,
     setUiActionHandler,
+    onBeforeUiAction,
   })
 
   return (
@@ -224,6 +230,7 @@ export function SnForm({
                             fieldList={fieldList}
                             fieldUIState={fieldUIState}
                             displayValues={displayValuesRef}
+                            hintDisplay={hintDisplay}
                             updateFieldUI={updateFieldUI}
                             table={table}
                             guid={guid}

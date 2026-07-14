@@ -269,6 +269,8 @@ SnFormWrapper props:
 | `guid` | `string` | sys_id of a record |
 | `table` | `string` | Table name the record belongs to |
 | `apis` | `SnFormApis` | Resource path to metadata apis |
+| `hintDisplay` **?** | `'hover' \| 'alert'` | How field hints are displayed. Defaults to `'hover'` |
+| `onBeforeUiAction` **?** | `BeforeUiActionHandler` | Asynchronously approve or cancel UI actions before client scripts and submission |
 | `snInsert` **?** | (guid: string) => void | Optional callback triggered on record insert |
 | `snUpdate` **?** | (guid: string) => void | Optional callback triggered on record insert |
 
@@ -284,6 +286,75 @@ To use the form you must provide it with all necessary metadata, I do this via a
 You can find this code in the sn-scripts folder of the repo: [getFormMetadata.js](./sn-scripts/getFormMetadata.js), [getReferenceDisplay.js](./sn-scripts/getReferenceDisplay.js)
 
 This component will then consume the metadata from the api response and pass it to **`<SnForm/>`** to build the form
+
+### Confirming UI actions in the hosting application
+
+Both `SnFormWrapper` and `SnForm` accept an `onBeforeUiAction` callback. It runs after form validation but before onSubmit client scripts, internal pre-action callbacks, and the native UI action request. Return `true` to continue or `false` to cancel. The callback receives the full UI action, so use `action.action_name` for matching; `action.name` is its display label.
+
+The callback's second argument contains a read-only snapshot of the validated form values at the time the action was selected. Values are keyed by their original ServiceNow field names, including dot-walked names such as `caller_id.email`.
+
+The callback can return a promise while the hosting application waits for confirmation from its own modal:
+
+```tsx
+import { type ComponentProps, useCallback, useRef, useState } from 'react'
+import { SnFormWrapper, type BeforeUiActionHandler } from 'sn-shadcn-kit/form'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
+
+type IncidentFormProps = Pick<ComponentProps<typeof SnFormWrapper>, 'guid' | 'apis'>
+
+export function IncidentForm({ guid, apis }: IncidentFormProps) {
+  const confirmationResolver = useRef<((allowed: boolean) => void) | null>(null)
+  const [pendingActionName, setPendingActionName] = useState<string | null>(null)
+
+  const onBeforeUiAction = useCallback<BeforeUiActionHandler>((action, { values }) => {
+    if (action.action_name !== 'close_incident') return true
+    if (values.state !== '6') return true
+
+    return new Promise<boolean>(resolve => {
+      confirmationResolver.current = resolve
+      setPendingActionName(action.name)
+    })
+  }, [])
+
+  const finishConfirmation = (allowed: boolean) => {
+    const resolve = confirmationResolver.current
+    confirmationResolver.current = null
+    setPendingActionName(null)
+    resolve?.(allowed)
+  }
+
+  return (
+    <>
+      <SnFormWrapper table="incident" guid={guid} apis={apis} onBeforeUiAction={onBeforeUiAction} />
+
+      <Dialog open={pendingActionName !== null} onOpenChange={open => !open && finishConfirmation(false)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Continue with {pendingActionName}?</DialogTitle>
+            <DialogDescription>This action may update the incident.</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => finishConfirmation(false)}>
+              Cancel
+            </Button>
+            <Button onClick={() => finishConfirmation(true)}>Continue</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
+  )
+}
+```
+
+While the promise is pending, the form keeps the selected action in its loading state and disables the other action buttons. The same guard applies to footer buttons and UI actions invoked through `g_form.save()` or `g_form.submit()`. If the handler throws or rejects, the action is canceled and the error is reported through the standard form error handling. The form values are read again after internal pre-action callbacks so any media or attachment updates are still included in the final submission payload.
 
 ![SnFormDemo](/demo/SNDemoForm.png)
 ![SnFormRefs](/demo/SNDemoFormRefs.png)

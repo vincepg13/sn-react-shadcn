@@ -67,10 +67,22 @@ export function createGFormBridge(opts: GFormBridgeOptions) {
   const getDisplayValues = () => displayValuesRef.current ?? ({} as Record<string, string>)
   const getUIState = () => fieldUIStateRef.current ?? ({} as Record<string, FieldUIState>)
 
-  const _getLabel = (fieldName: string) => getFormFields()[fieldName]?.label || ''
+  const _getLabel = (fieldName: string) =>
+    getUIState()[fieldName]?.label ?? getFormFields()[fieldName]?.label ?? ''
   const _setLabel = (fieldName: string, label: string) => {
     const fields = getFormFields()
-    if (fields[fieldName]) fields[fieldName].label = label
+    if (!fields[fieldName]) return
+
+    const nextLabel = String(label)
+    const uiState = getUIState()
+    fieldUIStateRef.current = {
+      ...uiState,
+      [fieldName]: {
+        ...(uiState[fieldName] ?? {}),
+        label: nextLabel,
+      },
+    }
+    updateFieldUI(fieldName, { label: nextLabel })
   }
 
   const getFieldUIState = (fieldName: string): FieldUIState => {

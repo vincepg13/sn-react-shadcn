@@ -2,9 +2,19 @@
 import { FieldErrors, UseFormReturn } from 'react-hook-form'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { buildSubmissionPayload, triggerNativeUIAction } from '@kit/utils/form-client'
-import { SnUiAction, SnFieldsSchema, SnUiResponse, UiActionHandler } from '@kit/types/form-schema'
+import {
+  BeforeUiActionHandler,
+  SnFieldPrimitive,
+  SnFormValues,
+  SnUiAction,
+  SnFieldsSchema,
+  SnUiResponse,
+  UiActionHandler,
+} from '@kit/types/form-schema'
 import { toast } from 'sonner'
 import { htmlToReact } from '@kit/utils/html-parser'
+import { errorHandler } from '@kit/lib/utils'
+import { toSafe } from './useDotSafeForm'
 
 type Callback = () => void | Promise<void>
 
@@ -19,6 +29,7 @@ type UseUiActionsParams<TFormValues extends Record<string, any> = Record<string,
   onValidationError: (errors: FieldErrors) => void
   runOnSubmitClientScripts: (action: string) => boolean
   setUiActionHandler: (fn?: UiActionHandler) => void
+  onBeforeUiAction?: BeforeUiActionHandler
   snInsert?: (guid: string) => void
 }
 
@@ -36,6 +47,7 @@ export function useUiActions<TFormValues extends Record<string, any> = Record<st
     snSubmit,
     snInsert,
     setUiActionHandler,
+    onBeforeUiAction,
   } = params
 
   //lifecycle callback registries
@@ -66,6 +78,23 @@ export function useUiActions<TFormValues extends Record<string, any> = Record<st
       if (loadingActionId) return
       setLoadingActionId(action.sys_id)
       try {
+        if (onBeforeUiAction) {
+          try {
+            const internalValues = form.getValues() as Record<string, SnFieldPrimitive | null | undefined>
+            const values = Object.freeze(
+              Object.fromEntries(
+                Object.values(formFields).map(field => [field.name, internalValues[toSafe(field.name)]])
+              )
+            ) as SnFormValues
+
+            const isAllowed = await onBeforeUiAction(action, { values })
+            if (!isAllowed) return
+          } catch (error) {
+            errorHandler(error, 'Failed to run before UI action handler')
+            return
+          }
+        }
+
         const canProceed = runOnSubmitClientScripts(action.action_name)
         if (canProceed === false) return
 
@@ -88,7 +117,7 @@ export function useUiActions<TFormValues extends Record<string, any> = Record<st
         //console.log('UI Action Response:', uiRes)
 
         if (uiRes.$$uiNotification) {
-          uiRes.$$uiNotification.forEach((msg) => {
+          uiRes.$$uiNotification.forEach(msg => {
             if (msg.type === 'error') toast.error(htmlToReact(msg.message))
             else if (msg.type === 'success') toast.success(htmlToReact(msg.message))
             else if (msg.type === 'info') toast.info(htmlToReact(msg.message))
@@ -113,6 +142,7 @@ export function useUiActions<TFormValues extends Record<string, any> = Record<st
       table,
       guid,
       attachmentGuid,
+      onBeforeUiAction,
       snInsert,
       snSubmit,
     ]

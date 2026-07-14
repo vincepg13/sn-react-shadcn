@@ -205,8 +205,7 @@ export function SnFieldReference({
               className={cn(
                 'w-full min-w-[200px] flex items-center flex-wrap gap-1 border rounded-md px-3 py-2 text-sm shadow-sm text-left',
                 'bg-background text-foreground',
-                !disabled &&
-                  'cursor-pointer hover:bg-accent hover:text-accent-foreground pr-4',
+                !disabled && 'cursor-pointer hover:bg-accent hover:text-accent-foreground pr-4',
                 disabled && 'cursor-not-allowed opacity-50'
               )}
             >
@@ -243,7 +242,7 @@ export function SnFieldReference({
               variant="outline"
               role="combobox"
               aria-expanded={open}
-              className="w-full justify-between pr-8 min-h-[40px] overflow-hidden"
+              className="w-full justify-between overflow-hidden pr-8"
             >
               <span className="truncate text-left">
                 {selectedRecords[0]?.display_value || <span className="text-muted-foreground">{field.label}</span>}

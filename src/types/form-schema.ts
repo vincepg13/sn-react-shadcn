@@ -35,7 +35,11 @@ const _uiResponse = z.object({
 export type SnUiAction = z.infer<typeof _action>
 export type SnUiResponse = z.infer<typeof _uiResponse>
 export type UiActionHandler = (a: SnUiAction) => Promise<void>
-
+export type SnFormValues = Readonly<Record<string, SnFieldPrimitive | null | undefined>>
+export type BeforeUiActionContext = {
+  values: SnFormValues
+}
+export type BeforeUiActionHandler = (action: SnUiAction, context: BeforeUiActionContext) => boolean | Promise<boolean>
 
 //Client Scripts
 const _clientScript = z.object({
@@ -213,6 +217,8 @@ export type EntryFields = {
   label: string
 }
 //General Form and Fields
+export type HintDisplayType = 'hover' | 'alert'
+
 const _currencyCode = z.object({
   code: z.string(),
   symbol: z.string(),
@@ -247,6 +253,7 @@ const _formConfig = z.object({
 const _formField = z.object({
   name: z.string(),
   label: z.string(),
+  hint: z.string().optional(),
   value: z.string(),
   displayValue: z.string(),
   mandatory: z.boolean(),
@@ -350,6 +357,7 @@ export type FieldDecoration = {
 }
 
 export type FieldUIState = {
+  label?: string
   mandatory: boolean
   visible: boolean
   readonly: boolean

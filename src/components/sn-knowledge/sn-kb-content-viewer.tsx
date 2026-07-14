@@ -67,7 +67,7 @@ export function SnKbContentViewer({
 
   return (
     <Card className={cn('sn-kb-content-viewer w-full gap-0 overflow-hidden rounded-md py-0', className)}>
-      <CardHeader className="gap-3 border-b px-4 py-5 sm:px-6">
+      <CardHeader className="gap-0 border-b px-4 py-5 sm:px-6">
         <div className="flex min-w-0 flex-col-reverse items-start justify-between gap-3 sm:flex-row sm:items-center">
           <CardTitle className="min-w-0 text-xl leading-tight sm:text-2xl">
             {article.short_description.trim() || 'Knowledge article'}

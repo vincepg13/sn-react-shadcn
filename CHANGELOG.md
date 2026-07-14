@@ -5,6 +5,9 @@
 - Added `SnKbContentViewer` for safely rendering knowledge article content and attachments in a responsive Shadcn card.
 - Added `SnKbContentWrapper` for loading articles through the ServiceNow Knowledge API with language, field, search attribution, API version, and view tracking options.
 - Added the `sn-shadcn-kit/knowledge` entry point with Knowledge API helpers and TypeScript types.
+- Added support for form field `hint` metadata. Hints use a question-mark hover card by default and can be shown as persistent muted alerts with the `hintDisplay="alert"` prop on `SnForm` or `SnFormWrapper`.
+- Aligned single-reference field controls with the default height of other form inputs and selects.
+- Added an asynchronous `onBeforeUiAction` guard to `SnForm` and `SnFormWrapper`, allowing hosting applications to inspect a read-only snapshot of current form values and confirm or cancel button and `g_form` UI actions before client scripts or submission run.
 
 ## [V2.2.3]
 - Fixed duplicate key violation in SnRecordPicker
