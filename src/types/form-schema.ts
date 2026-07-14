@@ -36,10 +36,6 @@ export type SnUiAction = z.infer<typeof _action>
 export type SnUiResponse = z.infer<typeof _uiResponse>
 export type UiActionHandler = (a: SnUiAction) => Promise<void>
 export type SnFormValues = Readonly<Record<string, SnFieldPrimitive | null | undefined>>
-export type BeforeUiActionContext = {
-  values: SnFormValues
-}
-export type BeforeUiActionHandler = (action: SnUiAction, context: BeforeUiActionContext) => boolean | Promise<boolean>
 
 //Client Scripts
 const _clientScript = z.object({

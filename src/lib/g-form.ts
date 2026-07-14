@@ -12,13 +12,15 @@ import {
   FieldMessageType,
   SnDecorationIcon,
   FieldUIState,
+  SnFieldPrimitive,
   SnFieldsSchema,
   SnSection,
   SnUiAction,
   UiActionHandler,
 } from '../types/form-schema'
+import type { SnGForm, SnGFormReference, UiActionClientGForm } from '../types/g-form'
 
-const refCache = new Map<string, any>()
+const refCache = new Map<string, SnGFormReference>()
 let _actionName = ''
 
 export function setActionName(name: string) {
@@ -27,10 +29,14 @@ export function setActionName(name: string) {
 
 interface GFormBridgeOptions {
   formFieldsRef: RefObject<SnFieldsSchema>
-  getValues: () => any
-  setValue: (field: string, value: string, opts?: any) => void
+  getValues: () => Record<string, SnFieldPrimitive | null | undefined>
+  setValue: (
+    field: string,
+    value: SnFieldPrimitive,
+    opts?: { shouldDirty?: boolean; shouldTouch?: boolean; shouldValidate?: boolean }
+  ) => void
   updateFieldUI: (field: string, updates: Partial<FieldUIState>) => void
-  fieldChangeHandlers: RefObject<Record<string, (value: any) => void>>
+  fieldChangeHandlers: RefObject<Record<string, (value: SnFieldPrimitive) => void>>
   sectionsRef: RefObject<SnSection[]>
   displayValuesRef: RefObject<Record<string, string>>
   fieldUIStateRef: RefObject<Record<string, FieldUIState>>
@@ -42,7 +48,7 @@ interface GFormBridgeOptions {
   uiActionHandlerRef: RefObject<UiActionHandler | undefined>
 }
 
-export function createGFormBridge(opts: GFormBridgeOptions) {
+export function createGFormBridge(opts: GFormBridgeOptions): SnGForm {
   const {
     formFieldsRef,
     getValues,
@@ -133,7 +139,7 @@ export function createGFormBridge(opts: GFormBridgeOptions) {
     updateFieldUI(fieldName, { decoration })
   }
 
-  const base: Record<string, any> = {
+  const base: SnGForm & Record<string, any> = {
     // Meta
     getViewName: () => view,
     getTableName: () => table,
@@ -163,9 +169,9 @@ export function createGFormBridge(opts: GFormBridgeOptions) {
     },
     getBooleanValue: (field: string) => {
       const v = base.getValue(field)
-      return v === true || v === 'true'
+      return v === 'true'
     },
-    setValue: (fieldName: string, value: any, displayValue: any) => {
+    setValue: (fieldName: string, value: SnFieldPrimitive, displayValue?: string) => {
       if (displayValue) {
         const localField = getFormFields()[fieldName]
         if (localField) {
@@ -317,7 +323,7 @@ export function createGFormBridge(opts: GFormBridgeOptions) {
     },
 
     // Data fetching helpers
-    async getReference(fieldName: string, cb: (obj: any) => void) {
+    async getReference(fieldName: string, cb: (obj: SnGFormReference | null) => void) {
       try {
         const field = getFormFields()[fieldName]
         if (!field || field.type !== 'reference') return cb(null)
@@ -409,5 +415,13 @@ export function createGFormBridge(opts: GFormBridgeOptions) {
     },
   })
 
-  return proxy as any
+  return proxy
+}
+
+export function createUiActionClientGForm(gForm: SnGForm): UiActionClientGForm {
+  const { save: _save, submit: _submit, ...restrictedGForm } = gForm
+  void _save
+  void _submit
+
+  return Object.freeze(restrictedGForm)
 }

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { SnFieldSchema, SnFieldsSchema } from '@kit/types/form-schema'
 import { FieldUIState } from '../../../types/form-schema'
 import { computeEffectiveFieldState } from '@kit/utils/form-client'
@@ -34,6 +34,9 @@ export function useEffectiveFieldStates({ fields, uiState }: MultiFieldProps): R
 
 export function useFieldUIStateManager(formFields: SnFieldsSchema) {
   const [fieldUIState, setFieldUIState] = useState<Record<string, FieldUIState>>({})
+  const pendingRevisionRef = useRef(0)
+  const committedRevisionRef = useRef(0)
+  const commitWaitersRef = useRef<Array<{ revision: number; resolve: () => void }>>([])
 
   const enforceJournalVisibility = useCallback((nextState: Record<string, FieldUIState>) => {
     const journals = Object.values(formFields).filter(f => f.type === 'journal_input')
@@ -63,6 +66,7 @@ export function useFieldUIStateManager(formFields: SnFieldsSchema) {
   }, [formFields])
 
   const updateFieldUI = useCallback((field: string, updates: Partial<FieldUIState>) => {
+    pendingRevisionRef.current += 1
     setFieldUIState(prev => {
       const originalMandatory = prev[field]?.mandatory ?? formFields[field]?.mandatory
       let next = {
@@ -87,10 +91,37 @@ export function useFieldUIStateManager(formFields: SnFieldsSchema) {
   }, [formFields, enforceJournalVisibility])
 
   useEffect(() => {
+    committedRevisionRef.current = pendingRevisionRef.current
+
+    const pendingWaiters = commitWaitersRef.current
+    commitWaitersRef.current = pendingWaiters.filter(waiter => {
+      if (waiter.revision > committedRevisionRef.current) return true
+      waiter.resolve()
+      return false
+    })
+  }, [fieldUIState])
+
+  useEffect(
+    () => () => {
+      commitWaitersRef.current.forEach(waiter => waiter.resolve())
+      commitWaitersRef.current = []
+    },
+    []
+  )
+
+  const waitForFieldUIUpdates = useCallback(() => {
+    const revision = pendingRevisionRef.current
+    if (committedRevisionRef.current >= revision) return Promise.resolve()
+
+    return new Promise<void>(resolve => {
+      commitWaitersRef.current.push({ revision, resolve })
+    })
+  }, [])
+
+  useEffect(() => {
     // When formFields change, re-enforce once against the current state
     setFieldUIState(prev => enforceJournalVisibility(prev))
   }, [formFields, enforceJournalVisibility])
 
-  return { fieldUIState, updateFieldUI }
+  return { fieldUIState, updateFieldUI, waitForFieldUIUpdates }
 }
-

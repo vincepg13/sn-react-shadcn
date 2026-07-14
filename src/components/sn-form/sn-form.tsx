@@ -20,7 +20,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { SnFormLifecycleContext } from './contexts/SnFormLifecycleContext'
 import { useNormalizedDefaultValues } from './hooks/useNormalizedDefaultValues'
 import {
-  BeforeUiActionHandler,
   HintDisplayType,
   SnActivity,
   SnClientScript,
@@ -32,6 +31,7 @@ import {
   SnSection,
   SnUiAction,
 } from '@kit/types/form-schema'
+import type { BeforeUiActionSubmitCallback, UiActionClientCallback } from '@kit/types/g-form'
 
 interface SnFormProps {
   table: string
@@ -49,7 +49,8 @@ interface SnFormProps {
   messages: Record<string, string>
   scratchpad: Record<string, unknown>
   hintDisplay?: HintDisplayType
-  onBeforeUiAction?: BeforeUiActionHandler
+  uiActionClientCallback?: UiActionClientCallback
+  beforeUiActionSubmitCallback?: BeforeUiActionSubmitCallback
   activity?: SnActivity
   setAttachments: (attachments: SnAttachment[]) => void
   snSubmit(guid: string): void
@@ -73,7 +74,8 @@ export function SnForm({
   messages,
   scratchpad,
   hintDisplay = 'hover',
-  onBeforeUiAction,
+  uiActionClientCallback,
+  beforeUiActionSubmitCallback,
   setAttachments,
   snInsert,
   snSubmit,
@@ -84,7 +86,7 @@ export function SnForm({
   const fieldList = useMemo(() => Object.keys(formFields), [formFields])
 
   const [overrideTab, setOverrideTab] = useState<string | undefined>()
-  const { fieldUIState, updateFieldUI } = useFieldUIStateManager(formFields)
+  const { fieldUIState, updateFieldUI, waitForFieldUIUpdates } = useFieldUIStateManager(formFields)
   const { defaultValues, buildNormalizedValues } = useNormalizedDefaultValues(formFields)
   const schema = useZodFormSchema(formFields, fieldUIState)
 
@@ -163,6 +165,7 @@ export function SnForm({
 
   const { handleUiAction, loadingActionId, registerPreUiActionCallback, registerPostUiActionCallback } = useUiActions({
     form,
+    gForm,
     onValidationError,
     formFields,
     uiActions,
@@ -170,10 +173,12 @@ export function SnForm({
     guid,
     attachmentGuid,
     runOnSubmitClientScripts,
+    waitForFieldUIUpdates,
     snSubmit,
     snInsert,
     setUiActionHandler,
-    onBeforeUiAction,
+    uiActionClientCallback,
+    beforeUiActionSubmitCallback,
   })
 
   return (

@@ -1,9 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { FieldErrors, UseFormReturn } from 'react-hook-form'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { buildSubmissionPayload, triggerNativeUIAction } from '@kit/utils/form-client'
 import {
-  BeforeUiActionHandler,
   SnFieldPrimitive,
   SnFormValues,
   SnUiAction,
@@ -11,9 +10,15 @@ import {
   SnUiResponse,
   UiActionHandler,
 } from '@kit/types/form-schema'
+import type {
+  BeforeUiActionSubmitCallback,
+  SnGForm,
+  UiActionClientCallback,
+} from '@kit/types/g-form'
 import { toast } from 'sonner'
 import { htmlToReact } from '@kit/utils/html-parser'
 import { errorHandler } from '@kit/lib/utils'
+import { createUiActionClientGForm } from '@kit/lib/g-form'
 import { toSafe } from './useDotSafeForm'
 
 type Callback = () => void | Promise<void>
@@ -25,11 +30,14 @@ type UseUiActionsParams<TFormValues extends Record<string, any> = Record<string,
   uiActions: SnUiAction[]
   formFields: SnFieldsSchema
   form: UseFormReturn<TFormValues>
+  gForm: SnGForm
   snSubmit: (guid: string) => void
   onValidationError: (errors: FieldErrors) => void
   runOnSubmitClientScripts: (action: string) => boolean
+  waitForFieldUIUpdates: () => Promise<void>
   setUiActionHandler: (fn?: UiActionHandler) => void
-  onBeforeUiAction?: BeforeUiActionHandler
+  uiActionClientCallback?: UiActionClientCallback
+  beforeUiActionSubmitCallback?: BeforeUiActionSubmitCallback
   snInsert?: (guid: string) => void
 }
 
@@ -38,21 +46,25 @@ export function useUiActions<TFormValues extends Record<string, any> = Record<st
 ) {
   const {
     form,
+    gForm,
     onValidationError,
     formFields,
     table,
     guid,
     attachmentGuid,
     runOnSubmitClientScripts,
+    waitForFieldUIUpdates,
     snSubmit,
     snInsert,
     setUiActionHandler,
-    onBeforeUiAction,
+    uiActionClientCallback,
+    beforeUiActionSubmitCallback,
   } = params
 
   //lifecycle callback registries
   const preCallbacks = useRef<Map<string, Callback>>(new Map())
   const postCallbacks = useRef<Map<string, Callback>>(new Map())
+  const uiActionClientGForm = useMemo(() => createUiActionClientGForm(gForm), [gForm])
 
   const registerPreUiActionCallback = useCallback((key: string, cb: Callback) => {
     preCallbacks.current.set(key, cb)
@@ -71,26 +83,66 @@ export function useUiActions<TFormValues extends Record<string, any> = Record<st
 
   //loading state (prevent spam submissions)
   const [loadingActionId, setLoadingActionId] = useState<string | null>(null)
+  const loadingActionIdRef = useRef<string | null>(null)
 
-  //Raw UI Action Submission Handler (no validation)
+  const validateForm = useCallback(async () => {
+    let isValid = false
+
+    await form.handleSubmit(
+      () => {
+        isValid = true
+      },
+      errors => onValidationError(errors)
+    )()
+
+    return isValid
+  }, [form, onValidationError])
+
+  const getValuesSnapshot = useCallback(() => {
+    const internalValues = form.getValues() as Record<string, SnFieldPrimitive | null | undefined>
+    return Object.freeze(
+      Object.fromEntries(
+        Object.values(formFields).map(field => {
+          const value = internalValues[toSafe(field.name)]
+          return [field.name, Array.isArray(value) ? Object.freeze([...value]) : value]
+        })
+      )
+    ) as SnFormValues
+  }, [form, formFields])
+
+  // UI Action guard, validation, and submission pipeline
   const runUiActionRaw = useCallback(
     async (action: SnUiAction) => {
-      if (loadingActionId) return
+      if (loadingActionIdRef.current) return
+      loadingActionIdRef.current = action.sys_id
       setLoadingActionId(action.sys_id)
       try {
-        if (onBeforeUiAction) {
+        if (uiActionClientCallback) {
           try {
-            const internalValues = form.getValues() as Record<string, SnFieldPrimitive | null | undefined>
-            const values = Object.freeze(
-              Object.fromEntries(
-                Object.values(formFields).map(field => [field.name, internalValues[toSafe(field.name)]])
-              )
-            ) as SnFormValues
-
-            const isAllowed = await onBeforeUiAction(action, { values })
+            const isAllowed = await uiActionClientCallback(action, {
+              values: getValuesSnapshot(),
+              gForm: uiActionClientGForm,
+            })
             if (!isAllowed) return
           } catch (error) {
-            errorHandler(error, 'Failed to run before UI action handler')
+            errorHandler(error, 'Failed to run UI action client callback')
+            return
+          }
+        }
+
+        await waitForFieldUIUpdates()
+
+        const isValid = await validateForm()
+        if (!isValid) return
+
+        if (beforeUiActionSubmitCallback) {
+          try {
+            const isAllowed = await beforeUiActionSubmitCallback(action, {
+              values: getValuesSnapshot(),
+            })
+            if (!isAllowed) return
+          } catch (error) {
+            errorHandler(error, 'Failed to run before UI action submit callback')
             return
           }
         }
@@ -130,11 +182,11 @@ export function useUiActions<TFormValues extends Record<string, any> = Record<st
         if (snInsert && uiRes?.isInsert) return snInsert(uiRes.sys_id)
         snSubmit(guid)
       } finally {
+        loadingActionIdRef.current = null
         setLoadingActionId(null)
       }
     },
     [
-      loadingActionId,
       runOnSubmitClientScripts,
       runCallbacks,
       form,
@@ -142,20 +194,23 @@ export function useUiActions<TFormValues extends Record<string, any> = Record<st
       table,
       guid,
       attachmentGuid,
-      onBeforeUiAction,
+      uiActionClientCallback,
+      beforeUiActionSubmitCallback,
+      uiActionClientGForm,
+      getValuesSnapshot,
+      waitForFieldUIUpdates,
+      validateForm,
       snInsert,
       snSubmit,
     ]
   )
 
-  //Validated Submission Handler
+  // Shared entry point for buttons and g_form save/submit calls
   const handleUiAction = useCallback(
     async (action: SnUiAction) => {
-      await form.handleSubmit(async () => {
-        await runUiActionRaw(action)
-      }, onValidationError)()
+      await runUiActionRaw(action)
     },
-    [form, runUiActionRaw, onValidationError]
+    [runUiActionRaw]
   )
 
   //Bind handler to gForm bridge

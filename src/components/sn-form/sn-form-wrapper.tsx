@@ -8,15 +8,17 @@ import { mutateEsVersion } from '@kit/utils/script-editor'
 import { ESLintConfigAny } from '@kit/exports/script.index'
 import { SnAttachment } from '@kit/types/attachment-schema'
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert'
-import { BeforeUiActionHandler, HintDisplayType, SnActivity, SnFormApis, SnSection } from '@kit/types/form-schema'
+import { HintDisplayType, SnActivity, SnFormApis, SnSection } from '@kit/types/form-schema'
 import { SnUiAction, SnFieldsSchema, SnFormConfig, SnClientScript, SnPolicy } from '@kit/types/form-schema'
+import type { BeforeUiActionSubmitCallback, UiActionClientCallback } from '@kit/types/g-form'
 
 interface SnFormProps {
   table: string
   guid: string
   apis: SnFormApis
   hintDisplay?: HintDisplayType
-  onBeforeUiAction?: BeforeUiActionHandler
+  uiActionClientCallback?: UiActionClientCallback
+  beforeUiActionSubmitCallback?: BeforeUiActionSubmitCallback
   enableAttachments?: boolean
   esLintConfig?: ESLintConfigAny
   snMount?(): void
@@ -39,7 +41,8 @@ export function SnFormWrapper({
   guid,
   esLintConfig,
   hintDisplay = 'hover',
-  onBeforeUiAction,
+  uiActionClientCallback,
+  beforeUiActionSubmitCallback,
   enableAttachments = true,
   snMount,
   snInsert,
@@ -173,7 +176,8 @@ export function SnFormWrapper({
           snInsert={snInsert}
           snSubmit={handleSubmit}
           hintDisplay={hintDisplay}
-          onBeforeUiAction={onBeforeUiAction}
+          uiActionClientCallback={uiActionClientCallback}
+          beforeUiActionSubmitCallback={beforeUiActionSubmitCallback}
         ></SnForm>
       )}
     </>

@@ -7,7 +7,7 @@
 - Added the `sn-shadcn-kit/knowledge` entry point with Knowledge API helpers and TypeScript types.
 - Added support for form field `hint` metadata. Hints use a question-mark hover card by default and can be shown as persistent muted alerts with the `hintDisplay="alert"` prop on `SnForm` or `SnFormWrapper`.
 - Aligned single-reference field controls with the default height of other form inputs and selects.
-- Added an asynchronous `onBeforeUiAction` guard to `SnForm` and `SnFormWrapper`, allowing hosting applications to inspect a read-only snapshot of current form values and confirm or cancel button and `g_form` UI actions before client scripts or submission run.
+- Added two asynchronous UI action callbacks to `SnForm` and `SnFormWrapper`. `uiActionClientCallback` runs before validation with a restricted `gForm` façade for host-side mutations, while `beforeUiActionSubmitCallback` runs after validation with a read-only values snapshot for confirmation-only flows.
 
 ## [V2.2.3]
 - Fixed duplicate key violation in SnRecordPicker

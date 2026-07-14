@@ -270,7 +270,8 @@ SnFormWrapper props:
 | `table` | `string` | Table name the record belongs to |
 | `apis` | `SnFormApis` | Resource path to metadata apis |
 | `hintDisplay` **?** | `'hover' \| 'alert'` | How field hints are displayed. Defaults to `'hover'` |
-| `onBeforeUiAction` **?** | `BeforeUiActionHandler` | Asynchronously approve or cancel UI actions before client scripts and submission |
+| `uiActionClientCallback` **?** | `UiActionClientCallback` | Update form state or cancel an action before validation |
+| `beforeUiActionSubmitCallback` **?** | `BeforeUiActionSubmitCallback` | Confirm or cancel a validated action before client scripts and submission |
 | `snInsert` **?** | (guid: string) => void | Optional callback triggered on record insert |
 | `snUpdate` **?** | (guid: string) => void | Optional callback triggered on record insert |
 
@@ -287,17 +288,24 @@ You can find this code in the sn-scripts folder of the repo: [getFormMetadata.js
 
 This component will then consume the metadata from the api response and pass it to **`<SnForm/>`** to build the form
 
-### Confirming UI actions in the hosting application
+### Intercepting UI actions in the hosting application
 
-Both `SnFormWrapper` and `SnForm` accept an `onBeforeUiAction` callback. It runs after form validation but before onSubmit client scripts, internal pre-action callbacks, and the native UI action request. Return `true` to continue or `false` to cancel. The callback receives the full UI action, so use `action.action_name` for matching; `action.name` is its display label.
+Both `SnFormWrapper` and `SnForm` accept two cancellable UI action callbacks:
 
-The callback's second argument contains a read-only snapshot of the validated form values at the time the action was selected. Values are keyed by their original ServiceNow field names, including dot-walked names such as `caller_id.email`.
+- `uiActionClientCallback` runs before validation. It receives an action-time values snapshot and a live, restricted `gForm` façade, making it suitable for recreating client-side UI action logic such as setting a state that triggers onChange scripts.
+- `beforeUiActionSubmitCallback` runs only after the form passes validation. It receives the validated values snapshot without `gForm`, making it suitable for confirmation dialogs that should not mutate the form.
 
-The callback can return a promise while the hosting application waits for confirmation from its own modal:
+Both callbacks receive the full UI action and return `true` to continue or `false` to cancel. Use `action.action_name` for matching; `action.name` is its display label. The execution order is client callback, field UI-state commit, validation, pre-submit callback, onSubmit client scripts, internal pre-action callbacks, and native submission.
+
+Snapshots are read-only and keyed by their original ServiceNow field names, including dot-walked names such as `caller_id.email`. The client callback snapshot does not change after `gForm.setValue()`, while `gForm.getValue()` immediately reflects the current form state. Its `gForm` has no `save` or `submit` methods, preventing recursive action submission.
 
 ```tsx
 import { type ComponentProps, useCallback, useRef, useState } from 'react'
-import { SnFormWrapper, type BeforeUiActionHandler } from 'sn-shadcn-kit/form'
+import {
+  SnFormWrapper,
+  type BeforeUiActionSubmitCallback,
+  type UiActionClientCallback,
+} from 'sn-shadcn-kit/form'
 import {
   Dialog,
   DialogContent,
@@ -314,7 +322,15 @@ export function IncidentForm({ guid, apis }: IncidentFormProps) {
   const confirmationResolver = useRef<((allowed: boolean) => void) | null>(null)
   const [pendingActionName, setPendingActionName] = useState<string | null>(null)
 
-  const onBeforeUiAction = useCallback<BeforeUiActionHandler>((action, { values }) => {
+  const uiActionClientCallback = useCallback<UiActionClientCallback>((action, { gForm }) => {
+    if (action.action_name === 'save_as_draft') {
+      gForm.setValue('state', 'draft')
+    }
+
+    return true
+  }, [])
+
+  const beforeUiActionSubmitCallback = useCallback<BeforeUiActionSubmitCallback>(async (action, { values }) => {
     if (action.action_name !== 'close_incident') return true
     if (values.state !== '6') return true
 
@@ -333,7 +349,13 @@ export function IncidentForm({ guid, apis }: IncidentFormProps) {
 
   return (
     <>
-      <SnFormWrapper table="incident" guid={guid} apis={apis} onBeforeUiAction={onBeforeUiAction} />
+      <SnFormWrapper
+        table="incident"
+        guid={guid}
+        apis={apis}
+        uiActionClientCallback={uiActionClientCallback}
+        beforeUiActionSubmitCallback={beforeUiActionSubmitCallback}
+      />
 
       <Dialog open={pendingActionName !== null} onOpenChange={open => !open && finishConfirmation(false)}>
         <DialogContent>
@@ -354,7 +376,7 @@ export function IncidentForm({ guid, apis }: IncidentFormProps) {
 }
 ```
 
-While the promise is pending, the form keeps the selected action in its loading state and disables the other action buttons. The same guard applies to footer buttons and UI actions invoked through `g_form.save()` or `g_form.submit()`. If the handler throws or rejects, the action is canceled and the error is reported through the standard form error handling. The form values are read again after internal pre-action callbacks so any media or attachment updates are still included in the final submission payload.
+While either callback promise is pending, the form keeps the selected action in its loading state and disables the other action buttons. Both callbacks apply to footer buttons and actions invoked through `g_form.save()` or `g_form.submit()`. If a callback throws or rejects, the action is canceled and the error is reported through the standard form error handling. Client callback mutations are not rolled back if either callback later cancels. Final form values are read again after internal pre-action callbacks so client script, media, and attachment updates are included in the submission payload.
 
 ![SnFormDemo](/demo/SNDemoForm.png)
 ![SnFormRefs](/demo/SNDemoFormRefs.png)
