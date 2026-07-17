@@ -10,11 +10,7 @@ import {
   SnUiResponse,
   UiActionHandler,
 } from '@kit/types/form-schema'
-import type {
-  BeforeUiActionSubmitCallback,
-  SnGForm,
-  UiActionClientCallback,
-} from '@kit/types/g-form'
+import type { BeforeUiActionSubmitCallback, SnGForm, UiActionClientCallback } from '@kit/types/g-form'
 import { toast } from 'sonner'
 import { htmlToReact } from '@kit/utils/html-parser'
 import { errorHandler } from '@kit/lib/utils'
@@ -130,15 +126,17 @@ export function useUiActions<TFormValues extends Record<string, any> = Record<st
           }
         }
 
-        await waitForFieldUIUpdates()
-
-        const isValid = await validateForm()
-        if (!isValid) return
+        if (action.action_name !== 'sysverb_delete') {
+          await waitForFieldUIUpdates()
+          const isValid = await validateForm()
+          if (!isValid) return
+        }
 
         if (beforeUiActionSubmitCallback) {
           try {
             const isAllowed = await beforeUiActionSubmitCallback(action, {
               values: getValuesSnapshot(),
+              gForm: uiActionClientGForm,
             })
             if (!isAllowed) return
           } catch (error) {

@@ -270,6 +270,7 @@ SnFormWrapper props:
 | `table` | `string` | Table name the record belongs to |
 | `apis` | `SnFormApis` | Resource path to metadata apis |
 | `hintDisplay` **?** | `'hover' \| 'alert'` | How field hints are displayed. Defaults to `'hover'` |
+| `textareaThreshold` **?** | `number` | Minimum field `max_length` rendered as a textarea. Defaults to `200` |
 | `uiActionClientCallback` **?** | `UiActionClientCallback` | Update form state or cancel an action before validation |
 | `beforeUiActionSubmitCallback` **?** | `BeforeUiActionSubmitCallback` | Confirm or cancel a validated action before client scripts and submission |
 | `snInsert` **?** | (guid: string) => void | Optional callback triggered on record insert |

@@ -48,6 +48,7 @@ interface SnFieldProps {
   table: string
   guid: string
   hintDisplay?: HintDisplayType
+  textareaThreshold?: number
   updateFieldUI: (field: string, updates: Partial<FieldUIState>) => void
 }
 
@@ -72,6 +73,7 @@ function SnFieldComponent({
   table,
   displayValues,
   hintDisplay = 'alert',
+  textareaThreshold = 200,
 }: SnFieldProps) {
   const form = useFormContext() as ReturnType<typeof useDotSafeForm>
   const { control, getValues, setValue, watch, trigger, toSafe } = form
@@ -156,7 +158,8 @@ function SnFieldComponent({
             handleFocus,
             getValues(),
             watch,
-            formLabelRightRef
+            formLabelRightRef,
+            textareaThreshold
           )
 
           if (!input) return <></>
@@ -234,7 +237,8 @@ function renderFieldComponent(
   handleFocus: () => void,
   formValues: Record<string, string>,
   watch: ReturnType<typeof useFormContext>['watch'],
-  adornmentRef: RefObject<HTMLDivElement | null>
+  adornmentRef: RefObject<HTMLDivElement | null>,
+  textareaThreshold: number
 ): ReactNode {
   const depField = field.dependentField || ''
   const depValue = depField ? watch(depField) : undefined
@@ -256,7 +260,7 @@ function renderFieldComponent(
     case 'journal_input':
       if (field.type.startsWith('password'))
         return <SnFieldInput rhfField={rhfField} onChange={handleChange} onFocus={handleFocus} type="password" />
-      if (field.type == 'journal_input' || (field.max_length && field.max_length >= 200)) {
+      if (field.type == 'journal_input' || (field.max_length && field.max_length > textareaThreshold)) {
         return <SnFieldTextarea field={field} rhfField={rhfField} onChange={handleChange} onFocus={handleFocus} />
       }
       return (

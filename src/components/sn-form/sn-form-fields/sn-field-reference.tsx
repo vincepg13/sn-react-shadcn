@@ -3,6 +3,7 @@ import { Button } from '@kit/components/ui/button'
 import { useDebounce } from '../hooks/useDebounce'
 import { SnFieldSchema } from '@kit/types/form-schema'
 import { useFieldUI } from '../contexts/FieldUIContext'
+import { toSafe } from '../hooks/useDotSafeForm'
 import { Check, ChevronsUpDown, Loader2, X } from 'lucide-react'
 import { useClientScripts } from '../contexts/SnClientScriptContext'
 import { useReferenceSelected } from '../hooks/references/useReferenceSelected'
@@ -82,7 +83,7 @@ export function SnFieldReference({
   }, [attributes?.ref_ac_columns, ed.searchField])
 
   const { value: rawValue, display: rawDisplay } = useReferenceSelected({
-    value: formValues[field.name],
+    value: formValues[toSafe(field.name)] ?? formValues[field.name],
     displayValue: field.displayValue,
   })
 

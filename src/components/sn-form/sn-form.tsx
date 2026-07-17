@@ -2,7 +2,7 @@ import { SnField } from './sn-form-fields/sn-field'
 import { useUiActions } from './hooks/useUiActions'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useUiPolicies } from './hooks/useUiPolicies'
-import { useDotSafeForm } from './hooks/useDotSafeForm'
+import { toRaw, useDotSafeForm } from './hooks/useDotSafeForm'
 import { useGFormBridge } from './hooks/useGFormBridge'
 import { useScriptRunner } from './hooks/useScriptRunner'
 import { useZodFormSchema } from './hooks/useZodFormSchema'
@@ -49,6 +49,7 @@ interface SnFormProps {
   messages: Record<string, string>
   scratchpad: Record<string, unknown>
   hintDisplay?: HintDisplayType
+  textareaThreshold?: number
   uiActionClientCallback?: UiActionClientCallback
   beforeUiActionSubmitCallback?: BeforeUiActionSubmitCallback
   activity?: SnActivity
@@ -74,6 +75,7 @@ export function SnForm({
   messages,
   scratchpad,
   hintDisplay = 'hover',
+  textareaThreshold = 200,
   uiActionClientCallback,
   beforeUiActionSubmitCallback,
   setAttachments,
@@ -158,7 +160,7 @@ export function SnForm({
 
   //UI Action handling and Lifecycle Callbacks
   const onValidationError = useCallback((errors: FieldErrors) => {
-    const firstErrorField = Object.keys(errors)[0]
+    const firstErrorField = toRaw(Object.keys(errors)[0])
     const tabKey = fieldTabMapRef.current[firstErrorField]
     if (tabKey) setOverrideTab(tabKey)
   }, [])
@@ -236,6 +238,7 @@ export function SnForm({
                             fieldUIState={fieldUIState}
                             displayValues={displayValuesRef}
                             hintDisplay={hintDisplay}
+                            textareaThreshold={textareaThreshold}
                             updateFieldUI={updateFieldUI}
                             table={table}
                             guid={guid}

@@ -3,7 +3,6 @@ export { SnForm } from '../components/sn-form/sn-form'
 export { SnFormWrapper } from '../components/sn-form/sn-form-wrapper'
 export type {
   BeforeUiActionSubmitCallback,
-  BeforeUiActionSubmitContext,
   SnGForm,
   UiActionClientCallback,
   UiActionClientContext,

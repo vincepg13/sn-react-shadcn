@@ -91,6 +91,9 @@ export function computeEffectiveFieldState(
   override: Partial<FieldUIState> | undefined
 ): FieldUIState {
   const sysRo = !!field?.sys_readonly
+  const hasValue = Array.isArray(fieldVal)
+    ? fieldVal.length > 0
+    : fieldVal !== undefined && fieldVal !== null && fieldVal !== ''
   let readonly = (override?.readonly ?? field?.readonly ?? false) as boolean
   let mandatory = (override?.mandatory ?? field?.mandatory ?? false) as boolean
   let visible = (override?.visible ?? field?.visible ?? true) as boolean
@@ -98,9 +101,9 @@ export function computeEffectiveFieldState(
   if (sysRo) {
     readonly = true
     mandatory = false
-  } else if (mandatory) {
-    readonly = false;
-    visible = !fieldVal || visible
+  } else if (mandatory && !hasValue) {
+    readonly = false
+    visible = true
   }
 
   return {

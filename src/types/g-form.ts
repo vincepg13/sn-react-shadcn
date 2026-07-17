@@ -77,11 +77,4 @@ export type UiActionClientCallback = (
   context: UiActionClientContext
 ) => boolean | Promise<boolean>
 
-export type BeforeUiActionSubmitContext = {
-  values: SnFormValues
-}
-
-export type BeforeUiActionSubmitCallback = (
-  action: SnUiAction,
-  context: BeforeUiActionSubmitContext
-) => boolean | Promise<boolean>
+export type BeforeUiActionSubmitCallback = UiActionClientCallback

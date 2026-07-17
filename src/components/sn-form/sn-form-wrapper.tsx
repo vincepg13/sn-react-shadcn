@@ -17,6 +17,7 @@ interface SnFormProps {
   guid: string
   apis: SnFormApis
   hintDisplay?: HintDisplayType
+  textareaThreshold?: number
   uiActionClientCallback?: UiActionClientCallback
   beforeUiActionSubmitCallback?: BeforeUiActionSubmitCallback
   enableAttachments?: boolean
@@ -41,6 +42,7 @@ export function SnFormWrapper({
   guid,
   esLintConfig,
   hintDisplay = 'hover',
+  textareaThreshold = 200,
   uiActionClientCallback,
   beforeUiActionSubmitCallback,
   enableAttachments = true,
@@ -176,6 +178,7 @@ export function SnFormWrapper({
           snInsert={snInsert}
           snSubmit={handleSubmit}
           hintDisplay={hintDisplay}
+          textareaThreshold={textareaThreshold}
           uiActionClientCallback={uiActionClientCallback}
           beforeUiActionSubmitCallback={beforeUiActionSubmitCallback}
         ></SnForm>
