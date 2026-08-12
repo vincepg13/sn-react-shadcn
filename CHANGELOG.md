@@ -1,5 +1,8 @@
 # Change Log
 
+## [V2.2.5]
+- Added a React-owned `UiActionController` for controlling UI action visibility and disabled state. Useful when applying client side validation on a ui action click (e.g. setting related fields to mandatory), and making sure the user can only proceed with the initial action that triggered the validation.
+
 ## [V2.2.4]
 
 - Added opt-in reference preview buttons to `SnForm` and `SnFormWrapper` through field-name keyed `referenceFieldCallbacks`.

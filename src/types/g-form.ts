@@ -67,9 +67,17 @@ export interface SnGForm {
 
 export type UiActionClientGForm = Omit<SnGForm, 'save' | 'submit'>
 
+export type UiActionController = {
+  showOnly(actionName: string): void
+  setVisible(actionName: string, visible: boolean): void
+  setDisabled(actionName: string, disabled: boolean): void
+  reset(): void
+}
+
 export type UiActionClientContext = {
   values: SnFormValues
   gForm: UiActionClientGForm
+  uiActions: UiActionController
 }
 
 export type UiActionClientCallback = (

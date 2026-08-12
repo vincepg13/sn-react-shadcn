@@ -168,7 +168,15 @@ export function SnForm({
     if (tabKey) setOverrideTab(tabKey)
   }, [])
 
-  const { handleUiAction, loadingActionId, registerPreUiActionCallback, registerPostUiActionCallback } = useUiActions({
+  const {
+    handleUiAction,
+    loadingActionId,
+    visibleUiActions,
+    uiActionController,
+    isActionDisabled,
+    registerPreUiActionCallback,
+    registerPostUiActionCallback,
+  } = useUiActions({
     form,
     gForm,
     onValidationError,
@@ -199,7 +207,16 @@ export function SnForm({
         }}
       >
         <SnUiPolicyContext.Provider value={{ formConfig, runUiPolicies, runUiPoliciesForField }}>
-          <SnUiActionContext.Provider value={{ handleUiAction, uiActions, loadingActionId }}>
+          <SnUiActionContext.Provider
+            value={{
+              handleUiAction,
+              uiActions,
+              visibleUiActions,
+              uiActionController,
+              isActionDisabled,
+              loadingActionId,
+            }}
+          >
             <FormProvider {...form}>
               <div className="w-full">
                 <form className="w-full">

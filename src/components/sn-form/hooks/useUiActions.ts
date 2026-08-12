@@ -10,7 +10,12 @@ import {
   SnUiResponse,
   UiActionHandler,
 } from '@kit/types/form-schema'
-import type { BeforeUiActionSubmitCallback, SnGForm, UiActionClientCallback } from '@kit/types/g-form'
+import type {
+  BeforeUiActionSubmitCallback,
+  SnGForm,
+  UiActionClientCallback,
+  UiActionController,
+} from '@kit/types/g-form'
 import { toast } from 'sonner'
 import { htmlToReact } from '@kit/utils/html-parser'
 import { errorHandler } from '@kit/lib/utils'
@@ -45,6 +50,7 @@ export function useUiActions<TFormValues extends Record<string, any> = Record<st
     gForm,
     onValidationError,
     formFields,
+    uiActions,
     table,
     guid,
     attachmentGuid,
@@ -62,6 +68,57 @@ export function useUiActions<TFormValues extends Record<string, any> = Record<st
   const postCallbacks = useRef<Map<string, Callback>>(new Map())
   const uiActionClientGForm = useMemo(() => createUiActionClientGForm(gForm), [gForm])
 
+  const [visibilityOverrides, setVisibilityOverrides] = useState<Record<string, boolean>>({})
+  const [disabledOverrides, setDisabledOverrides] = useState<Record<string, boolean>>({})
+  const uiActionsRef = useRef(uiActions)
+  uiActionsRef.current = uiActions
+
+  //loading state (prevent spam submissions)
+  const [loadingActionId, setLoadingActionId] = useState<string | null>(null)
+  const loadingActionIdRef = useRef<string | null>(null)
+
+  const uiActionController = useMemo<UiActionController>(() => {
+    const showOnly = (actionName: string) => {
+      setVisibilityOverrides(
+        Object.fromEntries(uiActionsRef.current.map(action => [action.action_name, action.action_name === actionName]))
+      )
+    }
+
+    const setVisible = (actionName: string, visible: boolean) => {
+      setVisibilityOverrides(current => ({ ...current, [actionName]: visible }))
+    }
+
+    const setDisabled = (actionName: string, disabled: boolean) => {
+      setDisabledOverrides(current => ({ ...current, [actionName]: disabled }))
+    }
+
+    const reset = () => {
+      setVisibilityOverrides({})
+      setDisabledOverrides({})
+    }
+
+    return { showOnly, setVisible, setDisabled, reset }
+  }, [])
+
+  const visibleUiActions = useMemo(
+    () => uiActions.filter(action => visibilityOverrides[action.action_name] !== false),
+    [uiActions, visibilityOverrides]
+  )
+
+  const isActionDisabled = useCallback(
+    (actionName: string) => !!loadingActionId || disabledOverrides[actionName] === true,
+    [disabledOverrides, loadingActionId]
+  )
+
+  const uiActionIdentity = useMemo(
+    () => uiActions.map(action => `${action.sys_id}:${action.action_name}`).join('\u0000'),
+    [uiActions]
+  )
+
+  useEffect(() => {
+    uiActionController.reset()
+  }, [table, guid, formFields, uiActionIdentity, uiActionController])
+
   const registerPreUiActionCallback = useCallback((key: string, cb: Callback) => {
     preCallbacks.current.set(key, cb)
   }, [])
@@ -76,10 +133,6 @@ export function useUiActions<TFormValues extends Record<string, any> = Record<st
     for (const fn of fns) await fn()
     map.clear()
   }, [])
-
-  //loading state (prevent spam submissions)
-  const [loadingActionId, setLoadingActionId] = useState<string | null>(null)
-  const loadingActionIdRef = useRef<string | null>(null)
 
   const validateForm = useCallback(async () => {
     let isValid = false
@@ -109,7 +162,7 @@ export function useUiActions<TFormValues extends Record<string, any> = Record<st
   // UI Action guard, validation, and submission pipeline
   const runUiActionRaw = useCallback(
     async (action: SnUiAction) => {
-      if (loadingActionIdRef.current) return
+      if (loadingActionIdRef.current || isActionDisabled(action.action_name)) return
       loadingActionIdRef.current = action.sys_id
       setLoadingActionId(action.sys_id)
       try {
@@ -118,6 +171,7 @@ export function useUiActions<TFormValues extends Record<string, any> = Record<st
             const isAllowed = await uiActionClientCallback(action, {
               values: getValuesSnapshot(),
               gForm: uiActionClientGForm,
+              uiActions: uiActionController,
             })
             if (!isAllowed) return
           } catch (error) {
@@ -137,6 +191,7 @@ export function useUiActions<TFormValues extends Record<string, any> = Record<st
             const isAllowed = await beforeUiActionSubmitCallback(action, {
               values: getValuesSnapshot(),
               gForm: uiActionClientGForm,
+              uiActions: uiActionController,
             })
             if (!isAllowed) return
           } catch (error) {
@@ -195,11 +250,13 @@ export function useUiActions<TFormValues extends Record<string, any> = Record<st
       uiActionClientCallback,
       beforeUiActionSubmitCallback,
       uiActionClientGForm,
+      uiActionController,
       getValuesSnapshot,
       waitForFieldUIUpdates,
       validateForm,
       snInsert,
       snSubmit,
+      isActionDisabled,
     ]
   )
 
@@ -219,6 +276,9 @@ export function useUiActions<TFormValues extends Record<string, any> = Record<st
   return {
     handleUiAction,
     loadingActionId,
+    visibleUiActions,
+    uiActionController,
+    isActionDisabled,
     isBusy: !!loadingActionId,
     registerPreUiActionCallback,
     registerPostUiActionCallback,

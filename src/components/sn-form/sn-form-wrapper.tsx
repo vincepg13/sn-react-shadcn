@@ -55,6 +55,7 @@ export function SnFormWrapper({
   const fetchIdRef = useRef(0)
   const [view, setView] = useState('')
   const [subCount, setSubCount] = useState(0)
+  const [formVersion, setFormVersion] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [uiActions, setUiActions] = useState<SnUiAction[]>([])
@@ -100,6 +101,7 @@ export function SnFormWrapper({
           const reactConfig = form.react_config as SnFormConfig
           mutateEsVersion(reactConfig.es_version, esLintConfig)
           setFormConfig(reactConfig)
+          setFormVersion(version => version + 1)
           snMount?.()
         }
       } catch (error: unknown) {
@@ -161,6 +163,7 @@ export function SnFormWrapper({
       )}
       {!error && (
         <SnForm
+          key={formVersion}
           table={table}
           guid={guid}
           view={view}

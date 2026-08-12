@@ -26,7 +26,7 @@ const getVariant = (action: SnUiAction) => {
 
 export function SnFormActions({ table, attachments, attachmentGuid, setAttachments }: SnFormActionsProps) {
   const { formConfig } = useFormLifecycle()
-  const { handleUiAction, uiActions, loadingActionId } = useUiActions()
+  const { handleUiAction, visibleUiActions, loadingActionId, isActionDisabled } = useUiActions()
 
   const canWrite = formConfig.security.canWrite ?? false
   const canDelete = formConfig.security.canDelete ?? false
@@ -44,14 +44,14 @@ export function SnFormActions({ table, attachments, attachmentGuid, setAttachmen
           setAttachments={setAttachments}
         />
       )}
-      {uiActions
+      {visibleUiActions
         .filter(a => a.is_button)
         .map(action => (
           <Button
             key={action.sys_id}
             type="button"
             onClick={() => handleUiAction(action)}
-            disabled={!!loadingActionId}
+            disabled={isActionDisabled(action.action_name)}
             variant={getVariant(action)}
           >
             {loadingActionId === action.sys_id ? 'Processing...' : action.name}

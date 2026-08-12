@@ -1,9 +1,13 @@
 import { createContext, useContext } from 'react'
 import { SnUiAction } from '@kit/types/form-schema'
+import type { UiActionController } from '@kit/types/g-form'
 
 type UiActionContextType = {
   handleUiAction: (action: SnUiAction) => Promise<void>
   uiActions: SnUiAction[]
+  visibleUiActions: SnUiAction[]
+  uiActionController: UiActionController
+  isActionDisabled: (actionName: string) => boolean
   loadingActionId: string | null
 }
 

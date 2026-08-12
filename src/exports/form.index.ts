@@ -7,5 +7,6 @@ export type {
   UiActionClientCallback,
   UiActionClientContext,
   UiActionClientGForm,
+  UiActionController,
 } from '../types/g-form'
 export type { SnFormValues, SnReferenceFieldCallback, SnReferenceFieldCallbacks } from '../types/form-schema'

@@ -306,12 +306,14 @@ This component will then consume the metadata from the api response and pass it 
 
 Both `SnFormWrapper` and `SnForm` accept two cancellable UI action callbacks:
 
-- `uiActionClientCallback` runs before validation. It receives an action-time values snapshot and a live, restricted `gForm` façade, making it suitable for recreating client-side UI action logic such as setting a state that triggers onChange scripts.
-- `beforeUiActionSubmitCallback` runs only after the form passes validation. It receives the validated values snapshot without `gForm`, making it suitable for confirmation dialogs that should not mutate the form.
+- `uiActionClientCallback` runs before validation. It receives an action-time values snapshot, a live restricted `gForm` façade, and a React-owned `uiActions` controller, making it suitable for recreating client-side UI action logic such as setting a state that triggers onChange scripts or limiting the available actions.
+- `beforeUiActionSubmitCallback` runs only after the form passes validation. It receives the validated values snapshot, the restricted `gForm`, and the same `uiActions` controller, making it suitable for confirmation dialogs that should not mutate the form.
 
 Both callbacks receive the full UI action and return `true` to continue or `false` to cancel. Use `action.action_name` for matching; `action.name` is its display label. The execution order is client callback, field UI-state commit, validation, pre-submit callback, onSubmit client scripts, internal pre-action callbacks, and native submission.
 
 Snapshots are read-only and keyed by their original ServiceNow field names, including dot-walked names such as `caller_id.email`. The client callback snapshot does not change after `gForm.setValue()`, while `gForm.getValue()` immediately reflects the current form state. Its `gForm` has no `save` or `submit` methods, preventing recursive action submission.
+
+The `uiActions` controller exposes `showOnly(actionName)`, `setVisible(actionName, visible)`, `setDisabled(actionName, disabled)`, and `reset()`. Overrides are applied consistently to rendered action buttons and are cleared when the form loads another record or is refreshed.
 
 ```tsx
 import { type ComponentProps, useCallback, useRef, useState } from 'react'
@@ -331,12 +333,17 @@ import {
 import { Button } from '@/components/ui/button'
 
 type IncidentFormProps = Pick<ComponentProps<typeof SnFormWrapper>, 'guid' | 'apis'>
+const VALIDATION_UI_ACTIONS = new Set(['close_incident'])
 
 export function IncidentForm({ guid, apis }: IncidentFormProps) {
   const confirmationResolver = useRef<((allowed: boolean) => void) | null>(null)
   const [pendingActionName, setPendingActionName] = useState<string | null>(null)
 
-  const uiActionClientCallback = useCallback<UiActionClientCallback>((action, { gForm }) => {
+  const uiActionClientCallback = useCallback<UiActionClientCallback>((action, { gForm, uiActions }) => {
+    if (VALIDATION_UI_ACTIONS.has(action.action_name)) {
+      uiActions.showOnly(action.action_name)
+    }
+
     if (action.action_name === 'save_as_draft') {
       gForm.setValue('state', 'draft')
     }
