@@ -28,6 +28,7 @@ import {
   SnFormApis,
   SnFormConfig,
   SnPolicy,
+  SnReferenceFieldCallbacks,
   SnSection,
   SnUiAction,
 } from '@kit/types/form-schema'
@@ -52,6 +53,7 @@ interface SnFormProps {
   textareaThreshold?: number
   uiActionClientCallback?: UiActionClientCallback
   beforeUiActionSubmitCallback?: BeforeUiActionSubmitCallback
+  referenceFieldCallbacks?: SnReferenceFieldCallbacks
   activity?: SnActivity
   setAttachments: (attachments: SnAttachment[]) => void
   snSubmit(guid: string): void
@@ -78,6 +80,7 @@ export function SnForm({
   textareaThreshold = 200,
   uiActionClientCallback,
   beforeUiActionSubmitCallback,
+  referenceFieldCallbacks,
   setAttachments,
   snInsert,
   snSubmit,
@@ -239,6 +242,7 @@ export function SnForm({
                             displayValues={displayValuesRef}
                             hintDisplay={hintDisplay}
                             textareaThreshold={textareaThreshold}
+                            referenceFieldCallbacks={referenceFieldCallbacks}
                             updateFieldUI={updateFieldUI}
                             table={table}
                             guid={guid}

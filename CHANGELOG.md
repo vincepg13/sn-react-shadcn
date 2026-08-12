@@ -2,6 +2,7 @@
 
 ## [V2.2.4]
 
+- Added opt-in reference preview buttons to `SnForm` and `SnFormWrapper` through field-name keyed `referenceFieldCallbacks`.
 - Added `SnKbContentViewer` for safely rendering knowledge article content and attachments in a responsive Shadcn card.
 - Added `SnKbContentWrapper` for loading articles through the ServiceNow Knowledge API with language, field, search attribution, API version, and view tracking options.
 - Added the `sn-shadcn-kit/knowledge` entry point with Knowledge API helpers and TypeScript types.

@@ -121,6 +121,8 @@ export const pickerList = z.record(z.string(), _recordPickerItem)
 export type SnRecordPickerItem = z.infer<typeof _recordPickerItem>
 export type SnRecordPickerList = SnRecordPickerItem[]
 export type SnRefFieldEd = z.infer<typeof _ed>
+export type SnReferenceFieldCallback = (value: string, displayValue: string) => void | Promise<void>
+export type SnReferenceFieldCallbacks = Record<string, SnReferenceFieldCallback>
 
 //Activity Formatter
 const _entrySchema = z.object({

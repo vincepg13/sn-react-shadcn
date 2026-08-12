@@ -8,7 +8,7 @@ import { mutateEsVersion } from '@kit/utils/script-editor'
 import { ESLintConfigAny } from '@kit/exports/script.index'
 import { SnAttachment } from '@kit/types/attachment-schema'
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert'
-import { HintDisplayType, SnActivity, SnFormApis, SnSection } from '@kit/types/form-schema'
+import { HintDisplayType, SnActivity, SnFormApis, SnReferenceFieldCallbacks, SnSection } from '@kit/types/form-schema'
 import { SnUiAction, SnFieldsSchema, SnFormConfig, SnClientScript, SnPolicy } from '@kit/types/form-schema'
 import type { BeforeUiActionSubmitCallback, UiActionClientCallback } from '@kit/types/g-form'
 
@@ -20,6 +20,7 @@ interface SnFormProps {
   textareaThreshold?: number
   uiActionClientCallback?: UiActionClientCallback
   beforeUiActionSubmitCallback?: BeforeUiActionSubmitCallback
+  referenceFieldCallbacks?: SnReferenceFieldCallbacks
   enableAttachments?: boolean
   esLintConfig?: ESLintConfigAny
   snMount?(): void
@@ -45,6 +46,7 @@ export function SnFormWrapper({
   textareaThreshold = 200,
   uiActionClientCallback,
   beforeUiActionSubmitCallback,
+  referenceFieldCallbacks,
   enableAttachments = true,
   snMount,
   snInsert,
@@ -181,6 +183,7 @@ export function SnFormWrapper({
           textareaThreshold={textareaThreshold}
           uiActionClientCallback={uiActionClientCallback}
           beforeUiActionSubmitCallback={beforeUiActionSubmitCallback}
+          referenceFieldCallbacks={referenceFieldCallbacks}
         ></SnForm>
       )}
     </>

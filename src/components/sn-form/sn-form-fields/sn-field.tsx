@@ -38,6 +38,7 @@ import {
   SnCurrencyField,
   FieldMessage,
   HintDisplayType,
+  SnReferenceFieldCallbacks,
 } from '../../../types/form-schema'
 
 interface SnFieldProps {
@@ -49,6 +50,7 @@ interface SnFieldProps {
   guid: string
   hintDisplay?: HintDisplayType
   textareaThreshold?: number
+  referenceFieldCallbacks?: SnReferenceFieldCallbacks
   updateFieldUI: (field: string, updates: Partial<FieldUIState>) => void
 }
 
@@ -74,6 +76,7 @@ function SnFieldComponent({
   displayValues,
   hintDisplay = 'alert',
   textareaThreshold = 200,
+  referenceFieldCallbacks,
 }: SnFieldProps) {
   const form = useFormContext() as ReturnType<typeof useDotSafeForm>
   const { control, getValues, setValue, watch, trigger, toSafe } = form
@@ -159,7 +162,8 @@ function SnFieldComponent({
             getValues(),
             watch,
             formLabelRightRef,
-            textareaThreshold
+            textareaThreshold,
+            referenceFieldCallbacks
           )
 
           if (!input) return <></>
@@ -238,7 +242,8 @@ function renderFieldComponent(
   formValues: Record<string, string>,
   watch: ReturnType<typeof useFormContext>['watch'],
   adornmentRef: RefObject<HTMLDivElement | null>,
-  textareaThreshold: number
+  textareaThreshold: number,
+  referenceFieldCallbacks?: SnReferenceFieldCallbacks
 ): ReactNode {
   const depField = field.dependentField || ''
   const depValue = depField ? watch(depField) : undefined
@@ -295,6 +300,7 @@ function renderFieldComponent(
           formValues={formValues}
           onChange={handleSelect}
           dependentValue={depValue}
+          onViewReference={guid !== '' && guid !== '-1' ? referenceFieldCallbacks?.[field.name] : undefined}
         />
       )
     }

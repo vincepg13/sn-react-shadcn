@@ -273,8 +273,21 @@ SnFormWrapper props:
 | `textareaThreshold` **?** | `number` | Minimum field `max_length` rendered as a textarea. Defaults to `200` |
 | `uiActionClientCallback` **?** | `UiActionClientCallback` | Update form state or cancel an action before validation |
 | `beforeUiActionSubmitCallback` **?** | `BeforeUiActionSubmitCallback` | Confirm or cancel a validated action before client scripts and submission |
+| `referenceFieldCallbacks` **?** | `SnReferenceFieldCallbacks` | Field-name callbacks for previewing populated single-reference fields on existing records |
 | `snInsert` **?** | (guid: string) => void | Optional callback triggered on record insert |
 | `snUpdate` **?** | (guid: string) => void | Optional callback triggered on record insert |
+
+Reference preview buttons are opt-in. Provide a callback keyed by field name; when the form is displaying an existing record and that single-reference field has a value, the callback receives its current value and display value:
+
+```tsx
+<SnFormWrapper
+  referenceFieldCallbacks={{
+    requested_for: (value, displayValue) => {
+      openUserRecord(value, displayValue)
+    },
+  }}
+/>
+```
 
 To use the form you must provide it with all necessary metadata, I do this via a scripted API calls in the global scope. The apis property should be an object which stores these endpoints e.g:
 

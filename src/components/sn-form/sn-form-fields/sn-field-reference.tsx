@@ -2,9 +2,11 @@ import { cn } from '@kit/lib/utils'
 import { Button } from '@kit/components/ui/button'
 import { useDebounce } from '../hooks/useDebounce'
 import { SnFieldSchema } from '@kit/types/form-schema'
+import type { SnReferenceFieldCallback } from '@kit/types/form-schema'
 import { useFieldUI } from '../contexts/FieldUIContext'
 import { toSafe } from '../hooks/useDotSafeForm'
-import { Check, ChevronsUpDown, Loader2, X } from 'lucide-react'
+import { Check, ChevronsUpDown, Info, Loader2, X } from 'lucide-react'
+import { SnSimpleTooltip } from '@kit/exports/ui.index'
 import { useClientScripts } from '../contexts/SnClientScriptContext'
 import { useReferenceSelected } from '../hooks/references/useReferenceSelected'
 import { Popover, PopoverContent, PopoverTrigger } from '@kit/components/ui/popover'
@@ -22,6 +24,7 @@ export interface SnReferenceProps {
   dependentValue?: string
   forceRefQuery?: boolean
   closeOnSelectMultiple?: boolean
+  onViewReference?: SnReferenceFieldCallback
 }
 
 export function SnFieldReference({
@@ -32,6 +35,7 @@ export function SnFieldReference({
   dependentValue,
   forceRefQuery = false,
   closeOnSelectMultiple = true,
+  onViewReference,
   onChange,
 }: SnReferenceProps) {
   const { readonly } = useFieldUI()
@@ -192,110 +196,141 @@ export function SnFieldReference({
     previousDependentValue.current = dependentValue
   }, [dependentValue, handleClear])
 
+  const viewedValue = !isMultiple ? rawValue[0] : undefined
+  const viewedDisplayValue = viewedValue ? rawDisplay[0] || viewedValue : undefined
+  const handleViewReference = useCallback(() => {
+    if (!onViewReference || !viewedValue || !viewedDisplayValue) return
+
+    void Promise.resolve()
+      .then(() => onViewReference(viewedValue, viewedDisplayValue))
+      .catch(error => {
+        console.error(`Failed to view reference field ${field.name}:`, error)
+      })
+  }, [field.name, onViewReference, viewedDisplayValue, viewedValue])
+
   return (
-    <Popover open={disabled ? false : open} onOpenChange={next => !disabled && setOpen(next)}>
-      <div className={cn('relative w-full overflow-hidden', disabled && 'cursor-not-allowed')} aria-disabled={disabled}>
-        <PopoverTrigger asChild className="overflow-hidden">
-          {isMultiple ? (
-            <button
-              type="button"
-              role="combobox"
-              aria-expanded={open}
-              disabled={disabled}
-              onClick={() => setOpen(v => !v)}
-              className={cn(
-                'w-full min-w-[200px] flex items-center flex-wrap gap-1 border rounded-md px-3 py-2 text-sm shadow-sm text-left',
-                'bg-background text-foreground',
-                !disabled && 'cursor-pointer hover:bg-accent hover:text-accent-foreground pr-4',
-                disabled && 'cursor-not-allowed opacity-50'
-              )}
-            >
-              {selectedRecords.length === 0 && <span className="text-muted-foreground">{field.label}</span>}
-              {selectedRecords.map(record => (
-                <div
-                  key={record.value}
-                  className="flex items-center gap-1 rounded bg-muted px-2 py-0.5 text-sm text-muted-foreground max-w-full"
-                >
-                  <span className="truncate max-w-[150px]">{record.display_value}</span>
-                  {!disabled && (
-                    <X
-                      className="h-3 w-3 cursor-pointer hover:text-destructive"
-                      onClick={e => {
-                        e.stopPropagation()
-                        const updated = selectedRecords.filter(r => r.value !== record.value)
-                        const newDisplay = updated.map(r => r.display_value).join(',')
+    <div className="flex w-full items-center gap-2">
+      <Popover open={disabled ? false : open} onOpenChange={next => !disabled && setOpen(next)}>
+        <div
+          className={cn('relative w-full overflow-hidden', disabled && 'cursor-not-allowed')}
+          aria-disabled={disabled}
+        >
+          <PopoverTrigger asChild className="overflow-hidden">
+            {isMultiple ? (
+              <button
+                type="button"
+                role="combobox"
+                aria-expanded={open}
+                disabled={disabled}
+                onClick={() => setOpen(v => !v)}
+                className={cn(
+                  'w-full min-w-[200px] flex items-center flex-wrap gap-1 border rounded-md px-3 py-2 text-sm shadow-sm text-left',
+                  'bg-background text-foreground',
+                  !disabled && 'cursor-pointer hover:bg-accent hover:text-accent-foreground pr-4',
+                  disabled && 'cursor-not-allowed opacity-50'
+                )}
+              >
+                {selectedRecords.length === 0 && <span className="text-muted-foreground">{field.label}</span>}
+                {selectedRecords.map(record => (
+                  <div
+                    key={record.value}
+                    className="flex items-center gap-1 rounded bg-muted px-2 py-0.5 text-sm text-muted-foreground max-w-full"
+                  >
+                    <span className="truncate max-w-[150px]">{record.display_value}</span>
+                    {!disabled && (
+                      <X
+                        className="h-3 w-3 cursor-pointer hover:text-destructive"
+                        onClick={e => {
+                          e.stopPropagation()
+                          const updated = selectedRecords.filter(r => r.value !== record.value)
+                          const newDisplay = updated.map(r => r.display_value).join(',')
 
-                        setSelectedRecords(updated)
-                        onChange(
-                          updated.map(r => r.value),
-                          newDisplay
-                        )
-                        field.displayValue = newDisplay
-                      }}
-                    />
-                  )}
-                </div>
-              ))}
-            </button>
-          ) : (
-            <Button
-              disabled={disabled}
-              variant="outline"
-              role="combobox"
-              aria-expanded={open}
-              className="w-full justify-between overflow-hidden pr-8"
-            >
-              <span className="truncate text-left">
-                {selectedRecords[0]?.display_value || <span className="text-muted-foreground">{field.label}</span>}
-              </span>
-              <ChevronsUpDown className="h-4 w-4 opacity-50 ml-2" />
-            </Button>
-          )}
-        </PopoverTrigger>
-
-        {selectedRecords.length > 0 && !disabled && (
-          <X
-            className={cn(
-              'absolute top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground cursor-pointer',
-              isMultiple ? 'right-4' : 'right-8'
-            )}
-            onClick={handleClear}
-          />
-        )}
-      </div>
-
-      {!disabled && (
-        <PopoverContent className="w-full max-w-[500px] p-0">
-          <Command shouldFilter={false}>
-            <div className="relative">
-              <CommandInput placeholder="Search..." value={search} onValueChange={setSearch} className="pr-10" />
-              {loading && (
-                <Loader2 className="absolute right-2 top-1/2 h-4 w-4 animate-spin text-muted-foreground transform -translate-y-1/2" />
-              )}
-            </div>
-            <CommandList ref={listRef} onScroll={handleScroll}>
-              {!loading && records.length === 0 && <CommandEmpty>No results.</CommandEmpty>}
-              <CommandGroup>
-                {records.map(r => (
-                  <CommandItem key={r.value} value={r.value} onSelect={() => handleSelect(r.value)}>
-                    <div className="flex flex-col gap-1">
-                      {r.display_value}
-                      {r.primary && <span className="text-muted-foreground text-sm">{r.primary}</span>}
-                      {r.secondary && <span className="text-muted-foreground text-sm">{r.secondary}</span>}
-                    </div>
-                    <Check
-                      className={cn('ml-auto', {
-                        'opacity-100': isSelected(r.value),
-                        'opacity-0': !isSelected(r.value),
-                      })}
-                    />
-                  </CommandItem>
+                          setSelectedRecords(updated)
+                          onChange(
+                            updated.map(r => r.value),
+                            newDisplay
+                          )
+                          field.displayValue = newDisplay
+                        }}
+                      />
+                    )}
+                  </div>
                 ))}
-              </CommandGroup>
-            </CommandList>
-          </Command>
-        </PopoverContent>
+              </button>
+            ) : (
+              <Button
+                disabled={disabled}
+                variant="outline"
+                role="combobox"
+                aria-expanded={open}
+                className="w-full justify-between overflow-hidden pr-8"
+              >
+                <span className="truncate text-left">
+                  {selectedRecords[0]?.display_value || <span className="text-muted-foreground">{field.label}</span>}
+                </span>
+                <ChevronsUpDown className="h-4 w-4 opacity-50 ml-2" />
+              </Button>
+            )}
+          </PopoverTrigger>
+
+          {selectedRecords.length > 0 && !disabled && (
+            <X
+              className={cn(
+                'absolute top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground cursor-pointer',
+                isMultiple ? 'right-4' : 'right-8'
+              )}
+              onClick={handleClear}
+            />
+          )}
+        </div>
+
+        {!disabled && (
+          <PopoverContent className="w-full max-w-[500px] p-0">
+            <Command shouldFilter={false}>
+              <div className="relative">
+                <CommandInput placeholder="Search..." value={search} onValueChange={setSearch} className="pr-10" />
+                {loading && (
+                  <Loader2 className="absolute right-2 top-1/2 h-4 w-4 animate-spin text-muted-foreground transform -translate-y-1/2" />
+                )}
+              </div>
+              <CommandList ref={listRef} onScroll={handleScroll}>
+                {!loading && records.length === 0 && <CommandEmpty>No results.</CommandEmpty>}
+                <CommandGroup>
+                  {records.map(r => (
+                    <CommandItem key={r.value} value={r.value} onSelect={() => handleSelect(r.value)}>
+                      <div className="flex flex-col gap-1">
+                        {r.display_value}
+                        {r.primary && <span className="text-muted-foreground text-sm">{r.primary}</span>}
+                        {r.secondary && <span className="text-muted-foreground text-sm">{r.secondary}</span>}
+                      </div>
+                      <Check
+                        className={cn('ml-auto', {
+                          'opacity-100': isSelected(r.value),
+                          'opacity-0': !isSelected(r.value),
+                        })}
+                      />
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              </CommandList>
+            </Command>
+          </PopoverContent>
+        )}
+      </Popover>
+
+      {onViewReference && viewedValue && (
+        <SnSimpleTooltip content="View this record">
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            aria-label={`View ${field.label} record`}
+            onClick={handleViewReference}
+          >
+            <Info aria-hidden />
+          </Button>
+        </SnSimpleTooltip>
       )}
-    </Popover>
+    </div>
   )
 }

@@ -8,4 +8,4 @@ export type {
   UiActionClientContext,
   UiActionClientGForm,
 } from '../types/g-form'
-export type { SnFormValues } from '../types/form-schema'
+export type { SnFormValues, SnReferenceFieldCallback, SnReferenceFieldCallbacks } from '../types/form-schema'
