@@ -2,23 +2,25 @@ import { SnField } from './sn-form-fields/sn-field'
 import { useUiActions } from './hooks/useUiActions'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useUiPolicies } from './hooks/useUiPolicies'
+import { toRaw, useDotSafeForm } from './hooks/useDotSafeForm'
 import { useGFormBridge } from './hooks/useGFormBridge'
+import { useScriptRunner } from './hooks/useScriptRunner'
 import { useZodFormSchema } from './hooks/useZodFormSchema'
 import { useClientScripts } from './hooks/useClientScripts'
 import { SnAttachment } from '@kit/types/attachment-schema'
+import { FormProvider, FieldErrors } from 'react-hook-form'
 import { SnFormLayout } from './sn-form-layout/sn-form-layout'
 import { SnFormActions } from './sn-form-layout/sn-form-actions'
 import { SnUiPolicyContext } from './contexts/SnUiPolicyContext'
 import { SnUiActionContext } from './contexts/SnUiActionContext'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useFieldUIStateManager } from './hooks/useFieldUiState'
-import { FormProvider, FieldErrors } from 'react-hook-form'
 import { SnFormActivity } from '../sn-ui/sn-activity/sn-form-activity'
 import { SnClientScriptContext } from './contexts/SnClientScriptContext'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { SnFormLifecycleContext } from './contexts/SnFormLifecycleContext'
 import { useNormalizedDefaultValues } from './hooks/useNormalizedDefaultValues'
-
 import {
+  HintDisplayType,
   SnActivity,
   SnClientScript,
   SnFieldPrimitive,
@@ -26,11 +28,11 @@ import {
   SnFormApis,
   SnFormConfig,
   SnPolicy,
+  SnReferenceFieldCallbacks,
   SnSection,
   SnUiAction,
 } from '@kit/types/form-schema'
-import { useScriptRunner } from './hooks/useScriptRunner'
-import { useDotSafeForm } from './hooks/useDotSafeForm'
+import type { BeforeUiActionSubmitCallback, UiActionClientCallback } from '@kit/types/g-form'
 
 interface SnFormProps {
   table: string
@@ -47,6 +49,11 @@ interface SnFormProps {
   attachments: SnAttachment[] | null
   messages: Record<string, string>
   scratchpad: Record<string, unknown>
+  hintDisplay?: HintDisplayType
+  textareaThreshold?: number
+  uiActionClientCallback?: UiActionClientCallback
+  beforeUiActionSubmitCallback?: BeforeUiActionSubmitCallback
+  referenceFieldCallbacks?: SnReferenceFieldCallbacks
   activity?: SnActivity
   setAttachments: (attachments: SnAttachment[]) => void
   snSubmit(guid: string): void
@@ -69,6 +76,11 @@ export function SnForm({
   activity,
   messages,
   scratchpad,
+  hintDisplay = 'hover',
+  textareaThreshold = 200,
+  uiActionClientCallback,
+  beforeUiActionSubmitCallback,
+  referenceFieldCallbacks,
   setAttachments,
   snInsert,
   snSubmit,
@@ -79,7 +91,7 @@ export function SnForm({
   const fieldList = useMemo(() => Object.keys(formFields), [formFields])
 
   const [overrideTab, setOverrideTab] = useState<string | undefined>()
-  const { fieldUIState, updateFieldUI } = useFieldUIStateManager(formFields)
+  const { fieldUIState, updateFieldUI, waitForFieldUIUpdates } = useFieldUIStateManager(formFields)
   const { defaultValues, buildNormalizedValues } = useNormalizedDefaultValues(formFields)
   const schema = useZodFormSchema(formFields, fieldUIState)
 
@@ -151,13 +163,14 @@ export function SnForm({
 
   //UI Action handling and Lifecycle Callbacks
   const onValidationError = useCallback((errors: FieldErrors) => {
-    const firstErrorField = Object.keys(errors)[0]
+    const firstErrorField = toRaw(Object.keys(errors)[0])
     const tabKey = fieldTabMapRef.current[firstErrorField]
     if (tabKey) setOverrideTab(tabKey)
   }, [])
 
   const { handleUiAction, loadingActionId, registerPreUiActionCallback, registerPostUiActionCallback } = useUiActions({
     form,
+    gForm,
     onValidationError,
     formFields,
     uiActions,
@@ -165,9 +178,12 @@ export function SnForm({
     guid,
     attachmentGuid,
     runOnSubmitClientScripts,
+    waitForFieldUIUpdates,
     snSubmit,
     snInsert,
     setUiActionHandler,
+    uiActionClientCallback,
+    beforeUiActionSubmitCallback,
   })
 
   return (
@@ -224,6 +240,9 @@ export function SnForm({
                             fieldList={fieldList}
                             fieldUIState={fieldUIState}
                             displayValues={displayValuesRef}
+                            hintDisplay={hintDisplay}
+                            textareaThreshold={textareaThreshold}
+                            referenceFieldCallbacks={referenceFieldCallbacks}
                             updateFieldUI={updateFieldUI}
                             table={table}
                             guid={guid}

@@ -2,9 +2,18 @@
 import { RefObject, useEffect, useRef } from 'react'
 import { Path, UseFormReturn } from 'react-hook-form'
 import { createGFormBridge } from '@kit/lib/g-form'
-import { FieldUIState, SnFieldsSchema, SnSection, SnUiAction, UiActionHandler } from '@kit/types/form-schema'
+import {
+  FieldUIState,
+  SnFieldPrimitive,
+  SnFieldsSchema,
+  SnSection,
+  SnUiAction,
+  UiActionHandler,
+} from '@kit/types/form-schema'
+import type { SnGForm } from '@kit/types/g-form'
+import { toRaw } from './useDotSafeForm'
 
-type FieldChangeHandlers = RefObject<Record<string, (value: any) => void>>
+type FieldChangeHandlers = RefObject<Record<string, (value: SnFieldPrimitive) => void>>
 
 interface UseGFormBridgeParams<TFormValues extends Record<string, any> = Record<string, any>> {
   form: UseFormReturn<TFormValues>
@@ -84,17 +93,23 @@ export function useGFormBridge<TFormValues extends Record<string, any> = Record<
   }, [updateFieldUI])
 
   // Thin, stable wrappers the bridge will call
-  const getValuesSafe = () => getValuesRef.current()
-  const setValueSafe = (name: string, val: any, opts?: any) =>
-    setValueRef.current(name as Path<TFormValues>, val as any, opts)
+  const getValuesRaw = () =>
+    Object.fromEntries(
+      Object.entries(getValuesRef.current()).map(([name, value]) => [toRaw(name), value])
+    ) as Record<string, SnFieldPrimitive | null | undefined>
+  const setValueSafe = (
+    name: string,
+    val: SnFieldPrimitive,
+    opts?: { shouldDirty?: boolean; shouldTouch?: boolean; shouldValidate?: boolean }
+  ) => setValueRef.current(name as Path<TFormValues>, val as never, opts)
   const updateFieldUISafe = (name: string, patch: Partial<FieldUIState>) => updateFieldUIRef.current(name, patch)
 
   // Create the bridge once
-  const gFormRef = useRef<ReturnType<typeof createGFormBridge> | null>(null)
+  const gFormRef = useRef<SnGForm | null>(null)
   if (!gFormRef.current) {
     gFormRef.current = createGFormBridge({
       formFieldsRef,
-      getValues: getValuesSafe,
+      getValues: getValuesRaw,
       setValue: setValueSafe,
       updateFieldUI: updateFieldUISafe,
       fieldChangeHandlers: fieldChangeHandlersRef,
@@ -113,6 +128,6 @@ export function useGFormBridge<TFormValues extends Record<string, any> = Record<
   return {
     gForm: gFormRef.current!,
     displayValuesRef,
-    setUiActionHandler
+    setUiActionHandler,
   }
 }

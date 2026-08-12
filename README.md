@@ -17,12 +17,14 @@ npm install sn-shadcn-kit axios react react-dom sonner tailwindcss zod @tanstack
 ---
 
 ## ⚠️ Import Paths (V2+)
+
 To keep performance optimal in the hosting application, only import what is being used by the relevant path:
 
 - **`sn-shadcn-kit`** – Root exports for core setup utilities like `setAxiosInstance` / `getAxiosInstance`.
 - **`sn-shadcn-kit/amb`** – Functionality for ServiceNow’s _Asynchronous Message Bus_ (e.g., `useRecordWatch`).
 - **`sn-shadcn-kit/hooks`** – Utility React hooks (e.g., debouncing, shortcuts, responsive helpers).
 - **`sn-shadcn-kit/form`** – Form components (relies on heavier deps like CodeMirror and TipTap). ⚡ Consider lazy-loading these in your app.
+- **`sn-shadcn-kit/knowledge`** – Knowledge article viewing components and Knowledge API helpers.
 - **`sn-shadcn-kit/table`** – Components and utilities for working with ServiceNow tables.
 - **`sn-shadcn-kit/user`** – User-related components (avatars, user cards, group cards).
 - **`sn-shadcn-kit/skeleton`** – Placeholder skeletons and loaders.
@@ -71,6 +73,64 @@ if (import.meta.env.MODE === 'development') {
 // Important: inject the configured instance into sn-shadcn-kit
 setAxiosInstance(axios)
 ```
+
+---
+
+## 📚 Knowledge Articles
+
+The knowledge components use ServiceNow's [Knowledge Management REST API](https://www.servicenow.com/docs/r/api-reference/rest-apis/knowledge-api.html). The **Knowledge API (`sn_km_api`) plugin must be active** on the target instance and the current user must be able to read the requested article and its attachments.
+
+`SnKbContentWrapper` fetches an article by either `sys_id` or KB number and renders it with `SnKbContentViewer`. Article HTML is sanitized before rendering, and attachments are downloaded through the Knowledge API.
+
+```tsx
+import { SnKbContentWrapper } from 'sn-shadcn-kit/knowledge'
+
+export function KnowledgeArticle() {
+  return (
+    <SnKbContentWrapper
+      articleId="KB0000011"
+      fields={['author', 'published']}
+      language="en"
+      updateView
+      onLoad={article => console.log(`Loaded ${article.number}`)}
+    />
+  )
+}
+```
+
+`updateView` defaults to `true`. Set it to `false` when displaying an article should not increment its ServiceNow view count. Search results can preserve ServiceNow search attribution by passing both values together:
+
+```tsx
+<SnKbContentWrapper articleId="0b48fd75474321009db4b5b08b9a71c2" search={{ id: searchId, rank: searchRank }} />
+```
+
+### `<SnKbContentWrapper />`
+
+| Prop                      | Type                                   | Description                                                       |
+| ------------------------- | -------------------------------------- | ----------------------------------------------------------------- |
+| `articleId`               | `string`                               | Article `sys_id` or KB number                                     |
+| `fields` **?**            | `string[]`                             | Additional `kb_knowledge` fields to request                       |
+| `language` **?**          | `string`                               | Two-letter language code when loading by KB number                |
+| `search` **?**            | `SnKbSearchOptions`                    | Search ID and rank used for ServiceNow view attribution           |
+| `apiVersion` **?**        | `string`                               | Knowledge API version such as `v1`; the latest is used by default |
+| `updateView` **?**        | `boolean`                              | Increment the article view count; defaults to `true`              |
+| `className` **?**         | `string`                               | Classes applied to the viewer, skeleton, or error state           |
+| `getAttachmentUrl` **?**  | `(attachment, article) => string`      | Override attachment URL construction                              |
+| `onAttachmentClick` **?** | `(attachment, article, event) => void` | Observe or prevent the default attachment action                  |
+| `onLoad` **?**            | `(article) => void`                    | Called after an article loads successfully                        |
+| `onError` **?**           | `(error) => void`                      | Called when article loading fails                                 |
+
+Use `SnKbContentViewer` directly when article data is already available. It accepts a typed `SnKbArticle` through its `article` prop and performs no article fetches.
+
+```tsx
+import { SnKbContentViewer, type SnKbArticle } from 'sn-shadcn-kit/knowledge'
+
+function Article({ article }: { article: SnKbArticle }) {
+  return <SnKbContentViewer article={article} />
+}
+```
+
+The same entry point exports `getKnowledgeArticle` and `getKnowledgeAttachmentUrl` for applications that need custom fetching or layout behavior.
 
 ---
 
@@ -209,8 +269,25 @@ SnFormWrapper props:
 | `guid` | `string` | sys_id of a record |
 | `table` | `string` | Table name the record belongs to |
 | `apis` | `SnFormApis` | Resource path to metadata apis |
+| `hintDisplay` **?** | `'hover' \| 'alert'` | How field hints are displayed. Defaults to `'hover'` |
+| `textareaThreshold` **?** | `number` | Minimum field `max_length` rendered as a textarea. Defaults to `200` |
+| `uiActionClientCallback` **?** | `UiActionClientCallback` | Update form state or cancel an action before validation |
+| `beforeUiActionSubmitCallback` **?** | `BeforeUiActionSubmitCallback` | Confirm or cancel a validated action before client scripts and submission |
+| `referenceFieldCallbacks` **?** | `SnReferenceFieldCallbacks` | Field-name callbacks for previewing populated single-reference fields on existing records |
 | `snInsert` **?** | (guid: string) => void | Optional callback triggered on record insert |
 | `snUpdate` **?** | (guid: string) => void | Optional callback triggered on record insert |
+
+Reference preview buttons are opt-in. Provide a callback keyed by field name; when the form is displaying an existing record and that single-reference field has a value, the callback receives its current value and display value:
+
+```tsx
+<SnFormWrapper
+  referenceFieldCallbacks={{
+    requested_for: (value, displayValue) => {
+      openUserRecord(value, displayValue)
+    },
+  }}
+/>
+```
 
 To use the form you must provide it with all necessary metadata, I do this via a scripted API calls in the global scope. The apis property should be an object which stores these endpoints e.g:
 
@@ -224,6 +301,96 @@ To use the form you must provide it with all necessary metadata, I do this via a
 You can find this code in the sn-scripts folder of the repo: [getFormMetadata.js](./sn-scripts/getFormMetadata.js), [getReferenceDisplay.js](./sn-scripts/getReferenceDisplay.js)
 
 This component will then consume the metadata from the api response and pass it to **`<SnForm/>`** to build the form
+
+### Intercepting UI actions in the hosting application
+
+Both `SnFormWrapper` and `SnForm` accept two cancellable UI action callbacks:
+
+- `uiActionClientCallback` runs before validation. It receives an action-time values snapshot and a live, restricted `gForm` façade, making it suitable for recreating client-side UI action logic such as setting a state that triggers onChange scripts.
+- `beforeUiActionSubmitCallback` runs only after the form passes validation. It receives the validated values snapshot without `gForm`, making it suitable for confirmation dialogs that should not mutate the form.
+
+Both callbacks receive the full UI action and return `true` to continue or `false` to cancel. Use `action.action_name` for matching; `action.name` is its display label. The execution order is client callback, field UI-state commit, validation, pre-submit callback, onSubmit client scripts, internal pre-action callbacks, and native submission.
+
+Snapshots are read-only and keyed by their original ServiceNow field names, including dot-walked names such as `caller_id.email`. The client callback snapshot does not change after `gForm.setValue()`, while `gForm.getValue()` immediately reflects the current form state. Its `gForm` has no `save` or `submit` methods, preventing recursive action submission.
+
+```tsx
+import { type ComponentProps, useCallback, useRef, useState } from 'react'
+import {
+  SnFormWrapper,
+  type BeforeUiActionSubmitCallback,
+  type UiActionClientCallback,
+} from 'sn-shadcn-kit/form'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
+
+type IncidentFormProps = Pick<ComponentProps<typeof SnFormWrapper>, 'guid' | 'apis'>
+
+export function IncidentForm({ guid, apis }: IncidentFormProps) {
+  const confirmationResolver = useRef<((allowed: boolean) => void) | null>(null)
+  const [pendingActionName, setPendingActionName] = useState<string | null>(null)
+
+  const uiActionClientCallback = useCallback<UiActionClientCallback>((action, { gForm }) => {
+    if (action.action_name === 'save_as_draft') {
+      gForm.setValue('state', 'draft')
+    }
+
+    return true
+  }, [])
+
+  const beforeUiActionSubmitCallback = useCallback<BeforeUiActionSubmitCallback>(async (action, { values }) => {
+    if (action.action_name !== 'close_incident') return true
+    if (values.state !== '6') return true
+
+    return new Promise<boolean>(resolve => {
+      confirmationResolver.current = resolve
+      setPendingActionName(action.name)
+    })
+  }, [])
+
+  const finishConfirmation = (allowed: boolean) => {
+    const resolve = confirmationResolver.current
+    confirmationResolver.current = null
+    setPendingActionName(null)
+    resolve?.(allowed)
+  }
+
+  return (
+    <>
+      <SnFormWrapper
+        table="incident"
+        guid={guid}
+        apis={apis}
+        uiActionClientCallback={uiActionClientCallback}
+        beforeUiActionSubmitCallback={beforeUiActionSubmitCallback}
+      />
+
+      <Dialog open={pendingActionName !== null} onOpenChange={open => !open && finishConfirmation(false)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Continue with {pendingActionName}?</DialogTitle>
+            <DialogDescription>This action may update the incident.</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => finishConfirmation(false)}>
+              Cancel
+            </Button>
+            <Button onClick={() => finishConfirmation(true)}>Continue</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
+  )
+}
+```
+
+While either callback promise is pending, the form keeps the selected action in its loading state and disables the other action buttons. Both callbacks apply to footer buttons and actions invoked through `g_form.save()` or `g_form.submit()`. If a callback throws or rejects, the action is canceled and the error is reported through the standard form error handling. Client callback mutations are not rolled back if either callback later cancels. Final form values are read again after internal pre-action callbacks so client script, media, and attachment updates are included in the submission payload.
 
 ![SnFormDemo](/demo/SNDemoForm.png)
 ![SnFormRefs](/demo/SNDemoFormRefs.png)
@@ -570,11 +737,13 @@ This package exports helpful types for working with ServiceNow data:
 ```ts
 import type { SnRow, SnRowItem } from 'sn-shadcn-kit/table'
 import type { SnUser, SnGroup } from 'sn-shadcn-kit/user'
+import type { SnKbArticle, SnKbAttachment } from 'sn-shadcn-kit/knowledge'
 import type { SnRecordPickerItem, SnRecordPickerList, SnClippyRef } from 'sn-shadcn-kit/standalone'
 ```
 
 - SnRowItem corresponds to a fields value which is simply an object with both its value and display_value. SnRow is a record (array) of SnRowItems.
 - SnUser and SnGroup define the schema for a user and group object respectively
+- SnKbArticle and SnKbAttachment describe Knowledge API article content and downloadable attachments
 - SnRecordPickerItem represents all the data you will get back when selecting a record using the SnRecordPicker component, and SnRecordPickerList is an array of these items
 - SnClippyRef provides the external-save methods for the SnClippy attachment workflow
 

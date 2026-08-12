@@ -1,4 +1,5 @@
 import { Button } from '../../ui/button'
+import { SnUiAction } from '@kit/types/form-schema';
 import { useUiActions } from '../contexts/SnUiActionContext'
 import { SnAttachment } from '../../../types/attachment-schema'
 import { SnAttachments } from '../../sn-ui/sn-attachments/sn-form-attachments'
@@ -9,6 +10,18 @@ interface SnFormActionsProps {
   attachments: SnAttachment[] | null
   attachmentGuid: string
   setAttachments: (attachments: SnAttachment[]) => void
+}
+
+const getVariant = (action: SnUiAction) => {
+  if (action.primary || action.form_style === 'primary') {
+    return 'default'
+  }
+
+  if (action.form_style === 'destructive') {
+    return 'destructive'
+  }
+
+  return 'outline'
 }
 
 export function SnFormActions({ table, attachments, attachmentGuid, setAttachments }: SnFormActionsProps) {
@@ -39,7 +52,7 @@ export function SnFormActions({ table, attachments, attachmentGuid, setAttachmen
             type="button"
             onClick={() => handleUiAction(action)}
             disabled={!!loadingActionId}
-            variant={action.primary ? 'default' : 'outline'}
+            variant={getVariant(action)}
           >
             {loadingActionId === action.sys_id ? 'Processing...' : action.name}
           </Button>

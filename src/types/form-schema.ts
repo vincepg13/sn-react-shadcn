@@ -35,7 +35,7 @@ const _uiResponse = z.object({
 export type SnUiAction = z.infer<typeof _action>
 export type SnUiResponse = z.infer<typeof _uiResponse>
 export type UiActionHandler = (a: SnUiAction) => Promise<void>
-
+export type SnFormValues = Readonly<Record<string, SnFieldPrimitive | null | undefined>>
 
 //Client Scripts
 const _clientScript = z.object({
@@ -121,6 +121,8 @@ export const pickerList = z.record(z.string(), _recordPickerItem)
 export type SnRecordPickerItem = z.infer<typeof _recordPickerItem>
 export type SnRecordPickerList = SnRecordPickerItem[]
 export type SnRefFieldEd = z.infer<typeof _ed>
+export type SnReferenceFieldCallback = (value: string, displayValue: string) => void | Promise<void>
+export type SnReferenceFieldCallbacks = Record<string, SnReferenceFieldCallback>
 
 //Activity Formatter
 const _entrySchema = z.object({
@@ -213,6 +215,8 @@ export type EntryFields = {
   label: string
 }
 //General Form and Fields
+export type HintDisplayType = 'hover' | 'alert'
+
 const _currencyCode = z.object({
   code: z.string(),
   symbol: z.string(),
@@ -247,6 +251,7 @@ const _formConfig = z.object({
 const _formField = z.object({
   name: z.string(),
   label: z.string(),
+  hint: z.string().optional(),
   value: z.string(),
   displayValue: z.string(),
   mandatory: z.boolean(),
@@ -350,6 +355,7 @@ export type FieldDecoration = {
 }
 
 export type FieldUIState = {
+  label?: string
   mandatory: boolean
   visible: boolean
   readonly: boolean
