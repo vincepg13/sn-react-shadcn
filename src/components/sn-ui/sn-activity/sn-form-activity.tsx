@@ -18,6 +18,7 @@ type SnActivityProps = {
   table: string
   guid: string
   fullWidth?: boolean
+  inputType?: 'inline' | 'textarea'
   fieldUIState?: Record<string, FieldUIState>
   journalInputs?: SnFieldSchema[]
   getValues?: (fieldName: string) => SnFieldPrimitive
@@ -31,6 +32,7 @@ export function SnFormActivity({
   table,
   guid,
   fullWidth = false,
+  inputType = 'inline',
   fieldUIState,
   journalInputs,
   setValue,
@@ -100,6 +102,7 @@ export function SnFormActivity({
           table={table}
           guid={guid}
           entryFields={entryFields}
+          inputType={inputType}
           onPost={onPostSuccess}
           onEntryChange={onEntryChange}
         />

@@ -24,7 +24,7 @@ export function SnActivityCard({entry, colour}: {entry: SnActivityEntry, colour?
           </div>
         </div>
 
-        <p className="text-sm">{entry.value}</p>
+        <p className="text-sm whitespace-pre-wrap">{entry.value}</p>
         {/* Optional: render attachment or file */}
       </CardContent>
     </Card>

@@ -51,6 +51,7 @@ interface SnFormProps {
   scratchpad: Record<string, unknown>
   hintDisplay?: HintDisplayType
   textareaThreshold?: number
+  activityPostType?: 'inline' | 'textarea'
   uiActionClientCallback?: UiActionClientCallback
   beforeUiActionSubmitCallback?: BeforeUiActionSubmitCallback
   referenceFieldCallbacks?: SnReferenceFieldCallbacks
@@ -78,6 +79,7 @@ export function SnForm({
   scratchpad,
   hintDisplay = 'hover',
   textareaThreshold = 200,
+  activityPostType = 'inline',
   uiActionClientCallback,
   beforeUiActionSubmitCallback,
   referenceFieldCallbacks,
@@ -243,6 +245,7 @@ export function SnForm({
                             journalInputs={journals}
                             getValues={form.getValues}
                             setValue={form.setValue}
+                            inputType={activityPostType}
                           />
                         )
                       }

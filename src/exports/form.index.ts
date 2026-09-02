@@ -1,6 +1,7 @@
 //Form Components
 export { SnForm } from '../components/sn-form/sn-form'
 export { SnFormWrapper } from '../components/sn-form/sn-form-wrapper'
+export type { FormOptions } from '../components/sn-form/sn-form-wrapper'
 export type {
   BeforeUiActionSubmitCallback,
   SnGForm,
@@ -9,4 +10,4 @@ export type {
   UiActionClientGForm,
   UiActionController,
 } from '../types/g-form'
-export type { SnFormValues, SnReferenceFieldCallback, SnReferenceFieldCallbacks } from '../types/form-schema'
+export type { SnFieldPrimitive, SnFieldSchema, SnFieldsSchema, SnFieldChoiceItem, SnFormValues, SnReferenceFieldCallback, SnReferenceFieldCallbacks } from '../types/form-schema'

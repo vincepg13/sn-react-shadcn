@@ -12,9 +12,10 @@ type ActivityProps = {
   guid: string
   user: string
   fullWidth?: boolean
+  inputType?: 'inline' | 'textarea'
 }
 
-export function SnActivity({ table, guid, user, fullWidth = false }: ActivityProps) {
+export function SnActivity({ table, guid, user, fullWidth = false, inputType = 'inline' }: ActivityProps) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [entries, setEntries] = useState<SnActivityEntry[]>([])
@@ -74,6 +75,7 @@ export function SnActivity({ table, guid, user, fullWidth = false }: ActivityPro
           journalFields={journalFields}
           journalEntries={entries}
           fullWidth={fullWidth}
+          inputType={inputType}
         />
       )}
     </>

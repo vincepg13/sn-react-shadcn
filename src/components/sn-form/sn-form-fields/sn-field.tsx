@@ -1,4 +1,4 @@
-import { CircleHelp } from 'lucide-react'
+import { CircleAlert, CircleHelp, Info, TriangleAlert } from 'lucide-react'
 import { SnFieldUrl } from './sn-field-url'
 import { SnFieldDate } from './sn-field-date'
 import { SnFieldTime } from './sn-field-time'
@@ -55,15 +55,26 @@ interface SnFieldProps {
 }
 
 const getFieldMessageClassName = (msgType: FieldMessage['type']) => {
-  const base = 'rounded-sm border-r-2 border-l-2 bg-transparent px-2 py-1'
+  const base = 'flex items-start gap-2 rounded-md border px-3 py-2 text-sm shadow-xs'
 
   switch (msgType) {
     case 'error':
-      return `${base} border-destructive/60 text-destructive`
+      return `${base} border-red-200/70 bg-red-50/70 text-red-950 dark:border-red-900 dark:bg-red-950/40 dark:text-red-100 [&>svg]:text-red-600 dark:[&>svg]:text-red-400`
     case 'warning':
-      return `${base} border-amber-500/50 text-amber-500`
+      return `${base} border-amber-200/70 bg-amber-50/70 text-amber-950 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-100 [&>svg]:text-amber-600 dark:[&>svg]:text-amber-400`
     default:
-      return `${base} border-muted-foreground/50 text-muted-foreground`
+      return `${base} border-blue-200/70 bg-blue-50/70 text-blue-950 dark:border-blue-900 dark:bg-blue-950/40 dark:text-blue-100 [&>svg]:text-blue-600 dark:[&>svg]:text-blue-400`
+  }
+}
+
+const getFieldMessageIcon = (msgType: FieldMessage['type']) => {
+  switch (msgType) {
+    case 'error':
+      return CircleAlert
+    case 'warning':
+      return TriangleAlert
+    default:
+      return Info
   }
 }
 
@@ -213,15 +224,20 @@ function SnFieldComponent({
               )}
               <FormControl>{input}</FormControl>
               <FormMessage />
-              {fieldUI.fieldMsgs?.map((message, index) => (
-                <FormMessage
-                  key={`${message.type}-${index}`}
-                  useError={false}
-                  className={getFieldMessageClassName(message.type)}
-                >
-                  {message.text}
-                </FormMessage>
-              ))}
+              {fieldUI.fieldMsgs?.map((message, index) => {
+                const MessageIcon = getFieldMessageIcon(message.type)
+
+                return (
+                  <FormMessage
+                    key={`${message.type}-${index}`}
+                    useError={false}
+                    className={getFieldMessageClassName(message.type)}
+                  >
+                    <MessageIcon className="mt-0.5 size-4 shrink-0" aria-hidden />
+                    <span>{message.text}</span>
+                  </FormMessage>
+                )
+              })}
             </FormItem>
           )
         }}

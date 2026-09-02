@@ -12,17 +12,24 @@ import { HintDisplayType, SnActivity, SnFormApis, SnReferenceFieldCallbacks, SnS
 import { SnUiAction, SnFieldsSchema, SnFormConfig, SnClientScript, SnPolicy } from '@kit/types/form-schema'
 import type { BeforeUiActionSubmitCallback, UiActionClientCallback } from '@kit/types/g-form'
 
+export interface FormOptions {
+  hintDisplay?: HintDisplayType
+  textareaThreshold?: number
+  activityPostType?: 'inline' | 'textarea'
+  enableAttachments?: boolean
+}
+
 interface SnFormProps {
   table: string
   guid: string
   apis: SnFormApis
-  hintDisplay?: HintDisplayType
-  textareaThreshold?: number
+  formOptions?: FormOptions
   uiActionClientCallback?: UiActionClientCallback
   beforeUiActionSubmitCallback?: BeforeUiActionSubmitCallback
   referenceFieldCallbacks?: SnReferenceFieldCallbacks
-  enableAttachments?: boolean
   esLintConfig?: ESLintConfigAny
+  /** Called after form metadata loads with its original field values. */
+  onFormFieldsLoaded?(formFields: SnFieldsSchema): void
   snMount?(): void
   snInsert?(guid: string): void
   snSubmit?(guid: string): void
@@ -42,16 +49,22 @@ export function SnFormWrapper({
   table,
   guid,
   esLintConfig,
-  hintDisplay = 'hover',
-  textareaThreshold = 200,
+  formOptions,
   uiActionClientCallback,
   beforeUiActionSubmitCallback,
   referenceFieldCallbacks,
-  enableAttachments = true,
+  onFormFieldsLoaded,
   snMount,
   snInsert,
   snSubmit,
 }: SnFormProps) {
+  const {
+    hintDisplay = 'hover',
+    textareaThreshold = 200,
+    activityPostType = 'inline',
+    enableAttachments = true,
+  } = formOptions ?? {}
+
   const fetchIdRef = useRef(0)
   const [view, setView] = useState('')
   const [subCount, setSubCount] = useState(0)
@@ -87,6 +100,7 @@ export function SnFormWrapper({
           const form = response.data.result
           setUiActions(form._ui_actions)
           setFormFields(form._fields)
+          onFormFieldsLoaded?.(form._fields)
           setClientScripts(unionClientScripts(form.client_script))
           setMessages(form.client_script.messages || {})
           setUiPolicies(form.policy || [])
@@ -184,6 +198,7 @@ export function SnFormWrapper({
           snSubmit={handleSubmit}
           hintDisplay={hintDisplay}
           textareaThreshold={textareaThreshold}
+          activityPostType={activityPostType}
           uiActionClientCallback={uiActionClientCallback}
           beforeUiActionSubmitCallback={beforeUiActionSubmitCallback}
           referenceFieldCallbacks={referenceFieldCallbacks}

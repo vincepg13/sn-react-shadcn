@@ -85,7 +85,9 @@ export function mapFieldToZod(field: SnFieldSchema): ZodTypeAny {
         if (field.max_length < 255) base = base.max(field.max_length)
       }
       if (!allowEmpty) {
-        base = (base as z.ZodString).min(1, '')
+        // Keep mandatory text fields invalid (and their labels red) without
+        // rendering Zod's default "Too small" validation message.
+        base = (base as z.ZodString).min(1, { message: '' })
       }
       break
   }

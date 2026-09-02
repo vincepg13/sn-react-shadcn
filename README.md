@@ -269,8 +269,8 @@ SnFormWrapper props:
 | `guid` | `string` | sys_id of a record |
 | `table` | `string` | Table name the record belongs to |
 | `apis` | `SnFormApis` | Resource path to metadata apis |
-| `hintDisplay` **?** | `'hover' \| 'alert'` | How field hints are displayed. Defaults to `'hover'` |
-| `textareaThreshold` **?** | `number` | Minimum field `max_length` rendered as a textarea. Defaults to `200` |
+| `formOptions` **?** | `FormOptions` | Form display options, including hint display and textarea threshold |
+| `onFormFieldsLoaded` **?** | `(formFields: SnFieldsSchema) => void` | Receives the original field metadata and values after the form loads |
 | `uiActionClientCallback` **?** | `UiActionClientCallback` | Update form state or cancel an action before validation |
 | `beforeUiActionSubmitCallback` **?** | `BeforeUiActionSubmitCallback` | Confirm or cancel a validated action before client scripts and submission |
 | `referenceFieldCallbacks` **?** | `SnReferenceFieldCallbacks` | Field-name callbacks for previewing populated single-reference fields on existing records |
@@ -590,6 +590,23 @@ SnGroupWrapper props:
 | `guid` | `string` | sys_id of a group record |
 | `pagesize` | `number` | Number of members to show per page |
 | `getImLink` **?** | `callback` | Function to build each users IM link |
+
+### `<SnGroupEditor />`
+
+A controlled editor for selecting an eligible group and updating its members. Import it from `sn-shadcn-kit/user`. I would suggest using a scripted rest API to handle the saving of the group members to avoid multiple actions being made at once via the table API.
+
+| Prop | Type | Description |
+|----------------|--------------------- |------------------------------------------------|
+| `groupQuery` | `string` | Encoded query used to limit selectable `sys_user_group` records |
+| `group` | `SnRecordPickerItem \| null` | Currently selected group |
+| `members` | `SnRecordPickerItem[]` | Members of the selected group |
+| `onGroupChange` | `(group: SnRecordPickerItem \| null) => void` | Called when the selected group changes |
+| `onSaveMembers` | `(memberIds: string[]) => void \| Promise<unknown>` | Called with member sys_ids when changes are saved |
+| `groupDescription` **?** | `string` | Supporting text displayed below the group picker |
+| `className` **?** | `string` | Additional classes for the editor card |
+| `selectedGroupId` **?** | `string` | Selected group sys_id; controls member-editor visibility |
+| `isGroupLoading` **?** | `boolean` | Shows group-member loading placeholders |
+| `isSavingMembers` **?** | `boolean` | Indicates a member save is in progress |
 
 below is an example of how to use SnRecordPicker (which allows you to fetch data from a ServiceNow table in a drop down) to select a user and display their details
 

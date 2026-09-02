@@ -3,6 +3,7 @@ export { SnUserCard } from '../components/sn-user/sn-user-card'
 export { SnGroupCard } from '../components/sn-user/sn-group-card'
 export { default as SnAvatar } from '../components/sn-user/sn-avatar'
 export { SnGroupWrapper } from '../components/sn-user/sn-group-wrapper'
+export { SnGroupEditor } from '../components/sn-user/sn-group-editor/sn-manage-groups'
 
 //Types
 export type { SnUser, SnGroup } from '../types/user-schema'

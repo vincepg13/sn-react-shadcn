@@ -1,10 +1,16 @@
 # Change Log
+## [V2.2.6]
+- Added `onFormFieldsLoaded` to `SnFormWrapper` for host-side on-load actions based on initial field values.
+- Added `SnGroupEditor` for selecting eligible groups and managing their members.
+- Removed mandatory field message for text areas
+- Field messages now look more like ootb ServiceNow ones
+- Fixed activity posts not honouring line breaks. 
+- Added inline or textarea layouts to SnActivity that can be configured through `SnFormWrapper`'s `FormOptions`.
 
 ## [V2.2.5]
 - Added a React-owned `UiActionController` for controlling UI action visibility and disabled state. Useful when applying client side validation on a ui action click (e.g. setting related fields to mandatory), and making sure the user can only proceed with the initial action that triggered the validation.
 
 ## [V2.2.4]
-
 - Added opt-in reference preview buttons to `SnForm` and `SnFormWrapper` through field-name keyed `referenceFieldCallbacks`.
 - Added `SnKbContentViewer` for safely rendering knowledge article content and attachments in a responsive Shadcn card.
 - Added `SnKbContentWrapper` for loading articles through the ServiceNow Knowledge API with language, field, search attribution, API version, and view tracking options.
