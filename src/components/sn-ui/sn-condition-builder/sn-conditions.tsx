@@ -4,11 +4,14 @@ import { useFieldCache } from './hooks/useFieldCache'
 import { Separator } from '@kit/components/ui/separator'
 import { CirclePlus, CircleX, Play } from 'lucide-react'
 import { TooltipProvider } from '@kit/components/ui/tooltip'
-import { serializeConditionModel, useConditionModel } from './hooks/useConditionModel'
+import { SnSaveFilterDialog } from './sn-save-filter-dialog'
+import { SnLoadFilterDialog } from './sn-load-filter-dialog'
+import { getParsedQuery, getTableMetadata } from '@kit/utils/conditions-api'
+import { serializeConditionModel, useConditionModel, hasConditionValue } from './hooks/useConditionModel'
 import { SnConditionSkeleton } from './sn-condition-skeleton'
 import { SnConditionsContext } from './contexts/SnConditionsContext'
 import { forwardRef, useEffect, useImperativeHandle, useMemo, useState } from 'react'
-import { SnConditionMap, SnConditionModel, SnDateTimeMeta, SnFieldCurrencyChoice } from '@kit/types/condition-schema'
+import { SnConditionMap, SnConditionModel, SnConditionNode, SnConditionRow, SnDateTimeMeta, SnFieldCurrencyChoice, SnSavedFilter } from '@kit/types/condition-schema'
 
 export type SnConditionHandle = {
   addGroup: () => void
@@ -23,13 +26,30 @@ type ConditionProps = {
   queryModel: SnConditionModel
   showControls?: boolean
   extendToChanges?: boolean
+  canSaveFilter?: boolean
   onQueryBuilt: (encoded: string) => void
   onModelChange?: (builtQuery: string) => void
+  onFilterSaved?: (filter: SnSavedFilter) => void
+  onFilterLoaded?: (filter: SnSavedFilter) => void
 }
 
 export const SnConditions = forwardRef<SnConditionHandle, ConditionProps>(
-  ({ table, columns, queryModel, extendToChanges, showControls = true, onQueryBuilt, onModelChange }, ref) => {
-    const { model, updateCondition, deleteCondition, updateModel, executeQuery, clearQuery, addGroup, adjustByIndex } =
+  (
+    {
+      table,
+      columns,
+      queryModel,
+      extendToChanges,
+      showControls = true,
+      canSaveFilter = true,
+      onQueryBuilt,
+      onModelChange,
+      onFilterSaved,
+      onFilterLoaded,
+    },
+    ref
+  ) => {
+    const { model, updateCondition, deleteCondition, updateModel, executeQuery, clearQuery, addGroup, adjustByIndex, loadModel } =
       useConditionModel(queryModel)
 
     const [dateMeta, setDateMeta] = useState<SnDateTimeMeta | null>(null)
@@ -57,12 +77,52 @@ export const SnConditions = forwardRef<SnConditionHandle, ConditionProps>(
       return onQueryBuilt(executeQuery(customModel) || '')
     }
 
+    const handleFilterLoaded = async (filter: SnSavedFilter) => {
+      const controller = new AbortController()
+      const parsed = await getParsedQuery(table, filter.filter, false, controller)
+      if (!parsed) return
+
+      const cache: Record<string, SnConditionMap> = { ...fieldsByTable }
+
+      const resolvePath = async (node: SnConditionRow): Promise<string> => {
+        if (!node.references?.length) return table
+        const targetTable = node.references[node.references.length - 2].reference_table
+        if (!cache[targetTable]) {
+          const meta = await getTableMetadata(targetTable, controller)
+          if (meta) {
+            cache[targetTable] = meta
+            setFieldsByTable(prev => ({ ...prev, [targetTable]: meta }))
+          }
+        }
+        return targetTable
+      }
+
+      const walkModel = async (nodes: SnConditionNode[]) => {
+        for (const node of nodes) {
+          if (node.type === 'condition') {
+            node.table = await resolvePath(node)
+            node.fieldLabel = node.fieldLabel?.replace(/ \. /g, '/')
+          } else {
+            await walkModel(node.conditions)
+          }
+        }
+      }
+
+      await walkModel(parsed.model)
+      loadModel(parsed.model)
+      runQuery(parsed.model)
+      onFilterLoaded?.(filter)
+    }
+
     useEffect(() => {
       if (!onModelChange) return
 
       const builtQuery = serializeConditionModel(model, false) || ''
       onModelChange(builtQuery)
     }, [model, onModelChange])
+
+    const liveQuery = useMemo(() => serializeConditionModel(model, false) || '', [model])
+    const hasConditions = useMemo(() => hasConditionValue(model), [model])
 
     const notLoaded = Object.values(cacheLoaded).some(value => value === false)
 
@@ -109,6 +169,17 @@ export const SnConditions = forwardRef<SnConditionHandle, ConditionProps>(
 
               {showControls && (
                 <div className="flex items-center justify-center gap-2">
+                  {canSaveFilter && (
+                    <>
+                      <SnSaveFilterDialog
+                        table={table}
+                        query={liveQuery}
+                        disabled={!hasConditions}
+                        onSaved={onFilterSaved}
+                      />
+                      <SnLoadFilterDialog table={table} onLoad={handleFilterLoaded} />
+                    </>
+                  )}
                   <Button variant="outline" onClick={addGroup}>
                     <CirclePlus />
                     New Group

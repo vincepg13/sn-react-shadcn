@@ -22,11 +22,21 @@ export { SnPersonalListSchema, type SnListItem, type SnPersonalList } from '../t
 export { SnDotwalkChoice } from '../components/sn-ui/sn-dotwalk-choice'
 export { SnFilter } from '../components/sn-ui/sn-condition-builder/sn-filter'
 export { SnConditionBuilder } from '../components/sn-ui/sn-condition-builder/sn-condition-builder'
+export { SnSaveFilterDialog } from '../components/sn-ui/sn-condition-builder/sn-save-filter-dialog'
+export { SnLoadFilterDialog } from '../components/sn-ui/sn-condition-builder/sn-load-filter-dialog'
+export { saveFilter, getSavedFilters, deleteFilter } from '../utils/conditions-api'
 export {
   type SnConditionMap,
   type SnConditionField,
   SnConditionMapSchema,
   SnConditionFieldSchema,
+  type SnSavedFilter,
+  type SnSavedFilterPayload,
+  type SnSavedFilterVisibility,
+  type SnSavedFiltersResponse,
+  SnSavedFilterSchema,
+  SnSavedFilterPayloadSchema,
+  SnSavedFiltersResponseSchema,
 } from '@kit/types/condition-schema'
 
 //Loaders

@@ -123,6 +123,35 @@ const PairSchema = z.tuple([z.string(), z.string()])
 export const DateMetaArraySchema = z.array(PairSchema)
 export type DateMetaArray = z.infer<typeof DateMetaArraySchema>
 
+//Saved filters
+export const SnSavedFilterVisibilitySchema = z.enum(['USER', 'GLOBAL', 'GROUP'])
+export type SnSavedFilterVisibility = z.infer<typeof SnSavedFilterVisibilitySchema>
+
+export const SnSavedFilterPayloadSchema = z.object({
+  tableName: z.string(),
+  title: z.string(),
+  filter: z.string(),
+  saveType: SnSavedFilterVisibilitySchema,
+  group: z.string().optional(),
+})
+export type SnSavedFilterPayload = z.infer<typeof SnSavedFilterPayloadSchema>
+
+export const SnSavedFilterSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  filter: z.string(),
+  tableName: z.string(),
+  saveType: SnSavedFilterVisibilitySchema,
+  canDelete: z.boolean().optional(),
+  group: z.string().optional(),
+  groupDisplayValue: z.string().optional(),
+})
+export type SnSavedFilter = z.infer<typeof SnSavedFilterSchema>
+
+// GET response is grouped by visibility type; POST typically echoes the created record.
+export const SnSavedFiltersResponseSchema = z.record(SnSavedFilterVisibilitySchema, z.array(SnSavedFilterSchema))
+export type SnSavedFiltersResponse = z.infer<typeof SnSavedFiltersResponseSchema>
+
 export const SnDateTimeMetaSchema = z.object({
   timeAgoDates: z.record(
     z.string(),

@@ -353,6 +353,16 @@ export function serializeConditionModel(model: SnConditionModel, strict = true):
   return model.map(serializeGroup).filter(Boolean).join('^NQ')
 }
 
+/** Returns true if the model has at least one condition row with a field selected. */
+export function hasConditionValue(model: SnConditionModel): boolean {
+  function check(node: SnConditionNode): boolean {
+    if (node.type === 'condition') return !!node.field
+    return node.conditions.some(check)
+  }
+
+  return model.some(check)
+}
+
 export function useConditionModel(initialModel: SnConditionModel) {
   const [model, setModel] = useState(() => initialModel)
 
@@ -425,6 +435,11 @@ export function useConditionModel(initialModel: SnConditionModel) {
     return newModel
   }, [])
 
+  const loadModel = useCallback((newModel: SnConditionModel) => {
+    setModel(newModel)
+    return newModel
+  }, [])
+
   return {
     model,
     updateCondition,
@@ -434,5 +449,6 @@ export function useConditionModel(initialModel: SnConditionModel) {
     clearQuery,
     addGroup,
     adjustByIndex,
+    loadModel,
   }
 }

@@ -199,9 +199,9 @@ export function SnRecordPicker({
         container={portalContainer}
         side="bottom"
         avoidCollisions={false}
-        className="w-full max-w-[500px] p-0"
+        className="w-full max-w-[500px] p-0 flex flex-col overflow-hidden"
       >
-        <Command shouldFilter={false}>
+        <Command shouldFilter={false} className="flex-1 min-h-0">
           <div className="relative">
             <CommandInput
               placeholder="Search records..."
@@ -213,7 +213,7 @@ export function SnRecordPicker({
               <Loader2 className="absolute right-2 top-1/2 h-4 w-4 animate-spin text-muted-foreground transform -translate-y-1/2" />
             )}
           </div>
-          <CommandList ref={listRef} onScroll={handleScroll}>
+          <CommandList ref={listRef} onScroll={handleScroll} className="flex-1 min-h-0 max-h-[300px]">
             {needsMoreSearchCharacters && (
               <CommandEmpty>Type at least {minimumSearchCharacters} characters to search.</CommandEmpty>
             )}

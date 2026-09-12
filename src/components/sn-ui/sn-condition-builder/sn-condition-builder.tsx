@@ -3,7 +3,7 @@ import { SnConditionHandle, SnConditions } from './sn-conditions'
 import { useParsedQuery } from './hooks/useParsedQuery'
 import { useFieldMetadata } from './hooks/useTableMetadata'
 import { SnConditionSkeleton } from './sn-condition-skeleton'
-import { SnConditionDisplayArray } from '@kit/types/condition-schema'
+import { SnConditionDisplayArray, SnSavedFilter } from '@kit/types/condition-schema'
 import { Alert, AlertTitle, AlertDescription } from '@kit/components/ui/alert'
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react'
 
@@ -12,9 +12,12 @@ type BuilderProps = {
   encodedQuery?: string
   showControls?: boolean
   extendToChanges?: boolean
+  canSaveFilter?: boolean
   onQueryBuilt?: (encoded: string) => void
   onModelChange?: (builtQuery: string) => void
   emitQueryDisplay?: (display: SnConditionDisplayArray | null) => void
+  onFilterSaved?: (filter: SnSavedFilter) => void
+  onFilterLoaded?: (filter: SnSavedFilter) => void
 }
 
 function extractOrder(query: string) {
@@ -38,7 +41,10 @@ function getBuilderQuery(query?: string) {
 }
 
 export const SnConditionBuilderRef = forwardRef<SnConditionHandle, BuilderProps>(
-  ({ table, encodedQuery, showControls, extendToChanges, emitQueryDisplay, onQueryBuilt, onModelChange }: BuilderProps, ref) => {
+  (
+    { table, encodedQuery, showControls, extendToChanges, canSaveFilter, emitQueryDisplay, onQueryBuilt, onModelChange, onFilterSaved, onFilterLoaded }: BuilderProps,
+    ref
+  ) => {
     const builderQuery = getBuilderQuery(encodedQuery)
     const [error, setError] = useState<string>('')
     const [loaded, setLoaded] = useState(false)
@@ -85,8 +91,11 @@ export const SnConditionBuilderRef = forwardRef<SnConditionHandle, BuilderProps>
           queryModel={queryModel}
           showControls={showControls}
           extendToChanges={extendToChanges}
+          canSaveFilter={canSaveFilter}
           onModelChange={onModelChange}
           onQueryBuilt={handleQueryBuilt}
+          onFilterSaved={onFilterSaved}
+          onFilterLoaded={onFilterLoaded}
         />
       )
     } else {
@@ -107,9 +116,12 @@ export function SnConditionBuilder({
   table,
   encodedQuery,
   showControls,
+  canSaveFilter,
   onQueryBuilt,
   emitQueryDisplay,
   onModelChange,
+  onFilterSaved,
+  onFilterLoaded,
 }: BuilderProps) {
   return (
     <div className="flex flex-col gap-4">
@@ -117,9 +129,12 @@ export function SnConditionBuilder({
         table={table}
         encodedQuery={encodedQuery}
         showControls={showControls}
+        canSaveFilter={canSaveFilter}
         emitQueryDisplay={emitQueryDisplay}
         onQueryBuilt={onQueryBuilt}
         onModelChange={onModelChange}
+        onFilterSaved={onFilterSaved}
+        onFilterLoaded={onFilterLoaded}
       />
     </div>
   )

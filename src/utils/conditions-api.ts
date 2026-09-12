@@ -12,6 +12,9 @@ import {
   SnConditionsApiResult,
   SnDateTimeMeta,
   SnFieldCurrencyChoice,
+  SnSavedFilter,
+  SnSavedFilterPayload,
+  SnSavedFiltersResponse,
 } from './../types/condition-schema'
 
 /********************************************************************
@@ -221,6 +224,63 @@ export async function getDateMetadata(
   } catch (error) {
     if (baseAxios.isAxiosError(error) && error.code === 'ERR_CANCELED') return false
     console.error('Error fetching date metadata:', error)
+    return false
+  }
+}
+
+export async function saveFilter(
+  table: string,
+  payload: SnSavedFilterPayload,
+  setError?: (msg: string) => void
+): Promise<SnSavedFilter | boolean> {
+  const axios = getAxiosInstance()
+  const errorMsg = 'Failed to save filter'
+
+  try {
+    const { data } = await axios.post(`/api/now/ui/saved_filters/${table}`, payload)
+    return data?.result ?? true
+  } catch (error) {
+    console.error('Error saving filter:', error)
+    setError?.(errorMsg)
+    return false
+  }
+}
+
+export async function getSavedFilters(
+  table: string,
+  controller: AbortController | AbortSignal,
+  setError?: (msg: string) => void
+): Promise<SnSavedFiltersResponse | false> {
+  const axios = getAxiosInstance()
+  const errorMsg = 'Failed to load saved filters'
+
+  try {
+    const { data } = await axios.get(`/api/now/ui/saved_filters/${table}`, {
+      signal: controller instanceof AbortController ? controller.signal : controller,
+    })
+    return (data?.result as SnSavedFiltersResponse) ?? false
+  } catch (error) {
+    if (baseAxios.isAxiosError(error) && error.code === 'ERR_CANCELED') return false
+    console.error('Error loading saved filters:', error)
+    setError?.(errorMsg)
+    return false
+  }
+}
+
+export async function deleteFilter(
+  table: string,
+  id: string,
+  setError?: (msg: string) => void
+): Promise<boolean> {
+  const axios = getAxiosInstance()
+  const errorMsg = 'Failed to delete filter'
+
+  try {
+    await axios.delete(`/api/now/ui/saved_filters/${table}`, { params: { sys_id: id } })
+    return true
+  } catch (error) {
+    console.error('Error deleting filter:', error)
+    setError?.(errorMsg)
     return false
   }
 }

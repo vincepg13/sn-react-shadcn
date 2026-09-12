@@ -1,4 +1,8 @@
 # Change Log
+## [V2.2.7]
+- Upgraded Tiptap html editor dependencies to V3
+- Added the ability to save/load filters in the condition builder
+
 ## [V2.2.6]
 - Added `onFormFieldsLoaded` to `SnFormWrapper` for host-side on-load actions based on initial field values.
 - Added `SnGroupEditor` for selecting eligible groups and managing their members.

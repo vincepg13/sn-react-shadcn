@@ -11,6 +11,7 @@ type FilterProps = {
   table: string
   encodedQuery?: string
   initialOpenState?: 'open' | 'closed'
+  canSaveFilter?: boolean
   onToggle?: (open?: boolean) => void
   onQueryBuilt?: (encoded: string) => void
 
@@ -25,6 +26,7 @@ export function SnFilter({
   table,
   encodedQuery,
   initialOpenState,
+  canSaveFilter,
   onToggle,
   onQueryBuilt,
   builderPortalTarget,
@@ -71,6 +73,7 @@ export function SnFilter({
         ref={conditionRef}
         table={table}
         encodedQuery={encodedQuery}
+        canSaveFilter={canSaveFilter}
         onQueryBuilt={handleQueryBuilt}
         emitQueryDisplay={handleDisplayUpdate}
       />

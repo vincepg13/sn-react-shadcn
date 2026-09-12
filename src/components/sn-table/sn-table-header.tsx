@@ -17,6 +17,7 @@ type SnTableHeaderProps = {
   uuid?: string;
   isFetching?: boolean;
   actions?: ReactNode[];
+  kwSearchType?: 'startsWith' | 'like';
   onQueryChange: (nextQuery: string) => void;
   onResetQuery: () => void;
 };
@@ -30,6 +31,7 @@ export function SnTableHeader({
   uuid,
   isFetching,
   actions,
+  kwSearchType = 'startsWith',
   onQueryChange,
   onResetQuery,
 }: SnTableHeaderProps) {
@@ -41,8 +43,8 @@ export function SnTableHeader({
   // Query on debounced search from input
   const handleChange = useDebouncedFn((value: string) => {
     if (!value) return onResetQuery();
-    const nextQuery = value.startsWith('*')
-      ? `${displayField}LIKE${value.slice(1)}`
+    const nextQuery = kwSearchType === 'like' || value.startsWith('*')
+      ? `${displayField}LIKE${value.startsWith('*') ? value.slice(1) : value}`
       : `${displayField}STARTSWITH${value}`;
     onQueryChange(nextQuery);
   }, 300);
