@@ -199,8 +199,11 @@ SnTableHeader props:
 | `uuid` **?** | `string` | Optional key to reset the condition builder instance |
 | `isFetching` **?** | `boolean` | Shows a loading spinner when true |
 | `actions` **?** | `ReactNode[]` | Additional action elements rendered on the right |
+| `closeFilterOnQueryChange` **?** | `boolean` | Close the advanced filter when its query changes. Defaults to `false` |
 | `onQueryChange` | `(nextQuery: string) => void` | Callback when the query changes |
-| `onResetQuery` | `() => void` | Callback when the query should be cleared |
+| `onClearQuery` | `() => void` | Callback used whenever the query is cleared |
+
+`onResetQuery` remains available as a deprecated alias for `onClearQuery`.
 
 ![SnTableHeader Demo](/demo/SnTableHeader.png)
 
@@ -485,7 +488,7 @@ SnFilter props:
 | Prop | Type | Description |
 |----------------|--------------------- |------------------------------------------------|
 | `table` | `string` | The table name of the record to load the conditions from |
-| `encodedQuery` **?** | `string` | The initial query to build |
+| `encodedQuery` **?** | `string` | Current external query. Changing it replaces the builder draft; rerendering with the same value preserves in-progress edits |
 | `initialOpenState` **?** | `open OR closed` | Whether to have the condition builder open on first load. It will default to closed. |
 | `onQueryBuilt` **?** | `(encoded: string)` | The callback called when the user executes the built condition by pressing the Run button |
 

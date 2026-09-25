@@ -19,6 +19,7 @@ export interface SnReferenceProps {
   field: SnFieldSchema
   onChange: (val: string | string[], displayValue?: string) => void
   formValues: Record<string, string>
+  getFormValues?: () => Record<string, unknown>
   table: string
   recordSysId: string
   dependentValue?: string
@@ -31,6 +32,7 @@ export function SnFieldReference({
   field,
   table,
   formValues,
+  getFormValues,
   recordSysId,
   dependentValue,
   forceRefQuery = false,
@@ -126,6 +128,7 @@ export function SnFieldReference({
     recordSysId,
     displayCols,
     formValues,
+    getFormValues,
     fetchable: open && !disabled,
   })
 

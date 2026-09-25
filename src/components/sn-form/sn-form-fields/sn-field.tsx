@@ -171,6 +171,7 @@ function SnFieldComponent({
             handleSelect,
             handleFocus,
             getValues(),
+            getValues,
             watch,
             formLabelRightRef,
             textareaThreshold,
@@ -256,6 +257,7 @@ function renderFieldComponent(
   handleSelect: (value: SnFieldPrimitive, display?: string) => void,
   handleFocus: () => void,
   formValues: Record<string, string>,
+  getFormValues: () => Record<string, unknown>,
   watch: ReturnType<typeof useFormContext>['watch'],
   adornmentRef: RefObject<HTMLDivElement | null>,
   textareaThreshold: number,
@@ -301,6 +303,7 @@ function renderFieldComponent(
           rhfField={rhfField}
           recordSysId={guid}
           formValues={formValues}
+          getFormValues={getFormValues}
           onChange={handleSelect}
           dependentValue={depValue}
         />
@@ -314,6 +317,7 @@ function renderFieldComponent(
           table={table}
           recordSysId={guid}
           formValues={formValues}
+          getFormValues={getFormValues}
           onChange={handleSelect}
           dependentValue={depValue}
           onViewReference={guid !== '' && guid !== '-1' ? referenceFieldCallbacks?.[field.name] : undefined}

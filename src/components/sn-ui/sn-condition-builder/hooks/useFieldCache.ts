@@ -32,7 +32,6 @@ export function useFieldCache(
   const [cacheLoaded, setCacheLoaded] = useState<Record<string, boolean>>({ fields: false })
   const [fieldsByTable, setFieldsByTable] = useState<Record<string, SnConditionMap>>({ [table]: columns })
   const fieldsRef = useRef(fieldsByTable)
-  const loadTracker = useRef<boolean[]>([])
   const isFirstLoad = useRef(true)
 
   useEffect(() => {
@@ -40,11 +39,23 @@ export function useFieldCache(
   }, [fieldsByTable])
 
   useEffect(() => {
+    fieldsRef.current = { ...fieldsRef.current, [table]: columns }
+    setFieldsByTable(prev => (prev[table] === columns ? prev : { ...prev, [table]: columns }))
+  }, [columns, table])
+
+  useEffect(() => {
     const hasGlideDate = hasFieldTypeCondition(queryModel, ['glide_date', 'glide_date_time', 'date', 'calendar_date_time', 'due_date', 'date_time'])
     const hasCurrency = hasFieldTypeCondition(queryModel, ['currency', 'currency2', 'price'])
+
+    setCacheLoaded(prev => ({
+      ...prev,
+      dateMeta: !hasGlideDate || !!dateMeta,
+      currencyMeta: !hasCurrency || currencyMeta.length > 0,
+    }))
+
     if (!hasGlideDate && !hasCurrency) {
       isFirstLoad.current = false
-      return 
+      return
     }
 
     const controller = new AbortController()
@@ -53,7 +64,7 @@ export function useFieldCache(
       if (isFirstLoad.current) setCacheLoaded(prev => ({ ...prev, dateMeta: false }))
       const fetchDateMeta = async () => {
         const fetchedDateMeta = await getDateMetadata(table, controller)
-        if (fetchedDateMeta) {
+        if (fetchedDateMeta && !controller.signal.aborted) {
           setDateMeta(fetchedDateMeta)
           setCacheLoaded(prev => ({ ...prev, dateMeta: true }))
         }
@@ -66,7 +77,7 @@ export function useFieldCache(
       if (isFirstLoad.current) setCacheLoaded(prev => ({ ...prev, currencyMeta: false }))
       const fetchCurrencyMeta = async () => {
         const currencies = await getActiveCurrencies(controller)
-        if (currencies) {
+        if (currencies && !controller.signal.aborted) {
           setCurrencyMeta(currencies)
           setCacheLoaded(prev => ({ ...prev, currencyMeta: true }))
         }
@@ -82,22 +93,25 @@ export function useFieldCache(
     const controller = new AbortController()
 
     const preloadMetadata = async () => {
-      loadTracker.current = []
+      const loadTracker: boolean[] = []
 
       const resolvePath = async (node: SnConditionRow): Promise<string> => {
         if (!node.references?.length) {
-          loadTracker.current.push(true)
+          loadTracker.push(true)
           return table
         }
 
         const targetTable = node.references[node.references.length - 2].reference_table
         if (!fieldsRef.current[targetTable]) {
           const meta = await getTableMetadata(targetTable, controller)
-          loadTracker.current.push(!!meta)
+          if (controller.signal.aborted) return targetTable
+          loadTracker.push(!!meta)
           if (meta) {
             fieldsRef.current = { ...fieldsRef.current, [targetTable]: meta }
             setFieldsByTable(prev => ({ ...prev, [targetTable]: meta }))
           }
+        } else {
+          loadTracker.push(true)
         }
 
         return targetTable
@@ -107,6 +121,7 @@ export function useFieldCache(
         for (const node of nodes) {
           if (node.type === 'condition') {
             const resolvedTable = await resolvePath(node)
+            if (controller.signal.aborted) return
             node.fieldLabel = node.fieldLabel?.replace(/ \. /g, '/')
             ;(node as SnConditionRow).table = resolvedTable
           } else {
@@ -116,13 +131,14 @@ export function useFieldCache(
       }
 
       await walkModel(queryModel)
-      setCacheLoaded(prev => ({ ...prev, fields: loadTracker.current.some(Boolean) }))
+      if (!controller.signal.aborted) {
+        setCacheLoaded(prev => ({ ...prev, fields: loadTracker.some(Boolean) }))
+      }
     }
 
     preloadMetadata()
     return () => controller.abort()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [table])
+  }, [queryModel, table])
 
   return {
     cacheLoaded,

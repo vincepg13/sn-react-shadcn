@@ -10,7 +10,7 @@ import { getParsedQuery, getTableMetadata } from '@kit/utils/conditions-api'
 import { serializeConditionModel, useConditionModel, hasConditionValue } from './hooks/useConditionModel'
 import { SnConditionSkeleton } from './sn-condition-skeleton'
 import { SnConditionsContext } from './contexts/SnConditionsContext'
-import { forwardRef, useEffect, useImperativeHandle, useMemo, useState } from 'react'
+import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react'
 import { SnConditionMap, SnConditionModel, SnConditionNode, SnConditionRow, SnDateTimeMeta, SnFieldCurrencyChoice, SnSavedFilter } from '@kit/types/condition-schema'
 
 export type SnConditionHandle = {
@@ -24,6 +24,7 @@ type ConditionProps = {
   initialQuery?: string
   columns: SnConditionMap
   queryModel: SnConditionModel
+  querySource: string
   showControls?: boolean
   extendToChanges?: boolean
   canSaveFilter?: boolean
@@ -39,6 +40,7 @@ export const SnConditions = forwardRef<SnConditionHandle, ConditionProps>(
       table,
       columns,
       queryModel,
+      querySource,
       extendToChanges,
       showControls = true,
       canSaveFilter = true,
@@ -51,6 +53,14 @@ export const SnConditions = forwardRef<SnConditionHandle, ConditionProps>(
   ) => {
     const { model, updateCondition, deleteCondition, updateModel, executeQuery, clearQuery, addGroup, adjustByIndex, loadModel } =
       useConditionModel(queryModel)
+    const querySourceRef = useRef(querySource)
+    const externalModelPending = querySourceRef.current !== querySource
+
+    useEffect(() => {
+      if (!externalModelPending) return
+      querySourceRef.current = querySource
+      loadModel(queryModel)
+    }, [externalModelPending, loadModel, queryModel, querySource])
 
     const [dateMeta, setDateMeta] = useState<SnDateTimeMeta | null>(null)
     const [currencyMeta, setCurrencyMeta] = useState<SnFieldCurrencyChoice[]>([])
@@ -115,11 +125,11 @@ export const SnConditions = forwardRef<SnConditionHandle, ConditionProps>(
     }
 
     useEffect(() => {
-      if (!onModelChange) return
+      if (!onModelChange || externalModelPending) return
 
       const builtQuery = serializeConditionModel(model, false) || ''
       onModelChange(builtQuery)
-    }, [model, onModelChange])
+    }, [externalModelPending, model, onModelChange])
 
     const liveQuery = useMemo(() => serializeConditionModel(model, false) || '', [model])
     const hasConditions = useMemo(() => hasConditionValue(model), [model])

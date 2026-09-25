@@ -125,6 +125,16 @@ export type SnReferenceFieldCallback = (value: string, displayValue: string) => 
 export type SnReferenceFieldCallbacks = Record<string, SnReferenceFieldCallback>
 
 //Activity Formatter
+const _attachmentSchema = z.object({
+  content_type: z.string(),
+  file_name: z.string(),
+  path: z.string(),
+  size: z.string(),
+  size_bytes: z.number(),
+  state: z.string(),
+  sys_id: z.string(),
+})
+
 const _entrySchema = z.object({
   sys_created_on_adjusted: z.string(),
   sys_id: z.string(),
@@ -139,6 +149,7 @@ const _entrySchema = z.object({
   value: z.string(),
   element: z.string(),
   user_img: z.string().optional(),
+  attachment: _attachmentSchema.optional(),
 })
 
 const _journalFieldSchema = z.object({

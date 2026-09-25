@@ -19,6 +19,7 @@ export function useReferenceRecords({
   recordSysId,
   displayCols,
   formValues,
+  getFormValues,
   fetchable = false,
 }: {
   ed: SnRefFieldEd
@@ -27,6 +28,7 @@ export function useReferenceRecords({
   recordSysId: string
   displayCols: string[]
   formValues: Record<string, string>
+  getFormValues?: () => Record<string, unknown>
   fetchable: boolean
 }) {
   const [records, setRecords] = useState<RefRecord[]>([])
@@ -49,7 +51,10 @@ export function useReferenceRecords({
           q,
           qualifier: ed.qualifier || '',
           requiredFields: displayCols,
-          recordValues: formValues,
+          // Read the values immediately before the request. A reference field
+          // does not rerender when an unrelated field changes, so the
+          // `formValues` snapshot from its last render can be stale here.
+          recordValues: getFormValues?.() ?? formValues,
           start: pageNumber * 20,
           count: 20,
         })
@@ -71,7 +76,19 @@ export function useReferenceRecords({
         setLoading(false)
       }
     },
-    [fetchable, loading, hasMore, ed.reference, ed.qualifier, table, fieldName, recordSysId, displayCols, formValues]
+    [
+      fetchable,
+      loading,
+      hasMore,
+      ed.reference,
+      ed.qualifier,
+      table,
+      fieldName,
+      recordSysId,
+      displayCols,
+      formValues,
+      getFormValues,
+    ]
   )
 
   return {

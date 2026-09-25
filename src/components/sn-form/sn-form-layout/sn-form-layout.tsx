@@ -72,7 +72,7 @@ export function SnFormLayout({
         key: tabKey,
         label: section.captionDisplay!,
         content: (
-          <div className="space-y-6">
+          <div className="sn-form-tab-content">
             <SnFormSection
               columns={section.columns}
               bootstrapCells={section._bootstrap_cells}

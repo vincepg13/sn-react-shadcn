@@ -52,7 +52,7 @@ export const SnConditionBuilderRef = forwardRef<SnConditionHandle, BuilderProps>
 
     const emitDisplay = !!emitQueryDisplay
     const columns = useFieldMetadata(table, setError)
-    const { queryModel, queryDisplay, queryParser } = useParsedQuery(table, builderQuery || '', emitDisplay, setError)
+    const { queryModel, querySource, queryDisplay, queryParser } = useParsedQuery(table, builderQuery || '', emitDisplay, setError)
     useEffect(() => setLoaded(!!columns && !!queryModel), [columns, queryModel])
 
     const conditionRef = useRef<SnConditionHandle>(null)
@@ -82,13 +82,14 @@ export const SnConditionBuilderRef = forwardRef<SnConditionHandle, BuilderProps>
       [emitDisplay, onQueryBuilt, queryParser]
     )
 
-    if (columns && queryModel) {
+    if (columns && queryModel && querySource) {
       return (
         <SnConditions
           ref={conditionRef}
           table={table}
           columns={columns}
           queryModel={queryModel}
+          querySource={querySource}
           showControls={showControls}
           extendToChanges={extendToChanges}
           canSaveFilter={canSaveFilter}

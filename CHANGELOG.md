@@ -1,4 +1,10 @@
 # Change Log
+## [V2.3.0]
+- Added optional group-manager editing to `SnGroupEditor`.
+- Enhanced `SnTableHeader` with filter chips and full-query clearing.
+- Added the ability to display added attachments in `SnFormActivity`.
+- Multiple bug fixes and performance improvements across the condition builder components.
+
 ## [V2.2.7]
 - Upgraded Tiptap html editor dependencies to V3
 - Added the ability to save/load filters in the condition builder

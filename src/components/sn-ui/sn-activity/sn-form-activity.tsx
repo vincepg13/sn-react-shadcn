@@ -42,7 +42,7 @@ export function SnFormActivity({
   const [entries, setEntries] = useState<SnActivityEntry[]>(journalEntries || [])
 
   useEffect(() => {
-    setEntries(journalEntries)
+    setEntries(journalEntries.filter(entry => entry.value || entry.element === 'attachment'))
   }, [journalEntries])
 
   const effectiveFields = useMemo(() => {
