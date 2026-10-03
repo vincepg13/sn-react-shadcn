@@ -105,6 +105,12 @@ export function SnFieldReference({
 
   const [selectedRecords, setSelectedRecords] = useState<RefRecord[]>(selected)
 
+  // Client scripts can change the RHF value without going through this
+  // component's selection handlers. Keep the rendered selection in sync.
+  useEffect(() => {
+    setSelectedRecords(selected)
+  }, [selected])
+
   const excludeValues = useMemo(() => (isMultiple ? selected.map(r => r.value) : []), [isMultiple, selected])
 
   const query = useMemo(

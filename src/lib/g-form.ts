@@ -172,11 +172,16 @@ export function createGFormBridge(opts: GFormBridgeOptions): SnGForm {
       return v === 'true'
     },
     setValue: (fieldName: string, value: SnFieldPrimitive, displayValue?: string) => {
-      if (displayValue) {
+      // An empty display value is meaningful when clearing a reference field.
+      // Preserve the existing display value only when callers set a non-empty
+      // value without supplying a display value.
+      const nextDisplayValue = displayValue ?? (value === '' ? '' : undefined)
+      if (nextDisplayValue !== undefined) {
         const localField = getFormFields()[fieldName]
         if (localField) {
-          localField.displayValue = String(displayValue)
+          localField.displayValue = String(nextDisplayValue)
         }
+        getDisplayValues()[fieldName] = String(nextDisplayValue)
       }
 
       setValue(fieldName, value, { shouldDirty: true, shouldTouch: true, shouldValidate: true })
@@ -335,7 +340,7 @@ export function createGFormBridge(opts: GFormBridgeOptions): SnGForm {
         if (!refTable) return cb(null)
 
         const cacheKey = `${refTable}:${sys_id}`
-        if (refCache.has(cacheKey)) return cb(refCache.get(cacheKey))
+        if (refCache.has(cacheKey)) return cb(refCache.get(cacheKey) ?? null)
 
         const ga = new GlideAjax('AJAXGlideRecord')
         ga.addParam('sysparm_name', refTable)

@@ -1,4 +1,7 @@
 # Change Log
+## [2.3.1]
+- Fixed reference fields not clearing their display value via g_form methods
+
 ## [V2.3.0]
 - Added optional group-manager editing to `SnGroupEditor`.
 - Enhanced `SnTableHeader` with filter chips and full-query clearing.
