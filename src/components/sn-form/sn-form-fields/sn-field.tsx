@@ -106,6 +106,19 @@ function SnFieldComponent({
     uiState: fieldUIState,
     fieldVal: String(getValues(field.name) ?? ''),
   })
+  const wasMandatoryRef = useRef(fieldUI.mandatory)
+
+  useEffect(() => {
+    const wasMandatory = wasMandatoryRef.current
+    wasMandatoryRef.current = fieldUI.mandatory
+
+    // React Hook Form retains an existing resolver error until the field is
+    // validated again. Revalidate when a dynamic UI policy makes the field
+    // optional so a stale required error (and its red label styling) clears.
+    if (wasMandatory && !fieldUI.mandatory) {
+      void trigger(field.name)
+    }
+  }, [field.name, fieldUI.mandatory, trigger])
 
   const handleChange = useCallback(
     async (newValue: SnFieldPrimitive, display?: string) => {

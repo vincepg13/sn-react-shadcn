@@ -1,4 +1,7 @@
 # Change Log
+## [2.3.2]
+- Fixed stale mandatory field messages in SnForm
+
 ## [2.3.1]
 - Fixed reference fields not clearing their display value via g_form methods
 
