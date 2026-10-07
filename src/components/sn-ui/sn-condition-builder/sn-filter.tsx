@@ -10,6 +10,7 @@ import { SnConditionDisplayArray } from '@kit/types/condition-schema'
 type FilterProps = {
   table: string
   encodedQuery?: string
+  referenceQueries?: Record<string, string>
   initialOpenState?: 'open' | 'closed'
   canSaveFilter?: boolean
   onToggle?: (open?: boolean) => void
@@ -25,6 +26,7 @@ type FilterProps = {
 export function SnFilter({
   table,
   encodedQuery,
+  referenceQueries,
   initialOpenState,
   canSaveFilter,
   onToggle,
@@ -73,6 +75,7 @@ export function SnFilter({
         ref={conditionRef}
         table={table}
         encodedQuery={encodedQuery}
+        referenceQueries={referenceQueries}
         canSaveFilter={canSaveFilter}
         onQueryBuilt={handleQueryBuilt}
         emitQueryDisplay={handleDisplayUpdate}

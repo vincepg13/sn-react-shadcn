@@ -1,4 +1,7 @@
 # Change Log
+## [2.3.3]
+- Added field-specific reference queries to `SnConditionBuilder` and `SnFilter`.
+
 ## [2.3.2]
 - Fixed stale mandatory field messages in SnForm
 

@@ -196,6 +196,7 @@ SnTableHeader props:
 | `table` | `string` | ServiceNow table name for the condition builder |
 | `displayField` | `string` | Field name used for the quick search input |
 | `query` **?** | `string` | Current encoded query string |
+| `referenceQueries` **?** | `Record<string, string>` | Fixed encoded queries keyed by the exact reference field path |
 | `uuid` **?** | `string` | Optional key to reset the condition builder instance |
 | `isFetching` **?** | `boolean` | Shows a loading spinner when true |
 | `actions` **?** | `ReactNode[]` | Additional action elements rendered on the right |
@@ -480,17 +481,38 @@ SnActivity props:
 | `user` | `string` | The sys_id of the current user |
 | `fullwidth` **?** | `boolean` | Setting this to true will display each row in the formatter in full width instead of the default left/right chat layout |
 
-## `<SnFilter/>`
+## `<SnConditionBuilder/>` and `<SnFilter/>`
 
 Used to display the condition builder of any given table. The component presents itself as a filter icon with the current query next to it. You can then click on the filter icon to open the full condition builder (Which is its own component you can also use, **`<SnConditionBuilder />`**).
+
+SnConditionBuilder props:
+| Prop | Type | Description |
+|----------------|--------------------- |------------------------------------------------|
+| `table` | `string` | The table name of the record to load the conditions from |
+| `encodedQuery` **?** | `string` | Current external query. Changing it replaces the builder draft; rerendering with the same value preserves in-progress edits |
+| `referenceQueries` **?** | `Record<string, string>` | Fixed encoded queries keyed by the exact reference field path |
+| `onQueryBuilt` **?** | `(encoded: string)` | The callback called when the user executes the built condition by pressing the Run button |
 
 SnFilter props:
 | Prop | Type | Description |
 |----------------|--------------------- |------------------------------------------------|
 | `table` | `string` | The table name of the record to load the conditions from |
 | `encodedQuery` **?** | `string` | Current external query. Changing it replaces the builder draft; rerendering with the same value preserves in-progress edits |
+| `referenceQueries` **?** | `Record<string, string>` | Fixed encoded queries keyed by the exact reference field path |
 | `initialOpenState` **?** | `open OR closed` | Whether to have the condition builder open on first load. It will default to closed. |
 | `onQueryBuilt` **?** | `(encoded: string)` | The callback called when the user executes the built condition by pressing the Run button |
+
+Reference queries are applied to the matching `SnRecordPicker`. Direct fields use their field name, while dot-walked fields must use their complete path. Fields without an exact match remain unrestricted.
+
+```tsx
+<SnConditionBuilder
+  table="incident"
+  referenceQueries={{
+    assigned_to: 'active=true',
+    'caller_id.manager': 'active=true^locked_out=false',
+  }}
+/>
+```
 
 ## `<SnDotwalkChoice />`
 

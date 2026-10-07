@@ -10,6 +10,7 @@ import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useSta
 type BuilderProps = {
   table: string
   encodedQuery?: string
+  referenceQueries?: Record<string, string>
   showControls?: boolean
   extendToChanges?: boolean
   canSaveFilter?: boolean
@@ -42,7 +43,19 @@ function getBuilderQuery(query?: string) {
 
 export const SnConditionBuilderRef = forwardRef<SnConditionHandle, BuilderProps>(
   (
-    { table, encodedQuery, showControls, extendToChanges, canSaveFilter, emitQueryDisplay, onQueryBuilt, onModelChange, onFilterSaved, onFilterLoaded }: BuilderProps,
+    {
+      table,
+      encodedQuery,
+      referenceQueries,
+      showControls,
+      extendToChanges,
+      canSaveFilter,
+      emitQueryDisplay,
+      onQueryBuilt,
+      onModelChange,
+      onFilterSaved,
+      onFilterLoaded,
+    }: BuilderProps,
     ref
   ) => {
     const builderQuery = getBuilderQuery(encodedQuery)
@@ -88,6 +101,7 @@ export const SnConditionBuilderRef = forwardRef<SnConditionHandle, BuilderProps>
           ref={conditionRef}
           table={table}
           columns={columns}
+          referenceQueries={referenceQueries}
           queryModel={queryModel}
           querySource={querySource}
           showControls={showControls}
@@ -116,6 +130,7 @@ export const SnConditionBuilderRef = forwardRef<SnConditionHandle, BuilderProps>
 export function SnConditionBuilder({
   table,
   encodedQuery,
+  referenceQueries,
   showControls,
   canSaveFilter,
   onQueryBuilt,
@@ -129,6 +144,7 @@ export function SnConditionBuilder({
       <SnConditionBuilderRef
         table={table}
         encodedQuery={encodedQuery}
+        referenceQueries={referenceQueries}
         showControls={showControls}
         canSaveFilter={canSaveFilter}
         emitQueryDisplay={emitQueryDisplay}

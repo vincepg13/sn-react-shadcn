@@ -23,6 +23,7 @@ type ConditionProps = {
   table: string
   initialQuery?: string
   columns: SnConditionMap
+  referenceQueries?: Record<string, string>
   queryModel: SnConditionModel
   querySource: string
   showControls?: boolean
@@ -39,6 +40,7 @@ export const SnConditions = forwardRef<SnConditionHandle, ConditionProps>(
     {
       table,
       columns,
+      referenceQueries,
       queryModel,
       querySource,
       extendToChanges,
@@ -140,12 +142,13 @@ export const SnConditions = forwardRef<SnConditionHandle, ConditionProps>(
       () => ({
         table,
         fieldsByTable,
+        referenceQueries,
         dateMeta,
         currencyMeta,
         extended: extendToChanges || false,
         setFieldsByTable,
       }),
-      [table, fieldsByTable, dateMeta, currencyMeta, extendToChanges, setFieldsByTable]
+      [table, fieldsByTable, referenceQueries, dateMeta, currencyMeta, extendToChanges, setFieldsByTable]
     )
 
     if (notLoaded) return <SnConditionSkeleton />

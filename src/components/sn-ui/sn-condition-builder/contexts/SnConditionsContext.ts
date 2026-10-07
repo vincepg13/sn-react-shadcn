@@ -4,6 +4,7 @@ import { createContext, Dispatch, SetStateAction, useContext } from 'react'
 type SnCondMeta = {
   table: string
   fieldsByTable: Record<string, SnConditionMap>
+  referenceQueries?: Record<string, string>
   dateMeta: SnDateTimeMeta | null
   currencyMeta: SnFieldCurrencyChoice[],
   extended: boolean

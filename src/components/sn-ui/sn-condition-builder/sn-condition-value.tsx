@@ -10,6 +10,7 @@ import { SnValueReference } from './value-editors/sn-value-reference'
 import { SnValueFieldName } from './value-editors/sn-value-field-name'
 import { SnValueDateEquivalent } from './value-editors/sn-value-date-equivalent'
 import { SnValueDateComparative } from './value-editors/sn-value-date-comparative'
+import { useCondMeta } from './contexts/SnConditionsContext'
 import { SnConditionField, SnConditionRow, SnFieldOperator } from '@kit/types/condition-schema'
 
 type SnConditionValueProps = {
@@ -25,6 +26,7 @@ const booleanChoices = [
 ]
 
 export function SnConditionValue({ condition, field, operator, onChange }: SnConditionValueProps) {
+  const { referenceQueries } = useCondMeta()
   const processValue = useMemo(
     () => (val: string, display?: string) => {
       onChange({ value: val, displayValue: display })
@@ -83,6 +85,7 @@ export function SnConditionValue({ condition, field, operator, onChange }: SnCon
           table={field.reference!}
           value={condition.value}
           display_value={condition.displayValue || ''}
+          query={referenceQueries?.[condition.field] ?? ''}
           onChange={processValue}
         />
       )

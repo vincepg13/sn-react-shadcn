@@ -8,10 +8,11 @@ type RefProps = {
   field: SnConditionField
   display_value: string
   table: string
+  query?: string
   onChange: (value: string, display_value: string) => void
 }
 
-export function SnValueReference({ value, field, display_value, table, onChange }: RefProps) {
+export function SnValueReference({ value, field, display_value, table, query = '', onChange }: RefProps) {
   const displayField = field.referenceDisplayField!
   const [refData, setRefData] = useState<SnRecordPickerItem | null>(value ? { value, display_value } : null)
 
@@ -30,6 +31,7 @@ export function SnValueReference({ value, field, display_value, table, onChange 
     <SnRecordPicker
       table={table}
       fields={displayFields}
+      query={query}
       value={refData}
       onChange={record => handleChange(record as SnRecordPickerItem)}
       placeholder="-- Empty --"

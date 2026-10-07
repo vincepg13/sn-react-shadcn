@@ -13,6 +13,7 @@ type SnTableHeaderBaseProps = {
   table: string
   displayField: string
   query?: string
+  referenceQueries?: Record<string, string>
   uuid?: string
   isFetching?: boolean
   actions?: ReactNode[]
@@ -49,6 +50,7 @@ export function SnTableHeader({
   table,
   displayField,
   query,
+  referenceQueries,
   uuid,
   isFetching,
   filterChips,
@@ -171,7 +173,13 @@ export function SnTableHeader({
         </div>
       </div>
       <div className={showFilter ? 'block' : 'hidden'}>
-        <SnConditionBuilder key={uuid} table={table} onQueryBuilt={handleQueryChange} encodedQuery={query || ''} />
+        <SnConditionBuilder
+          key={uuid}
+          table={table}
+          encodedQuery={query || ''}
+          referenceQueries={referenceQueries}
+          onQueryBuilt={handleQueryChange}
+        />
       </div>
     </div>
   )
