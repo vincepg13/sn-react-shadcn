@@ -1,0 +1,1008 @@
+{
+    "short_description": "Submit Billing Request Form",
+    "can_view": true,
+    "target_table_name": "x_bskyb_fn_freq",
+    "use_sc_layout": true,
+    "no_wishlist": false,
+    "item_catalogs": "952285821b8c06547d55873be54bcb41",
+    "icon": "6b1d49cd1bbdce108ed905f4464bcb1b.iix",
+    "description": {},
+    "no_order_now": false,
+    "availability": "on_both",
+    "request_method": "",
+    "mandatory_attachment": true,
+    "sys_class_name": "sc_cat_item_producer",
+    "no_attachments": false,
+    "sys_id": "2f084e0b1b184a54dfca1f89bd4bcb28",
+    "no_order": false,
+    "client_script": {
+        "onChange": [
+            {
+                "sys_id": "cb3cc8eb1bbf3910d63e98271d4bcbfe",
+                "fieldName": "requested_for",
+                "name": "SP Autofil User Details - Change",
+                "type": "onChange",
+                "script": "function onChange(control, oldValue, newValue, isLoading) {\n   if (isLoading || newValue == '') {\n      return;\n   }\n   var fetchFields = \"email,user_name,manager,location,cost_center\";\n\tvar ga = new GlideAjax('FinanceFdCatalogUtils').setScope(\"x_bskyb_fn\");\n\tga.addParam('sysparm_name', \"getUserRecordFields\");\n\tga.addParam('sysparam_fields', fetchFields);\n\tga.addParam('sysparm_requster', g_form.getValue('requested_for'));\n\tga.getXMLAnswer(function(answer){\n\t\tif(answer != ''){\n\t\t\tvar ansArray = answer.split(',');\n\t\t\tg_form.setValue('email_address', ansArray[0]);\n\t\t\tg_form.setValue('user_id', ansArray[1]);\n\t\t\tg_form.setValue('manager_sponsor', ansArray[2]);\n\t\t\tg_form.setValue('location', ansArray[3]);\n\t\t\tg_form.setValue('cost_code', ansArray[4]);\n\t\t}\n\t});\n   \n}\n",
+                "tableName": ""
+            }
+        ],
+        "onSubmit": [],
+        "onLoad": [
+            {
+                "sys_id": "1f3c0ceb1bbf3910d63e98271d4bcb36",
+                "fieldName": "7f513ef41b6a71147d55873be54bcb06",
+                "name": "SP Autofil User Details at Load",
+                "type": "onLoad",
+                "script": "function onLoad() {\n\tvar fetchFields = \"email,user_name,manager,location,cost_center\";\n\tvar ga = new GlideAjax('FinanceFdCatalogUtils').setScope(\"x_bskyb_fn\");\n\tga.addParam('sysparm_name', \"getUserRecordFields\");\n\tga.addParam('sysparam_fields', fetchFields);\n\tga.addParam('sysparm_requster', g_form.getValue('requested_for'));\n\tga.getXMLAnswer(function(answer){\n\t\tif(answer != ''){\n\t\t\tvar ansArray = answer.split(',');\n\t\t\tg_form.setValue('email_address', ansArray[0]);\n\t\t\tg_form.setValue('user_id', ansArray[1]);\n\t\t\tg_form.setValue('manager_sponsor', ansArray[2]);\n\t\t\tg_form.setValue('location', ansArray[3]);\n\t\t\tg_form.setValue('cost_code', ansArray[4]);\n\t\t}\n\t});\n}\n",
+                "tableName": ""
+            }
+        ],
+        "messages": {
+            "": ""
+        }
+    },
+    "has_requested_for_variable": false,
+    "validation_scripts": [],
+    "ui_scripts": [],
+    "table": "sc_cat_item",
+    "no_cart": false,
+    "order": 0,
+    "policy": [
+        {
+            "short_description": "SP Sky Media",
+            "sys_id": "d5112f76fbe6a650e14efc72ceefdc73",
+            "runScripts": false,
+            "conditions": [
+                {
+                    "catalog_variable": "8042f360fbee2a10e14efc72ceefdc90",
+                    "catalog_operator": "=",
+                    "or": false,
+                    "field_label": "Region:",
+                    "goto_query": false,
+                    "type": "string",
+                    "pre_evaluated_term": false,
+                    "pre_evaluated_term_result": false,
+                    "field": "IO:8042f360fbee2a10e14efc72ceefdc90",
+                    "rlqc_query": false,
+                    "oper": "=",
+                    "term": "variables.region_vs=UK",
+                    "column_type": "variable_request",
+                    "operator_label": "is",
+                    "catalog_variable_type": "choice",
+                    "value": "UK",
+                    "newquery": false
+                }
+            ],
+            "reverse": true,
+            "actions": [
+                {
+                    "visible": "true",
+                    "sysId": "0a21abb6fbe6a650e14efc72ceefdc77",
+                    "valueAction": "ignore",
+                    "name": "IO:e3b02bb2fbe6a650e14efc72ceefdc6d",
+                    "disabled": "ignore",
+                    "mandatory": "true",
+                    "value": "",
+                    "clearValue": "false",
+                    "fieldMessageType": "none"
+                }
+            ],
+            "table": "(catalog)",
+            "onload": true
+        }
+    ],
+    "no_quantity": false,
+    "_sections": [
+        {
+            "layout": "normal",
+            "_bootstrap_cells": 6,
+            "_count": 2,
+            "visible": true,
+            "columns": [
+                {
+                    "fields": [
+                        {
+                            "name": "requested_by",
+                            "type": "field",
+                            "$$hashKey": "object:325"
+                        },
+                        {
+                            "name": "requested_for",
+                            "type": "field",
+                            "$$hashKey": "object:326"
+                        },
+                        {
+                            "name": "manager_sponsor",
+                            "type": "field",
+                            "$$hashKey": "object:327"
+                        },
+                        {
+                            "name": "email_address",
+                            "type": "field",
+                            "$$hashKey": "object:328"
+                        }
+                    ],
+                    "$$hashKey": "object:318"
+                },
+                {
+                    "fields": [
+                        {
+                            "name": "user_id",
+                            "type": "field",
+                            "$$hashKey": "object:353"
+                        },
+                        {
+                            "name": "location",
+                            "type": "field",
+                            "$$hashKey": "object:354"
+                        },
+                        {
+                            "name": "cost_code",
+                            "type": "field",
+                            "$$hashKey": "object:355"
+                        }
+                    ],
+                    "$$hashKey": "object:319"
+                }
+            ],
+            "name": "sysaid_common_fields",
+            "caption": "",
+            "id": "sysaid_common_fields",
+            "type": "container",
+            "$$hashKey": "object:303"
+        },
+        {
+            "layout": "normal",
+            "_bootstrap_cells": 12,
+            "_count": 1,
+            "visible": true,
+            "columns": [
+                {
+                    "fields": [
+                        {
+                            "name": "region_vs",
+                            "type": "field",
+                            "$$hashKey": "object:380"
+                        }
+                    ],
+                    "$$hashKey": "object:376"
+                }
+            ],
+            "name": "region_o2c",
+            "caption": "",
+            "id": "region_o2c",
+            "type": "container",
+            "$$hashKey": "object:304"
+        },
+        {
+            "layout": "normal",
+            "_bootstrap_cells": 12,
+            "_count": 1,
+            "visible": true,
+            "columns": [
+                {
+                    "fields": [
+                        {
+                            "name": "request_subject",
+                            "type": "field",
+                            "$$hashKey": "object:393"
+                        }
+                    ],
+                    "$$hashKey": "object:389"
+                }
+            ],
+            "name": "request_subject_o2c",
+            "caption": "",
+            "id": "request_subject_o2c",
+            "type": "container",
+            "$$hashKey": "object:305"
+        },
+        {
+            "layout": "normal",
+            "_bootstrap_cells": 12,
+            "_count": 1,
+            "visible": true,
+            "columns": [
+                {
+                    "fields": [
+                        {
+                            "name": "sky_media",
+                            "type": "field",
+                            "$$hashKey": "object:406"
+                        },
+                        {
+                            "name": "additional_comments",
+                            "type": "field",
+                            "$$hashKey": "object:407"
+                        },
+                        {
+                            "layout": "normal",
+                            "variables": [
+                                {
+                                    "name": "have_you_attached_the_o2c_billing_request_form",
+                                    "type": "field"
+                                }
+                            ],
+                            "name": "IO:910f35df8377cb5076faac20ceaad3f8",
+                            "caption": "",
+                            "containers": [
+                                {
+                                    "layout": "normal",
+                                    "columns": [
+                                        {
+                                            "fields": [
+                                                {
+                                                    "name": "have_you_attached_the_o2c_billing_request_form",
+                                                    "type": "field",
+                                                    "$$hashKey": "object:553"
+                                                }
+                                            ],
+                                            "$$hashKey": "object:548"
+                                        }
+                                    ],
+                                    "name": "IO:910f35df8377cb5076faac20ceaad3f8",
+                                    "caption": "",
+                                    "id": "IO:910f35df8377cb5076faac20ceaad3f8",
+                                    "type": "container",
+                                    "$$hashKey": "object:544"
+                                }
+                            ],
+                            "type": "checkbox_container",
+                            "$$hashKey": "object:408"
+                        }
+                    ],
+                    "$$hashKey": "object:402"
+                }
+            ],
+            "name": "",
+            "caption": "",
+            "id": "",
+            "type": "container",
+            "$$hashKey": "object:306"
+        }
+    ],
+    "no_delivery_time": false,
+    "is_transient": true,
+    "_fields": {
+        "region_vs": {
+            "display_value": "",
+            "guide_implications": false,
+            "visible": true,
+            "label": "Region:",
+            "sys_readonly": false,
+            "dynamic_value_field": "",
+            "type": "choice",
+            "mandatory": true,
+            "visible_guide": true,
+            "visible_standalone": true,
+            "_cat_variable": true,
+            "displayValue": "ITA",
+            "sys_id": "8042f360fbee2a10e14efc72ceefdc90",
+            "readonly": false,
+            "read_only": false,
+            "unique": false,
+            "name": "region_vs",
+            "variable_name": "IO:8042f360fbee2a10e14efc72ceefdc90",
+            "placeholder": "",
+            "choice": 1,
+            "choices": [
+                {
+                    "rprice_dc": "GBP",
+                    "price": "0",
+                    "recurring_price": "0",
+                    "label": "--Select Option--",
+                    "price_dc": "GBP",
+                    "value": "",
+                    "selected": true
+                },
+                {
+                    "label": "UKI",
+                    "value": "UK"
+                },
+                {
+                    "label": "DE",
+                    "value": "DE"
+                },
+                {
+                    "label": "ITA",
+                    "value": "ITA"
+                }
+            ],
+            "value": "ITA",
+            "dynamic_value_dot_walk_path": "",
+            "_class_name": "SelectQuestion",
+            "_parent": "region_o2c",
+            "stagedValue": "ITA",
+            "originalValue": "",
+            "_visible": true,
+            "_readonly": false,
+            "_mandatory": true,
+            "catalogFieldName": "IO:8042f360fbee2a10e14efc72ceefdc90",
+            "$$hashKey": "object:283",
+            "hasAiSparkle": false
+        },
+        "requested_for": {
+            "display_value": "Vincent Fisher (Admin)",
+            "guide_implications": false,
+            "lookup_label": "",
+            "type": "reference",
+            "mandatory": true,
+            "visible_guide": true,
+            "visible_standalone": true,
+            "refTable": "sys_user",
+            "_cat_variable": true,
+            "sys_id": "0b3cc8eb1bbf3910d63e98271d4bcb91",
+            "readonly": false,
+            "read_only": false,
+            "lookup_value": "",
+            "variable_name": "IO:0b3cc8eb1bbf3910d63e98271d4bcb91",
+            "placeholder": "",
+            "value": "428d170fdb1ebb4cc186399ffe96195c",
+            "dynamic_value_dot_walk_path": "",
+            "_class_name": "ReferenceQuestion",
+            "ed": {
+                "reference": "sys_user",
+                "searchField": "name",
+                "defaultOperator": "LIKE",
+                "qualifier": "active=true^ldap_serverISNOTEMPTY^emailISNOTEMPTY^EQ",
+                "name": "requested_for"
+            },
+            "visible": true,
+            "label": "Requested For:",
+            "sys_readonly": false,
+            "dynamic_value_field": "",
+            "displayValue": "Vincent Fisher (Admin)",
+            "unique": false,
+            "name": "requested_for",
+            "attributes": "ref_ac_columns=alpha_name;guest_id,ref_ac_columns_search=true,ref_ac_order_by=name,ref_auto_completer=AJAXTableCompleter",
+            "readonlyClickthrough": true,
+            "choice": 0,
+            "_parent": "sysaid_common_fields",
+            "stagedValue": "428d170fdb1ebb4cc186399ffe96195c",
+            "originalValue": "428d170fdb1ebb4cc186399ffe96195c",
+            "_visible": true,
+            "_readonly": false,
+            "_mandatory": true,
+            "catalogFieldName": "IO:0b3cc8eb1bbf3910d63e98271d4bcb91"
+        },
+        "have_you_attached_the_o2c_billing_request_form": {
+            "display_value": "false",
+            "guide_implications": false,
+            "visible": true,
+            "label": "Have you attached the O2C billing request form.",
+            "sys_readonly": false,
+            "dynamic_value_field": "",
+            "type": "boolean",
+            "mandatory": true,
+            "visible_guide": true,
+            "visible_standalone": true,
+            "_cat_variable": true,
+            "displayValue": "false",
+            "sys_id": "cd88868f1b184a54dfca1f89bd4bcb8e",
+            "readonly": false,
+            "read_only": false,
+            "unique": false,
+            "name": "have_you_attached_the_o2c_billing_request_form",
+            "variable_name": "IO:cd88868f1b184a54dfca1f89bd4bcb8e",
+            "placeholder": "",
+            "choice": 0,
+            "value": "false",
+            "dynamic_value_dot_walk_path": "",
+            "_class_name": "CheckBoxQuestion",
+            "_parent": "IO:910f35df8377cb5076faac20ceaad3f8",
+            "stagedValue": "false",
+            "originalValue": "false",
+            "_visible": true,
+            "_readonly": false,
+            "_mandatory": true,
+            "catalogFieldName": "IO:cd88868f1b184a54dfca1f89bd4bcb8e",
+            "_value": "false"
+        },
+        "request_subject": {
+            "display_value": "",
+            "guide_implications": false,
+            "type": "string",
+            "mandatory": true,
+            "visible_guide": true,
+            "visible_standalone": true,
+            "_cat_variable": true,
+            "sys_id": "4091f32cfbae2a10e14efc72ceefdc36",
+            "readonly": false,
+            "_force_single_line": true,
+            "read_only": false,
+            "variable_name": "IO:4091f32cfbae2a10e14efc72ceefdc36",
+            "placeholder": "",
+            "value": "",
+            "dynamic_value_dot_walk_path": "",
+            "_class_name": "TextFieldQuestion",
+            "visible": true,
+            "label": "Request Subject:",
+            "sys_readonly": false,
+            "dynamic_value_field": "",
+            "displayValue": "",
+            "validate_regex": "",
+            "validation_message": "",
+            "regex_flag": "",
+            "unique": false,
+            "name": "request_subject",
+            "attributes": "",
+            "choice": 0,
+            "_parent": "request_subject_o2c",
+            "stagedValue": "",
+            "originalValue": "",
+            "_visible": true,
+            "_readonly": false,
+            "_mandatory": true,
+            "catalogFieldName": "IO:4091f32cfbae2a10e14efc72ceefdc36",
+            "$$hashKey": "object:284"
+        },
+        "sysaid_common_fields": {
+            "sys_id": "be3cc0e31bbf3910d63e98271d4bcb46",
+            "_children": [
+                "requested_by",
+                "requested_for",
+                "manager_sponsor",
+                "email_address",
+                "formatter2",
+                "user_id",
+                "location",
+                "cost_code"
+            ],
+            "visible": true,
+            "name": "sysaid_common_fields",
+            "variable_name": "SysAid Common Fields",
+            "type": "container_start",
+            "_cascade_hidden": false,
+            "_cat_variable": "true",
+            "originalValue": "true",
+            "_visible": true,
+            "catalogFieldName": "IO:be3cc0e31bbf3910d63e98271d4bcb46"
+        },
+        "additional_comments": {
+            "display_value": "",
+            "guide_implications": false,
+            "visible": true,
+            "label": "Additional Comments:",
+            "sys_readonly": false,
+            "dynamic_value_field": "",
+            "type": "textarea",
+            "mandatory": false,
+            "visible_guide": true,
+            "visible_standalone": true,
+            "_cat_variable": true,
+            "displayValue": "",
+            "sys_id": "bf98dd12fb465a9012e8fe40aeefdc0e",
+            "readonly": false,
+            "read_only": false,
+            "unique": false,
+            "name": "additional_comments",
+            "variable_name": "IO:bf98dd12fb465a9012e8fe40aeefdc0e",
+            "placeholder": "",
+            "choice": 0,
+            "value": "",
+            "dynamic_value_dot_walk_path": "",
+            "_class_name": "TextAreaQuestion",
+            "stagedValue": "",
+            "originalValue": "",
+            "_visible": true,
+            "_readonly": false,
+            "_mandatory": false,
+            "catalogFieldName": "IO:bf98dd12fb465a9012e8fe40aeefdc0e"
+        },
+        "requested_by": {
+            "display_value": "Vincent Fisher (Admin)",
+            "guide_implications": false,
+            "lookup_label": "",
+            "type": "reference",
+            "mandatory": false,
+            "visible_guide": true,
+            "visible_standalone": true,
+            "refTable": "sys_user",
+            "_cat_variable": true,
+            "sys_id": "c33cc8eb1bbf3910d63e98271d4bcb56",
+            "readonly": false,
+            "read_only": false,
+            "lookup_value": "",
+            "variable_name": "IO:c33cc8eb1bbf3910d63e98271d4bcb56",
+            "placeholder": "",
+            "value": "428d170fdb1ebb4cc186399ffe96195c",
+            "dynamic_value_dot_walk_path": "",
+            "_class_name": "ReferenceQuestion",
+            "ed": {
+                "reference": "sys_user",
+                "searchField": "name",
+                "defaultOperator": "LIKE",
+                "qualifier": "active=true^ldap_serverISNOTEMPTY^emailISNOTEMPTY^EQ",
+                "name": "requested_by"
+            },
+            "visible": false,
+            "label": "Requested By:",
+            "sys_readonly": false,
+            "dynamic_value_field": "",
+            "displayValue": "Vincent Fisher (Admin)",
+            "unique": false,
+            "name": "requested_by",
+            "attributes": "ref_ac_columns=user_name;email,ref_ac_columns_search=true,ref_ac_order_by=name,ref_auto_completer=AJAXTableCompleter",
+            "readonlyClickthrough": true,
+            "choice": 0,
+            "_parent": "sysaid_common_fields",
+            "stagedValue": "428d170fdb1ebb4cc186399ffe96195c",
+            "originalValue": "428d170fdb1ebb4cc186399ffe96195c",
+            "_visible": false,
+            "_readonly": false,
+            "_mandatory": false,
+            "catalogFieldName": "IO:c33cc8eb1bbf3910d63e98271d4bcb56"
+        },
+        "email_address": {
+            "display_value": "",
+            "guide_implications": false,
+            "type": "string",
+            "mandatory": false,
+            "visible_guide": true,
+            "visible_standalone": true,
+            "_cat_variable": true,
+            "sys_id": "433cc8eb1bbf3910d63e98271d4bcb1d",
+            "readonly": true,
+            "_force_single_line": true,
+            "read_only": false,
+            "variable_name": "IO:433cc8eb1bbf3910d63e98271d4bcb1d",
+            "placeholder": "",
+            "value": "vince@skyignore.com",
+            "dynamic_value_dot_walk_path": "",
+            "_class_name": "TextFieldQuestion",
+            "visible": true,
+            "label": "Email Address:",
+            "sys_readonly": false,
+            "dynamic_value_field": "",
+            "displayValue": "vince@skyignore.com",
+            "validate_regex": "",
+            "validation_message": "",
+            "regex_flag": "",
+            "unique": false,
+            "name": "email_address",
+            "attributes": "ref_auto_completer=AJAXTableCompleter,ref_ac_columns=user_name;email,ref_ac_columns_search=true",
+            "choice": 0,
+            "_parent": "sysaid_common_fields",
+            "stagedValue": "vince@skyignore.com",
+            "originalValue": "",
+            "_visible": true,
+            "_readonly": true,
+            "_mandatory": false,
+            "catalogFieldName": "IO:433cc8eb1bbf3910d63e98271d4bcb1d",
+            "hasAiSparkle": false
+        },
+        "formatter2": {
+            "guide_implications": false,
+            "visible": false,
+            "label": "",
+            "sys_readonly": false,
+            "type": "formatter",
+            "mandatory": false,
+            "visible_guide": true,
+            "visible_standalone": true,
+            "_cat_variable": true,
+            "sys_id": "4b3cc8eb1bbf3910d63e98271d4bcb5d",
+            "readonly": false,
+            "read_only": false,
+            "name": "formatter2",
+            "variable_name": "IO:4b3cc8eb1bbf3910d63e98271d4bcb5d",
+            "placeholder": "",
+            "choice": 0,
+            "_parent": "sysaid_common_fields",
+            "_visible": true,
+            "_readonly": false,
+            "_mandatory": false,
+            "catalogFieldName": "IO:4b3cc8eb1bbf3910d63e98271d4bcb5d"
+        },
+        "user_id": {
+            "display_value": "",
+            "guide_implications": false,
+            "type": "string",
+            "mandatory": false,
+            "visible_guide": true,
+            "visible_standalone": true,
+            "_cat_variable": true,
+            "sys_id": "c33cc8eb1bbf3910d63e98271d4bcbbe",
+            "readonly": true,
+            "_force_single_line": true,
+            "read_only": false,
+            "variable_name": "IO:c33cc8eb1bbf3910d63e98271d4bcbbe",
+            "placeholder": "",
+            "value": "vinceadmin",
+            "dynamic_value_dot_walk_path": "",
+            "_class_name": "TextFieldQuestion",
+            "visible": true,
+            "label": "User ID:",
+            "sys_readonly": false,
+            "dynamic_value_field": "",
+            "displayValue": "vinceadmin",
+            "validate_regex": "",
+            "validation_message": "",
+            "regex_flag": "",
+            "unique": false,
+            "name": "user_id",
+            "attributes": "ref_auto_completer=AJAXTableCompleter,ref_ac_columns=user_name;email,ref_ac_columns_search=true",
+            "choice": 0,
+            "_parent": "sysaid_common_fields",
+            "stagedValue": "vinceadmin",
+            "originalValue": "",
+            "_visible": true,
+            "_readonly": true,
+            "_mandatory": false,
+            "catalogFieldName": "IO:c33cc8eb1bbf3910d63e98271d4bcbbe",
+            "hasAiSparkle": false
+        },
+        "region_o2c": {
+            "sys_id": "b6323f2cfbae2a10e14efc72ceefdceb",
+            "_children": [
+                "region_vs"
+            ],
+            "visible": true,
+            "name": "region_o2c",
+            "variable_name": "Region - O2C",
+            "type": "container_start",
+            "_cascade_hidden": false,
+            "_cat_variable": "true",
+            "originalValue": "true",
+            "_visible": true,
+            "catalogFieldName": "IO:b6323f2cfbae2a10e14efc72ceefdceb"
+        },
+        "IO:910f35df8377cb5076faac20ceaad3f8": {
+            "visible": true,
+            "label": "Have you attached the O2C billing request form.",
+            "sys_readonly": false,
+            "type": "checkbox_container",
+            "mandatory": true,
+            "visible_guide": true,
+            "visible_standalone": true,
+            "_cat_variable": true,
+            "sys_id": "910f35df8377cb5076faac20ceaad3f8",
+            "render_label": false,
+            "readonly": false,
+            "read_only": false,
+            "name": "IO:910f35df8377cb5076faac20ceaad3f8",
+            "variable_name": "IO:910f35df8377cb5076faac20ceaad3f8",
+            "choice": 0,
+            "_children": [
+                "have_you_attached_the_o2c_billing_request_form"
+            ],
+            "stagedValue": "",
+            "originalValue": "",
+            "_visible": true,
+            "_readonly": false,
+            "_mandatory": true,
+            "catalogFieldName": "IO:910f35df8377cb5076faac20ceaad3f8",
+            "$$hashKey": "object:285"
+        },
+        "location": {
+            "display_value": "",
+            "guide_implications": false,
+            "lookup_label": "",
+            "type": "reference",
+            "mandatory": false,
+            "visible_guide": true,
+            "visible_standalone": true,
+            "refTable": "cmn_location",
+            "_cat_variable": true,
+            "sys_id": "fe3cc0e31bbf3910d63e98271d4bcb49",
+            "readonly": true,
+            "read_only": false,
+            "lookup_value": "",
+            "variable_name": "IO:fe3cc0e31bbf3910d63e98271d4bcb49",
+            "placeholder": "",
+            "value": "29fd9ee1371d87c09b280a5754990ed3",
+            "dynamic_value_dot_walk_path": "",
+            "_class_name": "ReferenceQuestion",
+            "ed": {
+                "reference": "cmn_location",
+                "searchField": "full_name",
+                "defaultOperator": "LIKE",
+                "qualifier": "",
+                "name": "location"
+            },
+            "visible": true,
+            "label": "Location:",
+            "sys_readonly": false,
+            "dynamic_value_field": "",
+            "displayValue": "UK/Osterley",
+            "unique": false,
+            "name": "location",
+            "attributes": "ref_ac_columns=user_name;email,ref_ac_columns_search=true,ref_ac_order_by,ref_auto_completer=AJAXTableCompleter",
+            "readonlyClickthrough": true,
+            "choice": 0,
+            "_parent": "sysaid_common_fields",
+            "stagedValue": "29fd9ee1371d87c09b280a5754990ed3",
+            "originalValue": "",
+            "_visible": true,
+            "_readonly": true,
+            "_mandatory": false,
+            "catalogFieldName": "IO:fe3cc0e31bbf3910d63e98271d4bcb49",
+            "referenceSysId": "29fd9ee1371d87c09b280a5754990ed3",
+            "hasAiSparkle": false
+        },
+        "manager_sponsor": {
+            "display_value": "",
+            "guide_implications": false,
+            "lookup_label": "",
+            "type": "reference",
+            "mandatory": false,
+            "visible_guide": true,
+            "visible_standalone": true,
+            "refTable": "sys_user",
+            "_cat_variable": true,
+            "sys_id": "473cc8eb1bbf3910d63e98271d4bcbf7",
+            "readonly": true,
+            "read_only": false,
+            "lookup_value": "",
+            "variable_name": "IO:473cc8eb1bbf3910d63e98271d4bcbf7",
+            "placeholder": "",
+            "value": "e08f0920db9a37c8c186399ffe961935",
+            "dynamic_value_dot_walk_path": "",
+            "_class_name": "ReferenceQuestion",
+            "ed": {
+                "reference": "sys_user",
+                "searchField": "name",
+                "defaultOperator": "LIKE",
+                "qualifier": "active=true^ldap_serverISNOTEMPTY^emailISNOTEMPTY^EQ",
+                "name": "manager_sponsor"
+            },
+            "visible": true,
+            "label": "Manager/Sponsor:",
+            "sys_readonly": false,
+            "dynamic_value_field": "",
+            "displayValue": "Vincent Fisher",
+            "unique": false,
+            "name": "manager_sponsor",
+            "attributes": "ref_ac_columns=user_name;email,ref_ac_columns_search=true,ref_ac_order_by=name,ref_auto_completer=AJAXTableCompleter",
+            "readonlyClickthrough": true,
+            "choice": 0,
+            "_parent": "sysaid_common_fields",
+            "stagedValue": "e08f0920db9a37c8c186399ffe961935",
+            "originalValue": "",
+            "_visible": true,
+            "_readonly": true,
+            "_mandatory": false,
+            "catalogFieldName": "IO:473cc8eb1bbf3910d63e98271d4bcbf7",
+            "referenceSysId": "e08f0920db9a37c8c186399ffe961935",
+            "hasAiSparkle": false
+        },
+        "request_subject_o2c": {
+            "sys_id": "91513ba8fbae2a10e14efc72ceefdcf5",
+            "_children": [
+                "request_subject"
+            ],
+            "visible": true,
+            "name": "request_subject_o2c",
+            "variable_name": "Request Subject - O2C",
+            "type": "container_start",
+            "_cascade_hidden": false,
+            "_cat_variable": "true",
+            "originalValue": "true",
+            "_visible": true,
+            "catalogFieldName": "IO:91513ba8fbae2a10e14efc72ceefdcf5"
+        },
+        "cost_code": {
+            "display_value": "",
+            "guide_implications": false,
+            "lookup_label": "",
+            "type": "reference",
+            "mandatory": false,
+            "visible_guide": true,
+            "visible_standalone": true,
+            "refTable": "cmn_cost_center",
+            "_cat_variable": true,
+            "sys_id": "833cc8eb1bbf3910d63e98271d4bcb8a",
+            "readonly": true,
+            "read_only": false,
+            "lookup_value": "",
+            "variable_name": "IO:833cc8eb1bbf3910d63e98271d4bcb8a",
+            "placeholder": "",
+            "value": "184be2231b28301029082134b24bcb08",
+            "dynamic_value_dot_walk_path": "",
+            "_class_name": "ReferenceQuestion",
+            "ed": {
+                "reference": "cmn_cost_center",
+                "searchField": "account_number",
+                "defaultOperator": "STARTSWITH",
+                "qualifier": "",
+                "name": "cost_code"
+            },
+            "visible": true,
+            "label": "Cost Code:",
+            "sys_readonly": false,
+            "dynamic_value_field": "",
+            "displayValue": "2000721055",
+            "unique": false,
+            "name": "cost_code",
+            "attributes": "ref_ac_columns=user_name;email,ref_ac_columns_search=true,ref_ac_order_by,ref_auto_completer=AJAXTableCompleter",
+            "readonlyClickthrough": true,
+            "choice": 0,
+            "_parent": "sysaid_common_fields",
+            "stagedValue": "184be2231b28301029082134b24bcb08",
+            "originalValue": "",
+            "_visible": true,
+            "_readonly": true,
+            "_mandatory": false,
+            "catalogFieldName": "IO:833cc8eb1bbf3910d63e98271d4bcb8a",
+            "referenceSysId": "184be2231b28301029082134b24bcb08",
+            "hasAiSparkle": false
+        },
+        "sky_media": {
+            "display_value": "",
+            "instructions": "",
+            "guide_implications": false,
+            "lookup_label": "",
+            "type": "choice",
+            "mandatory": false,
+            "visible_guide": true,
+            "visible_standalone": true,
+            "_cat_variable": true,
+            "sys_id": "e3b02bb2fbe6a650e14efc72ceefdc6d",
+            "readonly": false,
+            "lookup_table": "",
+            "read_only": false,
+            "lookup_value": "",
+            "variable_name": "IO:e3b02bb2fbe6a650e14efc72ceefdc6d",
+            "placeholder": "",
+            "value": "",
+            "dynamic_value_dot_walk_path": "",
+            "_class_name": "YesNoQuestion",
+            "expand_help": false,
+            "visible": false,
+            "label": "Sky Media:",
+            "sys_readonly": false,
+            "dynamic_value_field": "",
+            "help_tag": "More information",
+            "displayValue": "",
+            "unique": false,
+            "name": "sky_media",
+            "attributes": "",
+            "choice": 0,
+            "choices": [
+                {
+                    "rprice_dc": "GBP",
+                    "price": "0",
+                    "recurring_price": "0",
+                    "label": "--Select Option--",
+                    "price_dc": "GBP",
+                    "value": ""
+                },
+                {
+                    "label": "Yes",
+                    "value": "Yes"
+                },
+                {
+                    "label": "No",
+                    "value": "No"
+                }
+            ],
+            "reference_qual": "",
+            "help_text": "",
+            "stagedValue": "",
+            "originalValue": "",
+            "_visible": false,
+            "_readonly": false,
+            "_mandatory": false,
+            "catalogFieldName": "IO:e3b02bb2fbe6a650e14efc72ceefdc6d",
+            "dropdownClosed": false,
+            "$$hashKey": "object:576"
+        }
+    },
+    "real_record_class": "sc_cat_item_producer",
+    "picture": "",
+    "native_mobile": false,
+    "_view": [
+        {
+            "layout": "normal",
+            "question_text": "",
+            "variables": [
+                {
+                    "name": "requested_by",
+                    "type": "field"
+                },
+                {
+                    "name": "requested_for",
+                    "type": "field"
+                },
+                {
+                    "name": "manager_sponsor",
+                    "type": "field"
+                },
+                {
+                    "name": "email_address",
+                    "type": "field"
+                },
+                {
+                    "name": "formatter2",
+                    "type": "container_split"
+                },
+                {
+                    "name": "user_id",
+                    "type": "field"
+                },
+                {
+                    "name": "location",
+                    "type": "field"
+                },
+                {
+                    "name": "cost_code",
+                    "type": "field"
+                }
+            ],
+            "display_title": false,
+            "name": "sysaid_common_fields",
+            "type": "container_start"
+        },
+        {
+            "layout": "normal",
+            "question_text": "",
+            "variables": [
+                {
+                    "name": "region_vs",
+                    "type": "field"
+                }
+            ],
+            "display_title": false,
+            "name": "region_o2c",
+            "type": "container_start"
+        },
+        {
+            "layout": "normal",
+            "question_text": "",
+            "variables": [
+                {
+                    "name": "request_subject",
+                    "type": "field"
+                }
+            ],
+            "display_title": false,
+            "name": "request_subject_o2c",
+            "type": "container_start"
+        },
+        {
+            "name": "sky_media",
+            "type": "field"
+        },
+        {
+            "name": "additional_comments",
+            "type": "field"
+        },
+        {
+            "layout": "normal",
+            "variables": [
+                {
+                    "name": "have_you_attached_the_o2c_billing_request_form",
+                    "type": "field"
+                }
+            ],
+            "name": "IO:910f35df8377cb5076faac20ceaad3f8",
+            "caption": "",
+            "containers": [
+                {
+                    "layout": "normal",
+                    "columns": [
+                        {
+                            "fields": [
+                                {
+                                    "name": "have_you_attached_the_o2c_billing_request_form",
+                                    "type": "field"
+                                }
+                            ]
+                        }
+                    ],
+                    "name": "IO:910f35df8377cb5076faac20ceaad3f8",
+                    "caption": "",
+                    "id": "IO:910f35df8377cb5076faac20ceaad3f8",
+                    "type": "container"
+                }
+            ],
+            "type": "checkbox_container"
+        }
+    ],
+    "process_price": false,
+    "name": "O2C Billing Request Form",
+    "category": "c0933deb1b704ed4dfca1f89bd4bcbd2",
+    "no_save_as_draft": false,
+    "read_only_quantity": false,
+    "_attachmentGUID": "5d0f35df8377cb5076faac20ceaad3e0"
+}

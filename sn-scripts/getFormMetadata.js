@@ -3,7 +3,9 @@
  * should be passed to the SnForm component to operate.
  *
  * It should be used in ServiceNow scripted REST message resource in the global scope, with the "turn
- * on EXMAScript 2021" option enabled.
+ * on ECMAScript 2021" option enabled.
+ * 
+ * Recommended path: GET /react_utils/form_data/{table}/{id}
  *
  * @param {string} table - A servicenow tables name (database value).
  * @param {string} guid - The sys_id of the record to retrieve, or -1 for a new record.
@@ -17,44 +19,47 @@
   const guid = request.pathParams.id;
   const qry = request.queryParams.qry || '';
   const view = request.queryParams.view || '';
+  const fhType = request.queryParams.fh_type || '';
 
   if (!table || !guid) {
     return sendError('400', 'Table and id must be provided.');
   }
 
-  var grTarget = new GlideRecord(table);
+  const u = new ReactUtils();
+  const grTarget = new GlideRecord(table);
+
   if (guid == -1 && !grTarget.canCreate())
-    return sendError('400', 'You do not have access to create a record of this type');
+    return sendError('400', 'You do not have access to create a record of this type: ' + table);
   if (guid != -1 && !grTarget.get(guid)) return sendError('400', 'Record not found.');
   if (guid != -1 && !grTarget.canRead()) return sendError('400', 'You are not authorised to view this record.');
 
   const instanceURI = gs.getProperty('glide.servlet.uri');
   const formData = new global.GlideSPScriptable().getForm(table, guid, qry, view);
-  const hasActivityFormatter = hasActivity(formData._formatters);
+  const hasActivityFormatter = u.hasActivity(formData._formatters);
 
   if (!!hasActivityFormatter && guid != -1) {
-    formData.activity = getActivityData(table, guid, instanceURI);
+    formData.activity = u.getActivityData(table, guid, fhType);
     formData.activity.formatter = hasActivityFormatter;
   }
 
-  formData.attachments = getAttachments(table, guid, instanceURI);
-  modifyFields(formData._fields, formData.activity);
-  modifyPolicies(formData.policy, grTarget);
+  formData.attachments = u.getAttachments(table, guid, instanceURI);
+  u.modifyFields(formData._fields, formData.activity);
+  u.modifyPolicies(formData.policy, grTarget);
 
   formData.react_config = {
     user: gs.getUserID(),
     base_url: instanceURI,
-    glide_user: getGlideUser(),
-    scope: getScopeName(table),
-    security: getSecurity(grTarget),
+    glide_user: u.getGlideUser(),
+    scope: u.getScopeName(table),
+    security: u.getSecurity(grTarget),
     date_format: gs.getSession().getUser().getDateFormat(),
     prettier: {
       semi: true,
       singleQuote: true,
       tabWidth: 4,
-      printWidth: 120,
+      printWidth: 120
     },
-    es_lint: getLinting(grTarget, table, guid),
+    es_lint: u.getLinting(grTarget, table, guid)
   };
 
   response.setStatus(200);
@@ -65,219 +70,5 @@
     error.setStatus(code);
     error.setMessage(msg);
     return error;
-  }
-
-  function hasActivity(formatters) {
-    for (f in formatters) {
-      let formatterName = formatters[f].formatter;
-      if (formatterName === 'activity.xml') {
-        return f;
-      }
-    }
-
-    return false;
-  }
-
-  function getActivityData(table, guid, instance) {
-    const meta = new GlideSPScriptable().getStream(table, guid);
-    const jFields = meta.journal_fields;
-    const readable = jFields.filter(f => f.can_read).map(f => f.name);
-    const writeable = jFields.filter(f => f.can_write).map(f => f.name);
-    let entries = meta.entries.filter(f => !!f.value);
-
-    const userImgMap = {};
-    const grUser = new GlideRecord('sys_user');
-    entries = entries.map(e => {
-      if (userImgMap[e.user_sys_id]) {
-        e.user_img = userImgMap[e.user_sys_id];
-      } else if (grUser.get(e.user_sys_id)) {
-        const userImg = grUser.getDisplayValue('avatar') || grUser.getDisplayValue('photo');
-        if (!userImg) return e;
-
-        const photo = instance + userImg;
-        e.user_img = photo;
-        userImgMap[e.user_sys_id] = photo;
-      }
-      return e;
-    });
-
-    return {
-      ...meta,
-      entries,
-      readable,
-      writeable,
-    };
-  }
-
-  function getScopeName(table) {
-    var grDb = new GlideRecord('sys_db_object');
-    if (grDb.get('name', table)) {
-      return grDb.sys_scope.scope.toString();
-    }
-  }
-
-  function getSecurity(gr, guid) {
-    var access = {};
-
-    if (guid == -1) {
-      gr.initialize();
-      var canCreate = gr.canCreate();
-      access.canRead = canCreate;
-      access.canWrite = canCreate;
-    } else {
-      access.canRead = gr.canRead();
-      access.canWrite = gr.canWrite();
-      access.canDelete = gr.canDelete();
-    }
-
-    return access;
-  }
-
-  function modifyFields(fields, activityData) {
-    for (f in fields) {
-      var field = fields[f];
-
-      if (field.type === 'glide_date' || field.type == 'glide_date_time') {
-        if (field.value) {
-          var gd = field.type == 'glide_date' ? new GlideDate() : new GlideDateTime();
-          gd.setDisplayValue(field.value);
-          field.value = gd.getValue();
-        }
-      }
-
-      if (activityData && field.type == 'journal_input') {
-        field.visible = false;
-        if (activityData.readable && !activityData.readable.includes(field.name)) {
-          activityData.journal_fields.push({
-            can_read: true,
-            can_write: !field.readonly,
-            color: 'transparent',
-            label: field.label,
-            name: field.name,
-          });
-
-          activityData.readable.push(field.name);
-          if (!field.readonly) activityData.writeable.push(field.name);
-        }
-      }
-    }
-  }
-
-  function getAttachments(table, guid, instance) {
-    grAttach = new GlideRecordSecure('sys_attachment');
-    grAttach.addQuery('table_name', table);
-    grAttach.addQuery('table_sys_id', 'IN', guid);
-    grAttach.orderBy('sys_created_on');
-    grAttach.query();
-
-    var attachments = [];
-    while (grAttach.next()) {
-      var id = grAttach.getUniqueValue();
-      attachments.push({
-        sys_id: id,
-        url: instance + 'sys_attachment.do?sys_id=' + id,
-        file_name: grAttach.getValue('file_name'),
-        content_type: grAttach.getValue('content_type'),
-      });
-    }
-
-    return attachments;
-  }
-
-  function getGlideUser() {
-    const gsu = gs.getUser();
-
-    return {
-      roles: j2js(gsu.getAllRoles()),
-      departmentID: gsu.getDeparmentID(),
-      firstName: gsu.getFirstName(),
-      lastName: gsu.getLastName(),
-      fullName: gsu.getFullName(),
-      userID: gsu.getID(),
-      userName: gsu.getName(),
-    };
-  }
-
-  function getEsMode(gr, table, guid) {
-    let jsVersion = () => {
-      let scope = gr.sys_scope;
-
-      //First try to get scope via target record
-      if (scope) {
-        const esMode = scope.js_level.getValue();
-        return esMode == 'es_latest' ? 'latest' : 5;
-      }
-
-      //Next try to get scope via table
-      const grDb = new GlideRecord('sys_db_object');
-      if (grDb.get('name', table)) {
-        scope = grDb.sys_scope;
-        if (scope.toString() != 'global') {
-          const ecma = grDb.get('name', table) ? scope.js_level.toString() : '5';
-          return ecma == 'es_latest' ? 'latest' : 5;
-        }
-      }
-
-      //Lastly get scope via users current application
-      scope = gs.getCurrentApplicationId();
-      if (scope == 'global') return 5;
-
-      const grScope = new GlideRecord('sys_scope');
-      if (grScope.get(scope)) {
-        const esMode = grScope.getValue('js_level');
-        return esMode == 'es_latest' ? 'latest' : 5;
-      }
-    };
-    
-    const jsv = jsVersion();
-    if (guid == -1 || jsv == 'latest') return jsv;
-
-    const grEsLatest = new GlideRecord('sys_es_latest_script');
-    grEsLatest.addQuery('id', guid);
-    grEsLatest.addQuery('use_es_latest', true);
-    grEsLatest.query();
-
-    return grEsLatest.next() ? 'latest' : jsv;
-  }
-
-  function getLinting(gr, table, guid) {
-    let jsVersion = getEsMode(gr, table, guid);
-
-    return {
-      env: {
-        browser: true,
-      },
-      parserOptions: {
-        ecmaVersion: jsVersion,
-        sourceType: 'script',
-      },
-      rules: {
-        semi: ['warn', 'always'],
-        'no-unused-vars': [
-          'warn',
-          {
-            args: 'none',
-          },
-        ],
-      },
-    };
-  }
-
-  function modifyPolicies(policies, gr) {
-    for (const p of policies) {
-      for (const c of p.conditions) {
-        if (c.reference_fields) {
-          c.dotWalkedValue = dotwalkElement(gr, c.field);
-        }
-      }
-    }
-  }
-
-  function dotwalkElement(gr, fields) {
-    var fieldList = fields.split('.');
-    fieldList.forEach(function (f) {
-      gr = gr[f];
-    });
-    return gr.toString();
   }
 })(request, response);

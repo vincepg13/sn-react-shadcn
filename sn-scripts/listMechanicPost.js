@@ -2,7 +2,9 @@
  * This script can be used to save or reset a personalised list layout for a given table and view.
  *
  * It should be used in ServiceNow scripted REST message resource in the global scope, with the "turn
- * on EXMAScript 2021" option enabled.
+ * on ECMAScript 2021" option enabled.
+ * 
+ * Recommended path: POST /react_utils/lm
  *
  * @param {string} table - A servicenow tables name (database value).
  * @param {string} [view] - An optional view name to render the list with.
@@ -19,14 +21,6 @@
     response.setError(new sn_ws_err.BadRequestError('A table must be provided.'));
   }
 
-  lm = new ListMechanic();
-  lm.setViewName(view || 'Default view');
-
-  if (fields) {
-    lm.saveList(table, fields);
-  } else {
-    lm.reset(table);
-  }
-
+  new ReactUtils().setListMechanic(table, fields, view);
   return response.setBody({ success: true });
 })(request, response);
