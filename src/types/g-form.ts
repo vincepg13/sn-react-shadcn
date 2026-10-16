@@ -34,6 +34,8 @@ export interface SnGForm {
   setSectionDisplay(sectionName: string, state: boolean): void
 
   isMandatory(fieldName: string): boolean
+  isReadOnly(fieldName: string): boolean
+  isVisible(fieldName: string): boolean
   setDisabled(fieldName: string): void
   setDisplay(fieldName: string, state: boolean): void
   setVisible(fieldName: string, state: boolean): void

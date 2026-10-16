@@ -46,6 +46,9 @@ interface GFormBridgeOptions {
   guid?: string
   uiActions: SnUiAction[]
   uiActionHandlerRef: RefObject<UiActionHandler | undefined>
+  resolveFieldName?: (fieldName: string) => string
+  submitHandlerRef?: RefObject<((action?: string) => void | Promise<void>) | undefined>
+  saveHandlerRef?: RefObject<((action?: string) => void | Promise<void>) | undefined>
 }
 
 export function createGFormBridge(opts: GFormBridgeOptions): SnGForm {
@@ -64,6 +67,9 @@ export function createGFormBridge(opts: GFormBridgeOptions): SnGForm {
     guid,
     uiActions,
     uiActionHandlerRef,
+    resolveFieldName = fieldName => fieldName,
+    submitHandlerRef,
+    saveHandlerRef,
   } = opts
   const _uniqueValue = guid || '-1'
 
@@ -73,9 +79,12 @@ export function createGFormBridge(opts: GFormBridgeOptions): SnGForm {
   const getDisplayValues = () => displayValuesRef.current ?? ({} as Record<string, string>)
   const getUIState = () => fieldUIStateRef.current ?? ({} as Record<string, FieldUIState>)
 
-  const _getLabel = (fieldName: string) =>
-    getUIState()[fieldName]?.label ?? getFormFields()[fieldName]?.label ?? ''
+  const _getLabel = (fieldName: string) => {
+    const resolved = resolveFieldName(fieldName)
+    return getUIState()[resolved]?.label ?? getFormFields()[resolved]?.label ?? ''
+  }
   const _setLabel = (fieldName: string, label: string) => {
+    fieldName = resolveFieldName(fieldName)
     const fields = getFormFields()
     if (!fields[fieldName]) return
 
@@ -92,6 +101,7 @@ export function createGFormBridge(opts: GFormBridgeOptions): SnGForm {
   }
 
   const getFieldUIState = (fieldName: string): FieldUIState => {
+    fieldName = resolveFieldName(fieldName)
     const fields = getFormFields()
     const overrides = getUIState()
     const def = fields[fieldName]
@@ -99,12 +109,15 @@ export function createGFormBridge(opts: GFormBridgeOptions): SnGForm {
     return computeEffectiveFieldState(def, val, overrides[fieldName])
   }
 
-  const clientSubmit = (actionName: string) => {
+  const clientSubmit = (actionName: string, operation: 'save' | 'submit') => {
+    const directHandler = operation === 'save' ? saveHandlerRef?.current : submitHandlerRef?.current
+    if (directHandler) return directHandler(actionName)
+
     const fn = uiActionHandlerRef.current
     const action = uiActions.find(a => a.action_name === actionName)
     if (action && fn) return fn(action)
 
-    console.warn(`g_form.save: no handler or action found for ${actionName}`)
+    console.warn(`g_form.${operation}: no handler or action found for ${actionName}`)
   }
 
   const normalizeFieldMsgType = (type?: string): FieldMessageType => {
@@ -148,12 +161,13 @@ export function createGFormBridge(opts: GFormBridgeOptions): SnGForm {
     isNewRecord: () => !guid || guid === '-1' || guid === '',
 
     // Field presence
-    hasField: (fieldName: string) => !!getFormFields()[fieldName],
+    hasField: (fieldName: string) => !!getFormFields()[resolveFieldName(fieldName)],
     getFieldNames: () => Object.keys(getFormFields()),
 
     // Value accessors
-    getDisplayValue: (field: string) => getDisplayValues()[field] ?? '',
+    getDisplayValue: (field: string) => getDisplayValues()[resolveFieldName(field)] ?? '',
     getValue: (field: string) => {
+      field = resolveFieldName(field)
       const vals = getValues() || {}
       return String(vals[field] ?? '')
     },
@@ -172,6 +186,7 @@ export function createGFormBridge(opts: GFormBridgeOptions): SnGForm {
       return v === 'true'
     },
     setValue: (fieldName: string, value: SnFieldPrimitive, displayValue?: string) => {
+      fieldName = resolveFieldName(fieldName)
       // An empty display value is meaningful when clearing a reference field.
       // Preserve the existing display value only when callers set a non-empty
       // value without supplying a display value.
@@ -188,7 +203,7 @@ export function createGFormBridge(opts: GFormBridgeOptions): SnGForm {
       const handlers = fieldChangeHandlers.current
       if (handlers?.[fieldName]) handlers[fieldName](value)
     },
-    clearValue: (field: string) => base.setValue(field, ''),
+    clearValue: (field: string) => base.setValue(resolveFieldName(field), ''),
 
     // Labels
     getLabel: _getLabel,
@@ -208,21 +223,28 @@ export function createGFormBridge(opts: GFormBridgeOptions): SnGForm {
     isMandatory(field: string): boolean {
       return getFieldUIState(field).mandatory
     },
+    isReadOnly(field: string): boolean {
+      return getFieldUIState(field).readonly
+    },
+    isVisible(field: string): boolean {
+      return getFieldUIState(field).visible
+    },
 
     // UI Action Operations
     getActionName: () => _actionName,
-    save: (action?: string) => clientSubmit(action || 'sysverb_update_and_stay'),
-    submit: (action?: string) => clientSubmit(action || 'sysverb_update'),
+    save: (action?: string) => clientSubmit(action || 'sysverb_update_and_stay', 'save'),
+    submit: (action?: string) => clientSubmit(action || 'sysverb_update', 'submit'),
 
     // UI State updates
-    setDisabled: (field: string) => updateFieldUI(field, { readonly: true }),
-    setDisplay: (field: string, state: boolean) => updateFieldUI(field, { visible: state }),
-    setVisible: (field: string, state: boolean) => updateFieldUI(field, { visible: state }),
-    setReadOnly: (field: string, state: boolean) => updateFieldUI(field, { readonly: state }),
-    setMandatory: (field: string, state: boolean) => updateFieldUI(field, { mandatory: state }),
+    setDisabled: (field: string) => updateFieldUI(resolveFieldName(field), { readonly: true }),
+    setDisplay: (field: string, state: boolean) => updateFieldUI(resolveFieldName(field), { visible: state }),
+    setVisible: (field: string, state: boolean) => updateFieldUI(resolveFieldName(field), { visible: state }),
+    setReadOnly: (field: string, state: boolean) => updateFieldUI(resolveFieldName(field), { readonly: state }),
+    setMandatory: (field: string, state: boolean) => updateFieldUI(resolveFieldName(field), { mandatory: state }),
 
     // Choices management
     addOption: (fieldName: string, choiceValue: string, choiceLabel: string, choiceIndex?: number) => {
+      fieldName = resolveFieldName(fieldName)
       const field = getFormFields()[fieldName]
       if (!field || !field.choices) return
 
@@ -239,6 +261,7 @@ export function createGFormBridge(opts: GFormBridgeOptions): SnGForm {
       }
     },
     removeOption: (fieldName: string, choiceValue: string) => {
+      fieldName = resolveFieldName(fieldName)
       const fields = getFormFields()
       const field = fields[fieldName]
       if (!field || !field.choices) return
@@ -250,6 +273,7 @@ export function createGFormBridge(opts: GFormBridgeOptions): SnGForm {
       field.choices = field.choices.filter(choice => choice.value !== choiceValue)
     },
     clearOptions: (fieldName: string) => {
+      fieldName = resolveFieldName(fieldName)
       const field = getFormFields()[fieldName]
       if (!field || !field.choices) return
       field.choices = field.choices.filter(choice => choice.value === '')
@@ -271,6 +295,7 @@ export function createGFormBridge(opts: GFormBridgeOptions): SnGForm {
       this.hideFieldMsg(fieldName, false)
     },
     showFieldMsg(fieldName: string, message: string, type?: string) {
+      fieldName = resolveFieldName(fieldName)
       if (!fieldName || !message || !base.hasField(fieldName)) return
 
       const current = getFieldUIState(fieldName).fieldMsgs ?? []
@@ -279,6 +304,7 @@ export function createGFormBridge(opts: GFormBridgeOptions): SnGForm {
       setFieldMessages(fieldName, next)
     },
     hideFieldMsg(fieldName: string, clearAll = false) {
+      fieldName = resolveFieldName(fieldName)
       if (!fieldName || !base.hasField(fieldName)) return
 
       const current = getFieldUIState(fieldName).fieldMsgs ?? []
@@ -303,6 +329,7 @@ export function createGFormBridge(opts: GFormBridgeOptions): SnGForm {
 
     // Iconography
     addDecoration(fieldName: string, icon: string, title?: string) {
+      fieldName = resolveFieldName(fieldName)
       if (!fieldName || !icon || !base.hasField(fieldName)) return
       if (!isSupportedSnDecorationIcon(icon)) {
         console.warn(`g_form.addDecoration: unsupported icon "${icon}"`)
@@ -317,6 +344,7 @@ export function createGFormBridge(opts: GFormBridgeOptions): SnGForm {
       setFieldDecoration(fieldName, next)
     },
     removeDecoration(fieldName: string, icon?: string, title?: string) {
+      fieldName = resolveFieldName(fieldName)
       if (!fieldName || !base.hasField(fieldName)) return
 
       const current = getFieldUIState(fieldName).decoration
@@ -330,6 +358,7 @@ export function createGFormBridge(opts: GFormBridgeOptions): SnGForm {
     // Data fetching helpers
     async getReference(fieldName: string, cb: (obj: SnGFormReference | null) => void) {
       try {
+        fieldName = resolveFieldName(fieldName)
         const field = getFormFields()[fieldName]
         if (!field || field.type !== 'reference') return cb(null)
 

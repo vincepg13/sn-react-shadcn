@@ -11,6 +11,38 @@ export function getFormData(metadataApi: string, controller: AbortController | A
 }
 
 type SnValuePair = { value: string; displayValue: string }
+type SnTableApiValue = string | { value?: string; display_value?: string }
+
+const readTableApiValue = (value: SnTableApiValue | undefined) => {
+  if (value === undefined || value === null) return ''
+  if (typeof value === 'string') return value
+  return value.display_value || value.value || ''
+}
+
+export async function getReferenceRecordsByIds(
+  table: string,
+  sysIds: string[],
+  displayFields: string[],
+  signal?: AbortSignal
+): Promise<Array<Record<string, string>>> {
+  if (!table || sysIds.length === 0) return []
+
+  const fields = [...new Set(['sys_id', ...displayFields].filter(Boolean))]
+  const response = await getAxiosInstance().get(`/api/now/v1/table/${encodeURIComponent(table)}`, {
+    params: {
+      sysparm_limit: String(sysIds.length),
+      sysparm_display_value: 'all',
+      sysparm_fields: fields.join(','),
+      sysparm_query: `sys_idIN${sysIds.join(',')}`,
+    },
+    signal,
+  })
+
+  return (response.data?.result || []).map((record: Record<string, SnTableApiValue>) =>
+    Object.fromEntries(fields.map(field => [field, readTableApiValue(record[field])]))
+  )
+}
+
 export async function getDotwalkedValues(
   table: string,
   target: string,

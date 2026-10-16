@@ -9,6 +9,7 @@ import { Check, ChevronsUpDown, Info, Loader2, X } from 'lucide-react'
 import { SnSimpleTooltip } from '@kit/exports/ui.index'
 import { useClientScripts } from '../contexts/SnClientScriptContext'
 import { useReferenceSelected } from '../hooks/references/useReferenceSelected'
+import { useReferenceDisplayResolution } from '../hooks/references/useReferenceDisplayResolution'
 import { Popover, PopoverContent, PopoverTrigger } from '@kit/components/ui/popover'
 import { buildReferenceQuery, getTableDisplayFields } from '../../../utils/form-api'
 import { useReferenceRecords, RefRecord } from '../hooks/references/useReferenceRecords'
@@ -26,6 +27,7 @@ export interface SnReferenceProps {
   forceRefQuery?: boolean
   closeOnSelectMultiple?: boolean
   onViewReference?: SnReferenceFieldCallback
+  onDisplayValueResolved?: (displayValue: string) => void
 }
 
 export function SnFieldReference({
@@ -38,6 +40,7 @@ export function SnFieldReference({
   forceRefQuery = false,
   closeOnSelectMultiple = true,
   onViewReference,
+  onDisplayValueResolved,
   onChange,
 }: SnReferenceProps) {
   const { readonly } = useFieldUI()
@@ -97,7 +100,7 @@ export function SnFieldReference({
     () =>
       rawValue.map((v, i) => ({
         value: v,
-        display_value: rawDisplay[i] || v,
+        display_value: rawDisplay[i] && rawDisplay[i] !== v ? rawDisplay[i] : '',
         raw: {},
       })),
     [rawValue, rawDisplay]
@@ -110,6 +113,25 @@ export function SnFieldReference({
   useEffect(() => {
     setSelectedRecords(selected)
   }, [selected])
+
+  const handleDisplayResolution = useCallback(
+    (records: RefRecord[], displayValue: string) => {
+      field.displayValue = displayValue
+      onDisplayValueResolved?.(displayValue)
+      setSelectedRecords(records)
+    },
+    [field, onDisplayValueResolved]
+  )
+
+  const { isResolving: isDisplayResolving } = useReferenceDisplayResolution({
+    fieldName: field.name,
+    referenceTable: ed.reference,
+    values: rawValue,
+    displayValues: rawDisplay,
+    displayFields: displayCols,
+    displayFieldApi: apis?.refDisplay,
+    onResolved: handleDisplayResolution,
+  })
 
   const excludeValues = useMemo(() => (isMultiple ? selected.map(r => r.value) : []), [isMultiple, selected])
 
@@ -245,7 +267,9 @@ export function SnFieldReference({
                     key={record.value}
                     className="flex items-center gap-1 rounded bg-muted px-2 py-0.5 text-sm text-muted-foreground max-w-full"
                   >
-                    <span className="truncate max-w-[150px]">{record.display_value}</span>
+                    <span className="truncate max-w-[150px]">
+                      {record.display_value || (isDisplayResolving ? 'Loading...' : '')}
+                    </span>
                     {!disabled && (
                       <X
                         className="h-3 w-3 cursor-pointer hover:text-destructive"
@@ -275,7 +299,12 @@ export function SnFieldReference({
                 className="w-full justify-between overflow-hidden pr-8"
               >
                 <span className="truncate text-left">
-                  {selectedRecords[0]?.display_value || <span className="text-muted-foreground">{field.label}</span>}
+                  {selectedRecords[0]?.display_value || (
+                    <span className="inline-flex items-center gap-2 text-muted-foreground">
+                      {isDisplayResolving && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                      {isDisplayResolving ? 'Loading...' : field.label}
+                    </span>
+                  )}
                 </span>
                 <ChevronsUpDown className="h-4 w-4 opacity-50 ml-2" />
               </Button>

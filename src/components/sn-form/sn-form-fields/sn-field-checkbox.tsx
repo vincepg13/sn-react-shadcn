@@ -3,7 +3,7 @@ import { Checkbox } from '../../../components/ui/checkbox';
 import { useFieldUI } from '../contexts/FieldUIContext';
 
 export function SnFieldCheckbox({ field, rhfField, onChange }: SnFieldBaseProps<string|boolean>) {
-  const { readonly } = useFieldUI();
+  const { mandatory, readonly } = useFieldUI();
   if (!field) return null;
 
   return (
@@ -18,6 +18,7 @@ export function SnFieldCheckbox({ field, rhfField, onChange }: SnFieldBaseProps<
         htmlFor={field.name}
         className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
       >
+        {mandatory && <span className={rhfField.value === true || rhfField.value === 'true' ? 'text-grey-500' : 'text-red-500'}>*</span>}
         {field.label}
       </label>
     </div>

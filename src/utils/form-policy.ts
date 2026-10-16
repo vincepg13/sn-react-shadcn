@@ -3,7 +3,7 @@ import { evaluateCondition } from '../utils/predicate-evaluator'
 import {
   FieldUIState,
   SnFieldsSchema,
-  SnFormConfig,
+  SnPolicyConfig,
   SnPolicy,
   SnPolicyCondition,
   SnPolicyScript,
@@ -28,7 +28,7 @@ function groupConditions(conditions: SnPolicyCondition[]): SnPolicyCondition[][]
   return groups
 }
 
-function evaluateGroup(group: SnPolicyCondition[], formData: Record<string, any>, formConfig: SnFormConfig): boolean {
+function evaluateGroup(group: SnPolicyCondition[], formData: Record<string, any>, formConfig: SnPolicyConfig): boolean {
   if (group.length === 0) return true
 
   let result = evaluateCondition(group[0], formData, formConfig)
@@ -47,7 +47,7 @@ export function evaluatePolicy(
   policy: SnPolicy,
   formData: Record<string, any>,
   _formFields: SnFieldsSchema,
-  formConfig: SnFormConfig
+  formConfig: SnPolicyConfig
 ): boolean {
   if (policy.conditions.length === 0) return true
 
@@ -61,7 +61,7 @@ export function evaluateAndApplyPolicy(
   policy: SnPolicy,
   executePolicyScript: (script?: SnPolicyScript) => any,
   updateFieldUI: (field: string, updates: Partial<FieldUIState>) => void,
-  formConfig: SnFormConfig
+  formConfig: SnPolicyConfig
 ) {
   const formData = form.getValues()
   const result = evaluatePolicy(policy, formData, formFields, formConfig)

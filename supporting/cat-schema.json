@@ -1,19 +1,19 @@
 {
-    "short_description": "Submit Billing Request Form",
+    "short_description": "React Demo Producer",
     "can_view": true,
-    "target_table_name": "x_bskyb_fn_freq",
+    "target_table_name": "x_659318_react_demo",
     "use_sc_layout": true,
     "no_wishlist": false,
-    "item_catalogs": "952285821b8c06547d55873be54bcb41",
-    "icon": "6b1d49cd1bbdce108ed905f4464bcb1b.iix",
+    "item_catalogs": "",
+    "icon": "images/icons/catalog_item.gifx",
     "description": {},
     "no_order_now": false,
-    "availability": "on_both",
+    "availability": "on_desktop",
     "request_method": "",
-    "mandatory_attachment": true,
+    "mandatory_attachment": false,
     "sys_class_name": "sc_cat_item_producer",
     "no_attachments": false,
-    "sys_id": "2f084e0b1b184a54dfca1f89bd4bcb28",
+    "sys_id": "cbc48e58834cd7d076faac20ceaad348",
     "no_order": false,
     "client_script": {
         "onChange": [
@@ -47,50 +47,7 @@
     "table": "sc_cat_item",
     "no_cart": false,
     "order": 0,
-    "policy": [
-        {
-            "short_description": "SP Sky Media",
-            "sys_id": "d5112f76fbe6a650e14efc72ceefdc73",
-            "runScripts": false,
-            "conditions": [
-                {
-                    "catalog_variable": "8042f360fbee2a10e14efc72ceefdc90",
-                    "catalog_operator": "=",
-                    "or": false,
-                    "field_label": "Region:",
-                    "goto_query": false,
-                    "type": "string",
-                    "pre_evaluated_term": false,
-                    "pre_evaluated_term_result": false,
-                    "field": "IO:8042f360fbee2a10e14efc72ceefdc90",
-                    "rlqc_query": false,
-                    "oper": "=",
-                    "term": "variables.region_vs=UK",
-                    "column_type": "variable_request",
-                    "operator_label": "is",
-                    "catalog_variable_type": "choice",
-                    "value": "UK",
-                    "newquery": false
-                }
-            ],
-            "reverse": true,
-            "actions": [
-                {
-                    "visible": "true",
-                    "sysId": "0a21abb6fbe6a650e14efc72ceefdc77",
-                    "valueAction": "ignore",
-                    "name": "IO:e3b02bb2fbe6a650e14efc72ceefdc6d",
-                    "disabled": "ignore",
-                    "mandatory": "true",
-                    "value": "",
-                    "clearValue": "false",
-                    "fieldMessageType": "none"
-                }
-            ],
-            "table": "(catalog)",
-            "onload": true
-        }
-    ],
+    "policy": [],
     "no_quantity": false,
     "_sections": [
         {
@@ -104,98 +61,85 @@
                         {
                             "name": "requested_by",
                             "type": "field",
-                            "$$hashKey": "object:325"
+                            "$$hashKey": "object:331"
                         },
                         {
                             "name": "requested_for",
                             "type": "field",
-                            "$$hashKey": "object:326"
+                            "$$hashKey": "object:332"
                         },
                         {
                             "name": "manager_sponsor",
                             "type": "field",
-                            "$$hashKey": "object:327"
+                            "$$hashKey": "object:333"
                         },
                         {
                             "name": "email_address",
                             "type": "field",
-                            "$$hashKey": "object:328"
+                            "$$hashKey": "object:334"
                         }
                     ],
-                    "$$hashKey": "object:318"
+                    "$$hashKey": "object:324"
                 },
                 {
                     "fields": [
                         {
                             "name": "user_id",
                             "type": "field",
-                            "$$hashKey": "object:353"
+                            "$$hashKey": "object:359"
                         },
                         {
                             "name": "location",
                             "type": "field",
-                            "$$hashKey": "object:354"
+                            "$$hashKey": "object:360"
                         },
                         {
                             "name": "cost_code",
                             "type": "field",
-                            "$$hashKey": "object:355"
+                            "$$hashKey": "object:361"
                         }
                     ],
-                    "$$hashKey": "object:319"
+                    "$$hashKey": "object:325"
                 }
             ],
             "name": "sysaid_common_fields",
             "caption": "",
             "id": "sysaid_common_fields",
             "type": "container",
-            "$$hashKey": "object:303"
+            "$$hashKey": "object:312"
         },
         {
-            "layout": "normal",
-            "_bootstrap_cells": 12,
-            "_count": 1,
+            "layout": "2across",
+            "_bootstrap_cells": 6,
+            "_count": 2,
             "visible": true,
             "columns": [
                 {
                     "fields": [
                         {
-                            "name": "region_vs",
+                            "name": "title",
                             "type": "field",
-                            "$$hashKey": "object:380"
+                            "$$hashKey": "object:391"
                         }
                     ],
-                    "$$hashKey": "object:376"
-                }
-            ],
-            "name": "region_o2c",
-            "caption": "",
-            "id": "region_o2c",
-            "type": "container",
-            "$$hashKey": "object:304"
-        },
-        {
-            "layout": "normal",
-            "_bootstrap_cells": 12,
-            "_count": 1,
-            "visible": true,
-            "columns": [
+                    "$$hashKey": "object:384"
+                },
                 {
                     "fields": [
                         {
-                            "name": "request_subject",
+                            "name": "priority",
                             "type": "field",
-                            "$$hashKey": "object:393"
+                            "$$hashKey": "object:398"
                         }
                     ],
-                    "$$hashKey": "object:389"
+                    "$$hashKey": "object:385"
                 }
             ],
-            "name": "request_subject_o2c",
-            "caption": "",
-            "id": "request_subject_o2c",
+            "name": "simple_fields",
+            "caption": "Simple Fields",
+            "id": "simple_fields",
             "type": "container",
-            "$$hashKey": "object:305"
+            "$$hashKey": "object:313"
         },
         {
             "layout": "normal",
@@ -205,25 +149,15 @@
             "columns": [
                 {
                     "fields": [
-                        {
-                            "name": "sky_media",
-                            "type": "field",
-                            "$$hashKey": "object:406"
-                        },
-                        {
-                            "name": "additional_comments",
-                            "type": "field",
-                            "$$hashKey": "object:407"
-                        },
                         {
                             "layout": "normal",
                             "variables": [
                                 {
-                                    "name": "have_you_attached_the_o2c_billing_request_form",
+                                    "name": "enforceable_checkbox",
                                     "type": "field"
                                 }
                             ],
-                            "name": "IO:910f35df8377cb5076faac20ceaad3f8",
+                            "name": "IO:0537661083c81bd076faac20ceaad3f9",
                             "caption": "",
                             "containers": [
                                 {
@@ -232,97 +166,101 @@
                                         {
                                             "fields": [
                                                 {
-                                                    "name": "have_you_attached_the_o2c_billing_request_form",
+                                                    "name": "enforceable_checkbox",
                                                     "type": "field",
-                                                    "$$hashKey": "object:553"
+                                                    "$$hashKey": "object:529"
                                                 }
                                             ],
-                                            "$$hashKey": "object:548"
+                                            "$$hashKey": "object:524"
                                         }
                                     ],
-                                    "name": "IO:910f35df8377cb5076faac20ceaad3f8",
+                                    "name": "IO:0537661083c81bd076faac20ceaad3f9",
                                     "caption": "",
-                                    "id": "IO:910f35df8377cb5076faac20ceaad3f8",
+                                    "id": "IO:0537661083c81bd076faac20ceaad3f9",
                                     "type": "container",
-                                    "$$hashKey": "object:544"
+                                    "$$hashKey": "object:520"
                                 }
                             ],
                             "type": "checkbox_container",
-                            "$$hashKey": "object:408"
+                            "$$hashKey": "object:411"
                         }
                     ],
-                    "$$hashKey": "object:402"
+                    "$$hashKey": "object:407"
                 }
             ],
             "name": "",
             "caption": "",
             "id": "",
             "type": "container",
-            "$$hashKey": "object:306"
+            "$$hashKey": "object:314"
         }
     ],
     "no_delivery_time": false,
     "is_transient": true,
     "_fields": {
-        "region_vs": {
-            "display_value": "",
+        "simple_fields": {
             "guide_implications": false,
             "visible": true,
-            "label": "Region:",
+            "label": "Simple Fields",
+            "sys_readonly": false,
+            "type": "container_start",
+            "mandatory": true,
+            "visible_guide": true,
+            "visible_standalone": true,
+            "_cascade_hidden": false,
+            "_cat_variable": true,
+            "sys_id": "20a58e10838cd7d076faac20ceaad30d",
+            "_children": [
+                "title",
+                "priority"
+            ],
+            "readonly": false,
+            "read_only": false,
+            "name": "simple_fields",
+            "variable_name": "IO:20a58e10838cd7d076faac20ceaad30d",
+            "placeholder": "",
+            "choice": 0,
+            "originalValue": "true",
+            "_visible": true,
+            "_readonly": false,
+            "_mandatory": false,
+            "catalogFieldName": "IO:20a58e10838cd7d076faac20ceaad30d"
+        },
+        "enforceable_checkbox": {
+            "display_value": "false",
+            "guide_implications": false,
+            "visible": true,
+            "label": "Enforceable Checkbox",
             "sys_readonly": false,
             "dynamic_value_field": "",
-            "type": "choice",
+            "type": "boolean",
             "mandatory": true,
             "visible_guide": true,
             "visible_standalone": true,
             "_cat_variable": true,
-            "displayValue": "ITA",
-            "sys_id": "8042f360fbee2a10e14efc72ceefdc90",
+            "displayValue": "false",
+            "sys_id": "70866a9c83881bd076faac20ceaad344",
             "readonly": false,
             "read_only": false,
             "unique": false,
-            "name": "region_vs",
-            "variable_name": "IO:8042f360fbee2a10e14efc72ceefdc90",
+            "name": "enforceable_checkbox",
+            "variable_name": "IO:70866a9c83881bd076faac20ceaad344",
             "placeholder": "",
-            "choice": 1,
-            "choices": [
-                {
-                    "rprice_dc": "GBP",
-                    "price": "0",
-                    "recurring_price": "0",
-                    "label": "--Select Option--",
-                    "price_dc": "GBP",
-                    "value": "",
-                    "selected": true
-                },
-                {
-                    "label": "UKI",
-                    "value": "UK"
-                },
-                {
-                    "label": "DE",
-                    "value": "DE"
-                },
-                {
-                    "label": "ITA",
-                    "value": "ITA"
-                }
-            ],
-            "value": "ITA",
+            "choice": 0,
+            "value": "false",
             "dynamic_value_dot_walk_path": "",
-            "_class_name": "SelectQuestion",
-            "_parent": "region_o2c",
-            "stagedValue": "ITA",
-            "originalValue": "",
+            "_class_name": "CheckBoxQuestion",
+            "_parent": "IO:0537661083c81bd076faac20ceaad3f9",
+            "stagedValue": "false",
+            "originalValue": "false",
             "_visible": true,
             "_readonly": false,
             "_mandatory": true,
-            "catalogFieldName": "IO:8042f360fbee2a10e14efc72ceefdc90",
-            "$$hashKey": "object:283",
-            "hasAiSparkle": false
+            "catalogFieldName": "IO:70866a9c83881bd076faac20ceaad344",
+            "_value": "false"
         },
         "requested_for": {
-            "display_value": "Vincent Fisher (Admin)",
+            "display_value": "Vincent-P Fisher",
             "guide_implications": false,
             "lookup_label": "",
             "type": "reference",
@@ -337,7 +275,7 @@
             "lookup_value": "",
             "variable_name": "IO:0b3cc8eb1bbf3910d63e98271d4bcb91",
             "placeholder": "",
-            "value": "428d170fdb1ebb4cc186399ffe96195c",
+            "value": "1b3dc48ac3e6da108077df3e050131d0",
             "dynamic_value_dot_walk_path": "",
             "_class_name": "ReferenceQuestion",
             "ed": {
@@ -351,90 +289,115 @@
             "label": "Requested For:",
             "sys_readonly": false,
             "dynamic_value_field": "",
-            "displayValue": "Vincent Fisher (Admin)",
+            "displayValue": "Vincent-P Fisher",
             "unique": false,
             "name": "requested_for",
             "attributes": "ref_ac_columns=alpha_name;guest_id,ref_ac_columns_search=true,ref_ac_order_by=name,ref_auto_completer=AJAXTableCompleter",
             "readonlyClickthrough": true,
             "choice": 0,
             "_parent": "sysaid_common_fields",
-            "stagedValue": "428d170fdb1ebb4cc186399ffe96195c",
-            "originalValue": "428d170fdb1ebb4cc186399ffe96195c",
+            "stagedValue": "1b3dc48ac3e6da108077df3e050131d0",
+            "originalValue": "1b3dc48ac3e6da108077df3e050131d0",
             "_visible": true,
             "_readonly": false,
             "_mandatory": true,
             "catalogFieldName": "IO:0b3cc8eb1bbf3910d63e98271d4bcb91"
         },
-        "have_you_attached_the_o2c_billing_request_form": {
-            "display_value": "false",
-            "guide_implications": false,
-            "visible": true,
-            "label": "Have you attached the O2C billing request form.",
-            "sys_readonly": false,
-            "dynamic_value_field": "",
-            "type": "boolean",
-            "mandatory": true,
-            "visible_guide": true,
-            "visible_standalone": true,
-            "_cat_variable": true,
-            "displayValue": "false",
-            "sys_id": "cd88868f1b184a54dfca1f89bd4bcb8e",
-            "readonly": false,
-            "read_only": false,
-            "unique": false,
-            "name": "have_you_attached_the_o2c_billing_request_form",
-            "variable_name": "IO:cd88868f1b184a54dfca1f89bd4bcb8e",
-            "placeholder": "",
-            "choice": 0,
-            "value": "false",
-            "dynamic_value_dot_walk_path": "",
-            "_class_name": "CheckBoxQuestion",
-            "_parent": "IO:910f35df8377cb5076faac20ceaad3f8",
-            "stagedValue": "false",
-            "originalValue": "false",
-            "_visible": true,
-            "_readonly": false,
-            "_mandatory": true,
-            "catalogFieldName": "IO:cd88868f1b184a54dfca1f89bd4bcb8e",
-            "_value": "false"
-        },
-        "request_subject": {
+        "title": {
             "display_value": "",
+            "instructions": "<p>Test <em>richtext</em> <strong>label</strong></p>",
             "guide_implications": false,
             "type": "string",
             "mandatory": true,
             "visible_guide": true,
             "visible_standalone": true,
             "_cat_variable": true,
-            "sys_id": "4091f32cfbae2a10e14efc72ceefdc36",
+            "sys_id": "79a16e9883481bd076faac20ceaad304",
             "readonly": false,
             "_force_single_line": true,
             "read_only": false,
-            "variable_name": "IO:4091f32cfbae2a10e14efc72ceefdc36",
+            "variable_name": "IO:79a16e9883481bd076faac20ceaad304",
             "placeholder": "",
             "value": "",
             "dynamic_value_dot_walk_path": "",
+            "max_length": 100,
             "_class_name": "TextFieldQuestion",
+            "expand_help": true,
             "visible": true,
-            "label": "Request Subject:",
+            "label": "Title",
             "sys_readonly": false,
             "dynamic_value_field": "",
+            "help_tag": "More information",
             "displayValue": "",
             "validate_regex": "",
             "validation_message": "",
             "regex_flag": "",
             "unique": false,
-            "name": "request_subject",
+            "name": "title",
             "attributes": "",
             "choice": 0,
-            "_parent": "request_subject_o2c",
+            "help_text": "",
+            "_parent": "simple_fields",
             "stagedValue": "",
             "originalValue": "",
             "_visible": true,
             "_readonly": false,
             "_mandatory": true,
-            "catalogFieldName": "IO:4091f32cfbae2a10e14efc72ceefdc36",
-            "$$hashKey": "object:284"
+            "catalogFieldName": "IO:79a16e9883481bd076faac20ceaad304",
+            "$$hashKey": "object:292"
+        },
+        "priority": {
+            "display_value": "",
+            "guide_implications": false,
+            "type": "choice",
+            "mandatory": true,
+            "visible_guide": true,
+            "visible_standalone": true,
+            "_cat_variable": true,
+            "sys_id": "21c126d883481bd076faac20ceaad33c",
+            "readonly": false,
+            "read_only": false,
+            "variable_name": "IO:21c126d883481bd076faac20ceaad33c",
+            "placeholder": "",
+            "value": "",
+            "dynamic_value_dot_walk_path": "",
+            "max_length": 40,
+            "_class_name": "SelectQuestion",
+            "visible": true,
+            "label": "Priority",
+            "sys_readonly": false,
+            "dynamic_value_field": "",
+            "displayValue": "",
+            "unique": false,
+            "name": "priority",
+            "choice": 1,
+            "choices": [
+                {
+                    "rprice_dc": "GBP",
+                    "price": "0",
+                    "recurring_price": "0",
+                    "label": "--Select Option--",
+                    "price_dc": "GBP",
+                    "value": "",
+                    "selected": true
+                },
+                {
+                    "label": "High",
+                    "value": "high"
+                },
+                {
+                    "label": "Low",
+                    "value": "low"
+                }
+            ],
+            "_parent": "simple_fields",
+            "stagedValue": "",
+            "originalValue": "",
+            "_visible": true,
+            "_readonly": false,
+            "_mandatory": true,
+            "catalogFieldName": "IO:21c126d883481bd076faac20ceaad33c",
+            "$$hashKey": "object:293"
         },
         "sysaid_common_fields": {
             "sys_id": "be3cc0e31bbf3910d63e98271d4bcb46",
@@ -458,39 +421,53 @@
             "_visible": true,
             "catalogFieldName": "IO:be3cc0e31bbf3910d63e98271d4bcb46"
         },
-        "additional_comments": {
-            "display_value": "",
+        "formatter": {
             "guide_implications": false,
             "visible": true,
-            "label": "Additional Comments:",
+            "label": "",
             "sys_readonly": false,
-            "dynamic_value_field": "",
-            "type": "textarea",
+            "type": "formatter",
             "mandatory": false,
             "visible_guide": true,
             "visible_standalone": true,
             "_cat_variable": true,
-            "displayValue": "",
-            "sys_id": "bf98dd12fb465a9012e8fe40aeefdc0e",
+            "sys_id": "17f5ced0838cd7d076faac20ceaad37f",
             "readonly": false,
             "read_only": false,
-            "unique": false,
-            "name": "additional_comments",
-            "variable_name": "IO:bf98dd12fb465a9012e8fe40aeefdc0e",
+            "name": "formatter",
+            "variable_name": "IO:17f5ced0838cd7d076faac20ceaad37f",
             "placeholder": "",
+            "choice": 0
+        },
+        "IO:0537661083c81bd076faac20ceaad3f9": {
+            "visible": true,
+            "label": "Enforceable Checkbox",
+            "sys_readonly": false,
+            "type": "checkbox_container",
+            "mandatory": true,
+            "visible_guide": true,
+            "visible_standalone": true,
+            "_cat_variable": true,
+            "sys_id": "0537661083c81bd076faac20ceaad3f9",
+            "render_label": false,
+            "readonly": false,
+            "read_only": false,
+            "name": "IO:0537661083c81bd076faac20ceaad3f9",
+            "variable_name": "IO:0537661083c81bd076faac20ceaad3f9",
             "choice": 0,
-            "value": "",
-            "dynamic_value_dot_walk_path": "",
-            "_class_name": "TextAreaQuestion",
+            "_children": [
+                "enforceable_checkbox"
+            ],
             "stagedValue": "",
             "originalValue": "",
             "_visible": true,
             "_readonly": false,
-            "_mandatory": false,
-            "catalogFieldName": "IO:bf98dd12fb465a9012e8fe40aeefdc0e"
+            "_mandatory": true,
+            "catalogFieldName": "IO:0537661083c81bd076faac20ceaad3f9",
+            "$$hashKey": "object:294"
         },
         "requested_by": {
-            "display_value": "Vincent Fisher (Admin)",
+            "display_value": "Vincent-P Fisher",
             "guide_implications": false,
             "lookup_label": "",
             "type": "reference",
@@ -505,7 +482,7 @@
             "lookup_value": "",
             "variable_name": "IO:c33cc8eb1bbf3910d63e98271d4bcb56",
             "placeholder": "",
-            "value": "428d170fdb1ebb4cc186399ffe96195c",
+            "value": "1b3dc48ac3e6da108077df3e050131d0",
             "dynamic_value_dot_walk_path": "",
             "_class_name": "ReferenceQuestion",
             "ed": {
@@ -519,15 +496,15 @@
             "label": "Requested By:",
             "sys_readonly": false,
             "dynamic_value_field": "",
-            "displayValue": "Vincent Fisher (Admin)",
+            "displayValue": "Vincent-P Fisher",
             "unique": false,
             "name": "requested_by",
             "attributes": "ref_ac_columns=user_name;email,ref_ac_columns_search=true,ref_ac_order_by=name,ref_auto_completer=AJAXTableCompleter",
             "readonlyClickthrough": true,
             "choice": 0,
             "_parent": "sysaid_common_fields",
-            "stagedValue": "428d170fdb1ebb4cc186399ffe96195c",
-            "originalValue": "428d170fdb1ebb4cc186399ffe96195c",
+            "stagedValue": "1b3dc48ac3e6da108077df3e050131d0",
+            "originalValue": "1b3dc48ac3e6da108077df3e050131d0",
             "_visible": false,
             "_readonly": false,
             "_mandatory": false,
@@ -547,14 +524,14 @@
             "read_only": false,
             "variable_name": "IO:433cc8eb1bbf3910d63e98271d4bcb1d",
             "placeholder": "",
-            "value": "vince@skyignore.com",
+            "value": "Vincent-P.Fisher@skyglobal.onmicrosoft.com",
             "dynamic_value_dot_walk_path": "",
             "_class_name": "TextFieldQuestion",
             "visible": true,
             "label": "Email Address:",
             "sys_readonly": false,
             "dynamic_value_field": "",
-            "displayValue": "vince@skyignore.com",
+            "displayValue": "Vincent-P.Fisher@skyglobal.onmicrosoft.com",
             "validate_regex": "",
             "validation_message": "",
             "regex_flag": "",
@@ -563,7 +540,7 @@
             "attributes": "ref_auto_completer=AJAXTableCompleter,ref_ac_columns=user_name;email,ref_ac_columns_search=true",
             "choice": 0,
             "_parent": "sysaid_common_fields",
-            "stagedValue": "vince@skyignore.com",
+            "stagedValue": "Vincent-P.Fisher@skyglobal.onmicrosoft.com",
             "originalValue": "",
             "_visible": true,
             "_readonly": true,
@@ -608,14 +585,14 @@
             "read_only": false,
             "variable_name": "IO:c33cc8eb1bbf3910d63e98271d4bcbbe",
             "placeholder": "",
-            "value": "vinceadmin",
+            "value": "vfr03-p@skyglobal.onmicrosoft.com",
             "dynamic_value_dot_walk_path": "",
             "_class_name": "TextFieldQuestion",
             "visible": true,
             "label": "User ID:",
             "sys_readonly": false,
             "dynamic_value_field": "",
-            "displayValue": "vinceadmin",
+            "displayValue": "vfr03-p@skyglobal.onmicrosoft.com",
             "validate_regex": "",
             "validation_message": "",
             "regex_flag": "",
@@ -624,55 +601,13 @@
             "attributes": "ref_auto_completer=AJAXTableCompleter,ref_ac_columns=user_name;email,ref_ac_columns_search=true",
             "choice": 0,
             "_parent": "sysaid_common_fields",
-            "stagedValue": "vinceadmin",
+            "stagedValue": "vfr03-p@skyglobal.onmicrosoft.com",
             "originalValue": "",
             "_visible": true,
             "_readonly": true,
             "_mandatory": false,
             "catalogFieldName": "IO:c33cc8eb1bbf3910d63e98271d4bcbbe",
             "hasAiSparkle": false
-        },
-        "region_o2c": {
-            "sys_id": "b6323f2cfbae2a10e14efc72ceefdceb",
-            "_children": [
-                "region_vs"
-            ],
-            "visible": true,
-            "name": "region_o2c",
-            "variable_name": "Region - O2C",
-            "type": "container_start",
-            "_cascade_hidden": false,
-            "_cat_variable": "true",
-            "originalValue": "true",
-            "_visible": true,
-            "catalogFieldName": "IO:b6323f2cfbae2a10e14efc72ceefdceb"
-        },
-        "IO:910f35df8377cb5076faac20ceaad3f8": {
-            "visible": true,
-            "label": "Have you attached the O2C billing request form.",
-            "sys_readonly": false,
-            "type": "checkbox_container",
-            "mandatory": true,
-            "visible_guide": true,
-            "visible_standalone": true,
-            "_cat_variable": true,
-            "sys_id": "910f35df8377cb5076faac20ceaad3f8",
-            "render_label": false,
-            "readonly": false,
-            "read_only": false,
-            "name": "IO:910f35df8377cb5076faac20ceaad3f8",
-            "variable_name": "IO:910f35df8377cb5076faac20ceaad3f8",
-            "choice": 0,
-            "_children": [
-                "have_you_attached_the_o2c_billing_request_form"
-            ],
-            "stagedValue": "",
-            "originalValue": "",
-            "_visible": true,
-            "_readonly": false,
-            "_mandatory": true,
-            "catalogFieldName": "IO:910f35df8377cb5076faac20ceaad3f8",
-            "$$hashKey": "object:285"
         },
         "location": {
             "display_value": "",
@@ -736,7 +671,7 @@
             "lookup_value": "",
             "variable_name": "IO:473cc8eb1bbf3910d63e98271d4bcbf7",
             "placeholder": "",
-            "value": "e08f0920db9a37c8c186399ffe961935",
+            "value": "",
             "dynamic_value_dot_walk_path": "",
             "_class_name": "ReferenceQuestion",
             "ed": {
@@ -750,36 +685,19 @@
             "label": "Manager/Sponsor:",
             "sys_readonly": false,
             "dynamic_value_field": "",
-            "displayValue": "Vincent Fisher",
+            "displayValue": "",
             "unique": false,
             "name": "manager_sponsor",
             "attributes": "ref_ac_columns=user_name;email,ref_ac_columns_search=true,ref_ac_order_by=name,ref_auto_completer=AJAXTableCompleter",
             "readonlyClickthrough": true,
             "choice": 0,
             "_parent": "sysaid_common_fields",
-            "stagedValue": "e08f0920db9a37c8c186399ffe961935",
+            "stagedValue": "",
             "originalValue": "",
             "_visible": true,
             "_readonly": true,
             "_mandatory": false,
-            "catalogFieldName": "IO:473cc8eb1bbf3910d63e98271d4bcbf7",
-            "referenceSysId": "e08f0920db9a37c8c186399ffe961935",
-            "hasAiSparkle": false
-        },
-        "request_subject_o2c": {
-            "sys_id": "91513ba8fbae2a10e14efc72ceefdcf5",
-            "_children": [
-                "request_subject"
-            ],
-            "visible": true,
-            "name": "request_subject_o2c",
-            "variable_name": "Request Subject - O2C",
-            "type": "container_start",
-            "_cascade_hidden": false,
-            "_cat_variable": "true",
-            "originalValue": "true",
-            "_visible": true,
-            "catalogFieldName": "IO:91513ba8fbae2a10e14efc72ceefdcf5"
+            "catalogFieldName": "IO:473cc8eb1bbf3910d63e98271d4bcbf7"
         },
         "cost_code": {
             "display_value": "",
@@ -797,7 +715,7 @@
             "lookup_value": "",
             "variable_name": "IO:833cc8eb1bbf3910d63e98271d4bcb8a",
             "placeholder": "",
-            "value": "184be2231b28301029082134b24bcb08",
+            "value": "",
             "dynamic_value_dot_walk_path": "",
             "_class_name": "ReferenceQuestion",
             "ed": {
@@ -811,81 +729,19 @@
             "label": "Cost Code:",
             "sys_readonly": false,
             "dynamic_value_field": "",
-            "displayValue": "2000721055",
+            "displayValue": "",
             "unique": false,
             "name": "cost_code",
             "attributes": "ref_ac_columns=user_name;email,ref_ac_columns_search=true,ref_ac_order_by,ref_auto_completer=AJAXTableCompleter",
             "readonlyClickthrough": true,
             "choice": 0,
             "_parent": "sysaid_common_fields",
-            "stagedValue": "184be2231b28301029082134b24bcb08",
+            "stagedValue": "",
             "originalValue": "",
             "_visible": true,
             "_readonly": true,
             "_mandatory": false,
-            "catalogFieldName": "IO:833cc8eb1bbf3910d63e98271d4bcb8a",
-            "referenceSysId": "184be2231b28301029082134b24bcb08",
-            "hasAiSparkle": false
-        },
-        "sky_media": {
-            "display_value": "",
-            "instructions": "",
-            "guide_implications": false,
-            "lookup_label": "",
-            "type": "choice",
-            "mandatory": false,
-            "visible_guide": true,
-            "visible_standalone": true,
-            "_cat_variable": true,
-            "sys_id": "e3b02bb2fbe6a650e14efc72ceefdc6d",
-            "readonly": false,
-            "lookup_table": "",
-            "read_only": false,
-            "lookup_value": "",
-            "variable_name": "IO:e3b02bb2fbe6a650e14efc72ceefdc6d",
-            "placeholder": "",
-            "value": "",
-            "dynamic_value_dot_walk_path": "",
-            "_class_name": "YesNoQuestion",
-            "expand_help": false,
-            "visible": false,
-            "label": "Sky Media:",
-            "sys_readonly": false,
-            "dynamic_value_field": "",
-            "help_tag": "More information",
-            "displayValue": "",
-            "unique": false,
-            "name": "sky_media",
-            "attributes": "",
-            "choice": 0,
-            "choices": [
-                {
-                    "rprice_dc": "GBP",
-                    "price": "0",
-                    "recurring_price": "0",
-                    "label": "--Select Option--",
-                    "price_dc": "GBP",
-                    "value": ""
-                },
-                {
-                    "label": "Yes",
-                    "value": "Yes"
-                },
-                {
-                    "label": "No",
-                    "value": "No"
-                }
-            ],
-            "reference_qual": "",
-            "help_text": "",
-            "stagedValue": "",
-            "originalValue": "",
-            "_visible": false,
-            "_readonly": false,
-            "_mandatory": false,
-            "catalogFieldName": "IO:e3b02bb2fbe6a650e14efc72ceefdc6d",
-            "dropdownClosed": false,
-            "$$hashKey": "object:576"
+            "catalogFieldName": "IO:833cc8eb1bbf3910d63e98271d4bcb8a"
         }
     },
     "real_record_class": "sc_cat_item_producer",
@@ -934,48 +790,31 @@
             "type": "container_start"
         },
         {
-            "layout": "normal",
-            "question_text": "",
+            "layout": "2across",
+            "question_text": "Simple Fields",
             "variables": [
                 {
-                    "name": "region_vs",
+                    "name": "title",
+                    "type": "field"
+                },
+                {
+                    "name": "priority",
                     "type": "field"
                 }
             ],
-            "display_title": false,
-            "name": "region_o2c",
+            "display_title": true,
+            "name": "simple_fields",
             "type": "container_start"
         },
         {
             "layout": "normal",
-            "question_text": "",
             "variables": [
                 {
-                    "name": "request_subject",
+                    "name": "enforceable_checkbox",
                     "type": "field"
                 }
             ],
-            "display_title": false,
-            "name": "request_subject_o2c",
-            "type": "container_start"
-        },
-        {
-            "name": "sky_media",
-            "type": "field"
-        },
-        {
-            "name": "additional_comments",
-            "type": "field"
-        },
-        {
-            "layout": "normal",
-            "variables": [
-                {
-                    "name": "have_you_attached_the_o2c_billing_request_form",
-                    "type": "field"
-                }
-            ],
-            "name": "IO:910f35df8377cb5076faac20ceaad3f8",
+            "name": "IO:0537661083c81bd076faac20ceaad3f9",
             "caption": "",
             "containers": [
                 {
@@ -984,15 +823,15 @@
                         {
                             "fields": [
                                 {
-                                    "name": "have_you_attached_the_o2c_billing_request_form",
+                                    "name": "enforceable_checkbox",
                                     "type": "field"
                                 }
                             ]
                         }
                     ],
-                    "name": "IO:910f35df8377cb5076faac20ceaad3f8",
+                    "name": "IO:0537661083c81bd076faac20ceaad3f9",
                     "caption": "",
-                    "id": "IO:910f35df8377cb5076faac20ceaad3f8",
+                    "id": "IO:0537661083c81bd076faac20ceaad3f9",
                     "type": "container"
                 }
             ],
@@ -1000,9 +839,9 @@
         }
     ],
     "process_price": false,
-    "name": "O2C Billing Request Form",
-    "category": "c0933deb1b704ed4dfca1f89bd4bcbd2",
+    "name": "React Demo Producer",
+    "category": "",
     "no_save_as_draft": false,
     "read_only_quantity": false,
-    "_attachmentGUID": "5d0f35df8377cb5076faac20ceaad3e0"
+    "_attachmentGUID": "c537661083c81bd076faac20ceaad3f7"
 }

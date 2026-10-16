@@ -53,6 +53,10 @@
       "types": "./dist/form.d.ts",
       "import": "./dist/form.js"
     },
+    "./catalog": {
+      "types": "./dist/catalog.d.ts",
+      "import": "./dist/catalog.js"
+    },
     "./table": {
       "types": "./dist/table.d.ts",
       "import": "./dist/table.js"

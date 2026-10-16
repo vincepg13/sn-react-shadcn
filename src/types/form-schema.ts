@@ -226,7 +226,7 @@ export type EntryFields = {
   label: string
 }
 //General Form and Fields
-export type HintDisplayType = 'hover' | 'alert'
+export type HintDisplayType = 'hover' | 'alert' | 'collapsibleAlert'
 
 const _currencyCode = z.object({
   code: z.string(),
@@ -263,6 +263,8 @@ const _formField = z.object({
   name: z.string(),
   label: z.string(),
   hint: z.string().optional(),
+  hintLabel: z.string().optional(),
+  hintExpanded: z.boolean().optional(),
   value: z.string(),
   displayValue: z.string(),
   mandatory: z.boolean(),
@@ -296,13 +298,17 @@ export type SnFieldSchema = z.infer<typeof _formField>
 export type SnFieldsSchema = Record<string, SnFieldSchema>
 export type SnFieldChoiceItem = z.infer<typeof _fieldChoiceItem>
 export type SnFormConfig = z.infer<typeof _formConfig>
+export type SnPolicyConfig = Pick<SnFormConfig, 'date_format'>
 export type FormData = Record<string, string | boolean | number | null>
 export type RHFField = ControllerRenderProps<FormData, string>
 export type SnCurrencyField = z.infer<typeof _currencyField>
 
-export type SnFormApis = {
-  formData: string
+export type SnFieldApis = {
   refDisplay?: string
+}
+
+export type SnFormApis = SnFieldApis & {
+  formData: string
 }
 
 export type FieldMessageType = 'info' | 'warning' | 'error'

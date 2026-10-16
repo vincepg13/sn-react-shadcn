@@ -1,4 +1,4 @@
-import { CircleAlert, CircleHelp, Info, TriangleAlert } from 'lucide-react'
+import { CircleAlert, Info, TriangleAlert } from 'lucide-react'
 import { SnFieldUrl } from './sn-field-url'
 import { SnFieldDate } from './sn-field-date'
 import { SnFieldTime } from './sn-field-time'
@@ -14,7 +14,7 @@ import { SnFieldCheckbox } from './sn-field-checkbox'
 import { SnFieldCurrency } from './sn-field-currency'
 import { SnFieldDuration } from './sn-field-duration'
 import { SnSimpleTooltip } from '@kit/exports/ui.index'
-import { Alert, AlertDescription } from '../../ui/alert'
+import { SnFieldHintContent, SnFieldHintTrigger } from './sn-field-hint'
 import { SnFieldFieldList } from './sn-field-field-list'
 import { SnFieldMedia } from './sn-media/sn-field-media'
 import { SnFieldCondition } from './sn-field-condition'
@@ -27,8 +27,7 @@ import { useEffectiveFieldState } from '../hooks/useFieldUiState'
 import { SN_DECORATION_ICON_MAP } from '@kit/utils/decoration-icons'
 import { useClientScripts } from '../contexts/SnClientScriptContext'
 import { useUiPoliciesContext } from '../contexts/SnUiPolicyContext'
-import { ReactNode, useRef, useCallback, memo, RefObject, useEffect } from 'react'
-import { HoverCard, HoverCardContent, HoverCardTrigger } from '../../ui/hover-card'
+import { ReactNode, useRef, useCallback, memo, RefObject, useEffect, useId, useState } from 'react'
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '../../ui/form'
 import {
   SnFieldSchema,
@@ -100,6 +99,12 @@ function SnFieldComponent({
 
   const oldValueRef = useRef<SnFieldPrimitive>(field.value)
   const formLabelRightRef = useRef<HTMLDivElement | null>(null)
+  const hintId = useId()
+  const [hintExpanded, setHintExpanded] = useState(Boolean(field.hintExpanded))
+
+  useEffect(() => {
+    setHintExpanded(Boolean(field.hintExpanded))
+  }, [field.hintExpanded, field.name])
 
   const fieldUI = useEffectiveFieldState({
     field,
@@ -127,20 +132,38 @@ function SnFieldComponent({
       runClientScriptsForFieldChange(field.name, oldValueRef.current, newValue, false)
       runUiPoliciesForField(field.name)
 
-      oldValueRef.current = newValue
-      displayValues.current[field.name] = display || newValue.toString() || ''
+      if (field.type === 'reference') {
+        const previousValue = Array.isArray(oldValueRef.current)
+          ? oldValueRef.current.join(',')
+          : String(oldValueRef.current ?? '')
+        const nextValue = Array.isArray(newValue) ? newValue.join(',') : String(newValue ?? '')
+        const nextDisplay =
+          display !== undefined
+            ? display
+            : previousValue === nextValue
+              ? displayValues.current[field.name] || field.displayValue || ''
+              : ''
 
-      await linkRefFieldDotWalks(
-        field.type,
-        field.name,
-        field.ed!.reference,
-        fieldList,
-        String(newValue),
-        setValue,
-        displayValues,
-        toSafe,
-        controllerRef
-      )
+        field.displayValue = nextDisplay
+        displayValues.current[field.name] = nextDisplay
+      } else {
+        displayValues.current[field.name] = display || newValue.toString() || ''
+      }
+      oldValueRef.current = newValue
+
+      if (field.type === 'reference' && field.ed?.reference) {
+        await linkRefFieldDotWalks(
+          field.type,
+          field.name,
+          field.ed.reference,
+          fieldList,
+          String(newValue),
+          setValue,
+          displayValues,
+          toSafe,
+          controllerRef
+        )
+      }
     },
     [
       field.ed,
@@ -156,6 +179,14 @@ function SnFieldComponent({
   )
 
   fieldChangeHandlers[field.name] = handleChange
+
+  const handleReferenceDisplayResolved = useCallback(
+    (displayValue: string) => {
+      field.displayValue = displayValue
+      displayValues.current[field.name] = displayValue
+    },
+    [displayValues, field]
+  )
 
   if (!fieldUI.visible) return null
 
@@ -188,7 +219,8 @@ function SnFieldComponent({
             watch,
             formLabelRightRef,
             textareaThreshold,
-            referenceFieldCallbacks
+            referenceFieldCallbacks,
+            handleReferenceDisplayResolved
           )
 
           if (!input) return <></>
@@ -208,33 +240,31 @@ function SnFieldComponent({
                     {fieldUI.mandatory && <span className={rhfField.value ? 'text-grey-500' : 'text-red-500'}>*</span>}
 
                     {fieldUI.label}
-                    {hint && hintDisplay === 'hover' && (
-                      <HoverCard openDelay={100}>
-                        <HoverCardTrigger asChild>
-                          <span
-                            tabIndex={0}
-                            aria-label={`Hint for ${fieldUI.label}`}
-                            className="ml-1 inline-flex cursor-help text-muted-foreground"
-                          >
-                            <CircleHelp className="size-3.5" aria-hidden />
-                          </span>
-                        </HoverCardTrigger>
-                        <HoverCardContent className="text-sm whitespace-pre-wrap">{hint}</HoverCardContent>
-                      </HoverCard>
+                    {hint && (
+                      <SnFieldHintTrigger
+                        content={hint}
+                        display={hintDisplay}
+                        expanded={hintExpanded}
+                        helpLabel={field.hintLabel}
+                        id={hintId}
+                        label={fieldUI.label!}
+                        onExpandedChange={setHintExpanded}
+                      />
                     )}
                   </span>
                   <div ref={formLabelRightRef} />
                 </FormLabel>
               )}
-              {field.type !== 'boolean' && hint && hintDisplay === 'alert' && (
-                <Alert className="flex items-start gap-2 border-muted-foreground/20 bg-muted/50 px-3 py-2 text-muted-foreground">
-                  <span className="mt-0.5 inline-flex shrink-0">
-                    <CircleHelp className="size-4" aria-hidden />
-                  </span>
-                  <AlertDescription className="leading-5 whitespace-pre-wrap text-muted-foreground">
-                    {hint}
-                  </AlertDescription>
-                </Alert>
+              {field.type !== 'boolean' && hint && (
+                <SnFieldHintContent
+                  content={hint}
+                  display={hintDisplay}
+                  expanded={hintExpanded}
+                  helpLabel={field.hintLabel}
+                  id={hintId}
+                  label={fieldUI.label!}
+                  onExpandedChange={setHintExpanded}
+                />
               )}
               <FormControl>{input}</FormControl>
               <FormMessage />
@@ -274,7 +304,8 @@ function renderFieldComponent(
   watch: ReturnType<typeof useFormContext>['watch'],
   adornmentRef: RefObject<HTMLDivElement | null>,
   textareaThreshold: number,
-  referenceFieldCallbacks?: SnReferenceFieldCallbacks
+  referenceFieldCallbacks?: SnReferenceFieldCallbacks,
+  onReferenceDisplayResolved?: (displayValue: string) => void
 ): ReactNode {
   const depField = field.dependentField || ''
   const depValue = depField ? watch(depField) : undefined
@@ -302,6 +333,8 @@ function renderFieldComponent(
       return (
         <SnFieldInput rhfField={rhfField} maxLength={field.max_length} onChange={handleChange} onFocus={handleFocus} />
       )
+    case 'textarea':
+      return <SnFieldTextarea field={field} rhfField={rhfField} onChange={handleChange} onFocus={handleFocus} />
     case 'choice':
       return <SnFieldChoice field={field} rhfField={rhfField} onChange={handleSelect} />
     case 'boolean':
@@ -334,6 +367,7 @@ function renderFieldComponent(
           onChange={handleSelect}
           dependentValue={depValue}
           onViewReference={guid !== '' && guid !== '-1' ? referenceFieldCallbacks?.[field.name] : undefined}
+          onDisplayValueResolved={onReferenceDisplayResolved}
         />
       )
     }

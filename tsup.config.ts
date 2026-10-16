@@ -11,6 +11,7 @@ export default defineConfig({
     hooks: 'src/exports/hooks.index.ts',
     amb: 'src/exports/amb.index.ts',
     form: 'src/exports/form.index.ts',
+    catalog: 'src/exports/catalog.index.ts',
     table: 'src/exports/table.index.ts',
     user: 'src/exports/user.index.ts',
     knowledge: 'src/exports/knowledge.index.ts',

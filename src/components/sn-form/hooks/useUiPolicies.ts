@@ -1,6 +1,6 @@
 // hooks/useUiPolicies.ts
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { SnFormConfig, SnPolicy, SnPolicyCondition, SnPolicyScript } from './../../../types/form-schema'
+import { SnPolicyConfig, SnPolicy, SnPolicyCondition, SnPolicyScript } from './../../../types/form-schema'
 import { useCallback, useEffect, useMemo } from 'react'
 import { FieldUIState, SnFieldsSchema } from '@kit/types/form-schema'
 import { evaluateAndApplyPolicy } from '../../../utils/form-policy'
@@ -11,7 +11,7 @@ interface UseUiPoliciesOptions {
   uiPolicies: SnPolicy[]
   executePolicyScript: (script?: SnPolicyScript) => any
   updateFieldUI: (field: string, updates: Partial<FieldUIState>) => void
-  formConfig: SnFormConfig | null
+  formConfig: SnPolicyConfig | null
 }
 
 export function useUiPolicies({
@@ -59,12 +59,8 @@ export function useUiPolicies({
 
   useEffect(() => {
     if (!formFields || uiPolicies.length === 0) return
-
-    const values = form.getValues()
-    const hasAnyValue = Object.values(values).some(v => v !== undefined && v !== null)
-
-    if (hasAnyValue) runUiPolicies()
-  }, [form, formFields, runUiPolicies, uiPolicies])
+    runUiPolicies()
+  }, [formFields, runUiPolicies, uiPolicies])
 
   return {
     uiPolicies,

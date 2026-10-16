@@ -1,5 +1,5 @@
 import { getDateViaFormat, isDateOn, isDateBetween } from './date-helper'
-import { SnPolicyCondition, SnFormConfig } from '@kit/types/form-schema'
+import { SnPolicyCondition, SnPolicyConfig } from '@kit/types/form-schema'
 import { fieldTypeMap } from '../types/predicate-definitions'
 
 function evalLessThan(fieldVal: string, condVal: string, type: string, dateFormat: string): boolean {
@@ -68,7 +68,7 @@ function evalBetween(fieldVal: string, condVal: string, type: string, dateFormat
 export function evaluateCondition(
   cond: SnPolicyCondition,
   formData: Record<string, string>,
-  formConfig: SnFormConfig,
+  formConfig: SnPolicyConfig,
 ): boolean {
   
   const fieldVal = cond.dotWalkedValue || formData[cond.field]
